@@ -3,8 +3,14 @@ package methods;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 
 import navier.Cons;
 import navier.Pittsburgh;
@@ -23,20 +29,6 @@ public class Resulton {
 		this.cv = cv;
 		this.gen = gen;
 		this.nameDir = nameDir;
-
-		for(int i=0; i<gen; i++){
-			genTra.add(new ArrayList<Double>());
-			genNum.add(new ArrayList<Double>());
-			genLen.add(new ArrayList<Double>());
-			genTst.add(new ArrayList<Double>());
-		}
-
-		for(int i=0; i<gen; i++){
-			NoChange.add(new ArrayList<Double>());
-			Child.add(new ArrayList<Double>());
-			Grand.add(new ArrayList<Double>());
-			HV.add(new ArrayList<Double>());
-		}
 
 		time = new double[cv * repeat * pon];
 		timeCount = 0;
@@ -73,187 +65,8 @@ public class Resulton {
 	ArrayList<Double> Len = new ArrayList<Double>();
 	ArrayList<Integer> Clanum = new ArrayList<Integer>();
 
-	//世代
-	ArrayList<ArrayList<Double>> genTra = new ArrayList<ArrayList<Double>>();
-	ArrayList<ArrayList<Double>> genNum = new ArrayList<ArrayList<Double>>();
-	ArrayList<ArrayList<Double>> genLen = new ArrayList<ArrayList<Double>>();
-	ArrayList<ArrayList<Double>> genTst = new ArrayList<ArrayList<Double>>();
-
-	//使用
-	ArrayList<ArrayList<Double>> NoChange = new ArrayList<ArrayList<Double>>();
-	ArrayList<ArrayList<Double>> Child = new ArrayList<ArrayList<Double>>();
-	ArrayList<ArrayList<Double>> Grand= new ArrayList<ArrayList<Double>>();
-
-	//HV
-	ArrayList<ArrayList<Double>> HV= new ArrayList<ArrayList<Double>>();
-
 	public String getDirName(){
 		return nameDir;
-	}
-
-
-	/******************************************************************************/
-	public void setHV(int nowGen, double hv){
-		HV.get(nowGen).add(hv);
-	}
-
-	public void deletHV(){
-		for(int i=0; i<gen; i++){
-			HV.get(i).clear();
-		}
-	}
-
-	public void outHV(int rr){
-
-		String fileName;
-		if(os == Cons.Uni){
-			fileName = nameDir + "/write/HV_" + rr + "_" +".txt";
-		}else{
-			fileName = nameDir + "\\write\\HV_" + rr + "_" +".txt";
-		}
-
-		try {
-			FileWriter fw = new FileWriter(fileName, false);
-			PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
-
-			double hvAve = 0;
-
-			int arraySize = HV.get(1).size();
-			//System.out.println(HV.size() +" " + HV.get(4).size());
-
-	        for(int i=0;i<gen;i++){;
-	        	hvAve = 0;
-	        	for(int j=0; j<arraySize; j++){
-	        		hvAve += HV.get(i).get(j);
-	        	}
-
-	        	pw.println(i + " " + hvAve/arraySize);
-	        }
-
-	        pw.close();
-		}
-		catch (IOException ex) {
-			ex.printStackTrace();
-	    }
-
-	}
-
-	/******************************************************************************/
-	public void setGra(int nowGen, double best[]){
-
-		NoChange.get(nowGen).add(best[0]);
-		Child.get(nowGen).add(best[1]);
-		Grand.get(nowGen).add(best[2]);
-
-	}
-
-	public void deletGra(){
-		for(int i=0; i<gen; i++){
-			NoChange.get(i).clear();
-			Child.get(i).clear();
-			Grand.get(i).clear();
-		}
-	}
-
-	public void outGra(int rr){
-
-		String fileName;
-		if(os == Cons.Uni){
-			fileName = nameDir + "/write/GrandChild_" + rr + "_" +".txt";
-		}else{
-			fileName = nameDir + "\\write\\GrandChild_" + rr + "_" +".txt";
-		}
-
-		try {
-			FileWriter fw = new FileWriter(fileName, false);
-			PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
-
-			double parentAve = 0;
-			double childAve = 0;
-			double grandAve = 0;
-
-			int arraySize = genTra.get(1).size();
-
-	        for(int i=0;i<gen;i++){
-	        	parentAve = 0;
-	        	childAve = 0;
-	        	grandAve = 0;
-	        	for(int j=0; j<arraySize; j++){
-	        		parentAve += NoChange.get(i).get(j);
-	        		childAve += Child.get(i).get(j);
-	        		grandAve += Grand.get(i).get(j);
-	        	}
-
-	        	pw.println(i + " " + parentAve/arraySize+ " " + childAve/arraySize+ " " + grandAve/arraySize);
-	        }
-
-	        pw.close();
-		}
-		catch (IOException ex) {
-			ex.printStackTrace();
-	    }
-
-	}
-	/******************************************************************************/
-	public void setGen(int nowGen, double best[], double test){
-
-		genTra.get(nowGen).add(best[0]);
-		genNum.get(nowGen).add(best[1]);
-		genLen.get(nowGen).add(best[2]);
-		genTst.get(nowGen).add(test);
-
-	}
-
-	public void deletGen(){
-		for(int i=0; i<gen; i++){
-			genTra.get(i).clear();
-			genNum.get(i).clear();
-			genLen.get(i).clear();
-			genTst.get(i).clear();
-		}
-	}
-
-	public void outGen(int rr){
-
-		String fileName;
-		if(os == Cons.Uni){
-			fileName = nameDir + "/write/genLogAve_" + rr + "_" +".txt";
-		}else{
-			fileName = nameDir + "\\write\\genLogAve_" + rr + "_" +".txt";
-		}
-
-		try {
-			FileWriter fw = new FileWriter(fileName, false);
-			PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
-
-			double aveTra = 0;
-			double aveRule = 0;
-			double aveLength = 0;
-			double aveTest = 0;
-
-			int arraySize = genTra.get(1).size();
-
-	        for(int i=0;i<gen;i++){
-	        	aveTra = 0;
-				aveRule = 0;
-				aveLength = 0;
-				aveTest = 0;
-	        	for(int j=0; j<arraySize; j++){
-	        		aveTra += genTra.get(i).get(j);
-	        		aveRule += genNum.get(i).get(j);
-	        		aveLength += genLen.get(i).get(j);
-	        		aveTest += genTst.get(i).get(j);
-	        	}
-
-	        	pw.println(i + " " + aveTra/arraySize+ " " + aveTest/arraySize+ " " + aveRule/arraySize+ " " + aveLength/arraySize);
-	        }
-
-	        pw.close();
-		}
-		catch (IOException ex) {
-			ex.printStackTrace();
-	    }
-
 	}
 
 	/******************************************************************************/
@@ -279,23 +92,42 @@ public class Resulton {
 		String fileName;
 		if(os == Cons.Uni){
 			fileName = nameDir + "/solution/solution_"+pp+"_"+rr+"_"+cc+ "_" + Tra.size() +".txt";
-		}else{
+			Configuration conf = new Configuration();
+			Path hdfsPath = new Path( fileName);
+
+			try {
+				FileSystem fs = FileSystem.get(conf);
+				OutputStream os = fs.create(hdfsPath);
+			    BufferedWriter br = new BufferedWriter( new OutputStreamWriter( os, "UTF-8" ) );
+
+			    for(int i=0;i<Tra.size();i++){
+		        	br.write(Rul.get(i) + " " + Tra.get(i)+ " " + Tst.get(i)+ " " + Len.get(i)+ " " + Clanum.get(i) + "\n");
+		        }
+
+			    br.close();
+			    fs.close();
+			}
+			catch (IOException ex){
+				ex.printStackTrace();
+		    }
+
+		}
+		else{
 			fileName = nameDir + "\\solution\\solution_"+pp+"_"+rr+"_"+cc+ "_" + Tra.size() +".txt";
+			try {
+				FileWriter fw = new FileWriter(fileName, false);
+				PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
+
+		        for(int i=0;i<Tra.size();i++){
+		        	pw.println(Rul.get(i) + " " + Tra.get(i)+ " " + Tst.get(i)+ " " + Len.get(i)+ " " + Clanum.get(i));
+		        }
+
+		        pw.close();
+			}
+			catch (IOException ex) {
+				ex.printStackTrace();
+		    }
 		}
-
-		try {
-			FileWriter fw = new FileWriter(fileName, false);
-			PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
-
-	        for(int i=0;i<Tra.size();i++){
-	        	pw.println(Rul.get(i) + " " + Tra.get(i)+ " " + Tst.get(i)+ " " + Len.get(i)+ " " + Clanum.get(i));
-	        }
-
-	        pw.close();
-		}
-		catch (IOException ex) {
-			ex.printStackTrace();
-	    }
 
 	}
 
@@ -313,45 +145,84 @@ public class Resulton {
 	}
 
 	public void writeTime(double sec, double ns){
+
 		String fileName;
 		if(os == Cons.Uni){
+
 			fileName = nameDir + "/write/Atime" + ".txt";
-		}else{
-			fileName = nameDir + "\\write\\Atime" + ".txt";
+			Configuration conf = new Configuration();
+			Path hdfsPath = new Path( fileName );
+			try {
+				FileSystem fs = FileSystem.get(conf);
+				OutputStream os = fs.create(hdfsPath);
+			    BufferedWriter br = new BufferedWriter( new OutputStreamWriter( os, "UTF-8" ) );
+
+			    br.write(sec + " " + ns + "\n");
+
+			    br.close();
+			    fs.close();
+			}
+			catch (IOException ex){
+				ex.printStackTrace();
+		    }
+
 		}
-		 try {
-	        FileWriter fw = new FileWriter(fileName, true);
-	        PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
+		else{
+			fileName = nameDir + "\\write\\Atime" + ".txt";
+			try {
+		        FileWriter fw = new FileWriter(fileName, true);
+		        PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
 
-	        pw.println(sec + " " + ns);
+		        pw.println(sec + " " + ns);
+		        pw.close();
 
-	        pw.close();
+		        }
+			 catch (IOException ex) {
+		           ex.printStackTrace();
+			 }
+		}
 
-	        }
-		 catch (IOException ex) {
-	           ex.printStackTrace();
-		 }
 	}
 
 	public void writeAveTime(){
+
 		String fileName;
+
 		if(os == Cons.Uni){
 			fileName = nameDir + "/write/Avetime" + ".txt";
+
+			Configuration conf = new Configuration();
+			Path hdfsPath = new Path( fileName );
+			try {
+				FileSystem fs = FileSystem.get(conf);
+				OutputStream os = fs.create(hdfsPath);
+			    BufferedWriter br = new BufferedWriter( new OutputStreamWriter( os, "UTF-8" ) );
+			    br.write(timeAve + "\n");
+			    br.close();
+			    fs.close();
+			}
+			catch (IOException ex){
+				ex.printStackTrace();
+		    }
+
 		}else{
+
 			fileName = nameDir + "\\write\\Avetime" + ".txt";
+			try {
+		        FileWriter fw = new FileWriter(fileName, false);
+		        PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
+
+		        pw.println(timeAve);
+
+		        pw.close();
+
+		        }
+			 catch (IOException ex) {
+		           ex.printStackTrace();
+			 }
+
 		}
-		 try {
-	        FileWriter fw = new FileWriter(fileName, false);
-	        PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
 
-	        pw.println(timeAve);
-
-	        pw.close();
-
-	        }
-		 catch (IOException ex) {
-	           ex.printStackTrace();
-		 }
 	}
 
 	/******************************************************************************/
@@ -360,59 +231,112 @@ public class Resulton {
 		String fileName;
 		if(os == Cons.Uni){
 			fileName = nameDir + "/ruleset/rules"  +"_"+pp+"_"+rr+"_"+cc+ ".txt";
+
+			Configuration conf = new Configuration();
+			Path hdfsPath = new Path( fileName );
+			try {
+				FileSystem fs = FileSystem.get(conf);
+				OutputStream os = fs.create(hdfsPath);
+			    BufferedWriter br = new BufferedWriter( new OutputStreamWriter( os, "UTF-8" ) );
+
+			    for(int i=0;i<ruleset.pitsRules.size();i++){
+		        	br.write("rule: " + i + " " + ruleset.pitsRules.get(i).getVecNum() + "\n");
+		        	for(int f=0;f<ruleset.pitsRules.get(i).getMics().size();f++){
+		        		for(int g=0;g<ruleset.pitsRules.get(i).getMics().get(f).getNdim();g++){
+		        			br.write(ruleset.pitsRules.get(i).getMics().get(f).getRule(g)+" ");
+				        }
+		        		br.write(ruleset.pitsRules.get(i).getMics().get(f).getConc()+" ");
+		        		br.write(ruleset.pitsRules.get(i).getMics().get(f).getCf()+" ");
+		        		br.write("\n");
+			        }
+		        }
+			    br.close();
+			    fs.close();
+			}
+			catch (IOException ex){
+				ex.printStackTrace();
+		    }
+
 		}else{
 			fileName = nameDir + "\\ruleset\\rules"  +"_"+pp+"_"+rr+"_"+cc+ ".txt";
-		}
 
-		try {
-			FileWriter fw = new FileWriter(fileName, false);
-			PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
+			try {
+				FileWriter fw = new FileWriter(fileName, false);
+				PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
 
-	        for(int i=0;i<ruleset.pitsRules.size();i++){
-	        	pw.println("rule: " + i + " " + ruleset.pitsRules.get(i).getVecNum());
-	        	for(int f=0;f<ruleset.pitsRules.get(i).getMics().size();f++){
-	        		for(int g=0;g<ruleset.pitsRules.get(i).getMics().get(f).getNdim();g++){
-			        	pw.print(ruleset.pitsRules.get(i).getMics().get(f).getRule(g)+" ");
+		        for(int i=0;i<ruleset.pitsRules.size();i++){
+		        	pw.println("rule: " + i + " " + ruleset.pitsRules.get(i).getVecNum());
+		        	for(int f=0;f<ruleset.pitsRules.get(i).getMics().size();f++){
+		        		for(int g=0;g<ruleset.pitsRules.get(i).getMics().get(f).getNdim();g++){
+				        	pw.print(ruleset.pitsRules.get(i).getMics().get(f).getRule(g)+" ");
+				        }
+		        		pw.print(ruleset.pitsRules.get(i).getMics().get(f).getConc()+" ");
+		        		pw.print(ruleset.pitsRules.get(i).getMics().get(f).getCf()+" ");
+		        		pw.println();
 			        }
-	        		pw.print(ruleset.pitsRules.get(i).getMics().get(f).getConc()+" ");
-	        		pw.print(ruleset.pitsRules.get(i).getMics().get(f).getCf()+" ");
-	        		pw.println();
 		        }
-	        }
 
-	        pw.close();
+		        pw.close();
+			}
+			catch (IOException ex) {
+				ex.printStackTrace();
+		    }
+
 		}
-		catch (IOException ex) {
-			ex.printStackTrace();
-	    }
+
 	}
 
 	public void outputVec(RuleSet ruleset, int cc, int rr, int pp){
 		String fileName;
 		if(os == Cons.Uni){
 			fileName = nameDir+ "/vecset/vecs"  +"_"+pp+"_"+rr+"_"+cc+ ".txt";
+
+			Configuration conf = new Configuration();
+			Path hdfsPath = new Path( fileName );
+			try {
+				FileSystem fs = FileSystem.get(conf);
+				OutputStream os = fs.create(hdfsPath);
+			    BufferedWriter br = new BufferedWriter( new OutputStreamWriter( os, "UTF-8" ) );
+
+			    br.write("#ruleNum vecNum tra tst num len /n");
+		        for(int i=0;i<ruleset.pitsRules.size();i++){
+		        	br.write(i + " " + ruleset.pitsRules.get(i).getVecNum()
+		        			+" "+ ruleset.pitsRules.get(i).getMissRate()
+		        			+" "+ ruleset.pitsRules.get(i).GetTestMissRate()
+		        			+" "+ ruleset.pitsRules.get(i).getRuleNum()
+		        			+" "+ ruleset.pitsRules.get(i).getRuleLength() + "\n");
+		        }
+
+			    br.close();
+			    fs.close();
+			}
+			catch (IOException ex){
+				ex.printStackTrace();
+		    }
+
 		}else{
 			fileName = nameDir + "\\vecset\\vecs"  +"_"+pp+"_"+rr+"_"+cc+ ".txt";
+
+			try {
+				FileWriter fw = new FileWriter(fileName, false);
+				PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
+
+				pw.println("#ruleNum vecNum tra tst num len");
+
+		        for(int i=0;i<ruleset.pitsRules.size();i++){
+		        	pw.println(i + " " + ruleset.pitsRules.get(i).getVecNum()
+		        			+" "+ ruleset.pitsRules.get(i).getMissRate()
+		        			+" "+ ruleset.pitsRules.get(i).GetTestMissRate()
+		        			+" "+ ruleset.pitsRules.get(i).getRuleNum()
+		        			+" "+ ruleset.pitsRules.get(i).getRuleLength());
+		        }
+		        pw.close();
+			}
+			catch (IOException ex) {
+				ex.printStackTrace();
+		    }
+
 		}
-
-		try {
-			FileWriter fw = new FileWriter(fileName, false);
-			PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
-
-			pw.println("#ruleNum vecNum tra tst num len");
-
-	        for(int i=0;i<ruleset.pitsRules.size();i++){
-	        	pw.println(i + " " + ruleset.pitsRules.get(i).getVecNum()
-	        			+" "+ ruleset.pitsRules.get(i).getMissRate()
-	        			+" "+ ruleset.pitsRules.get(i).GetTestMissRate()
-	        			+" "+ ruleset.pitsRules.get(i).getRuleNum()
-	        			+" "+ ruleset.pitsRules.get(i).getRuleLength());
-	        }
-	        pw.close();
-		}
-		catch (IOException ex) {
-			ex.printStackTrace();
-	    }
 
 	}
 
@@ -422,20 +346,38 @@ public class Resulton {
 		String fileName;
 		if(os == Cons.Uni){
 			fileName = nameDir + "/write/" +pon2+repeat2+cv2+ "GEN" + ".txt";
+
+			Configuration conf = new Configuration();
+			Path hdfsPath = new Path( fileName );
+			try {
+				FileSystem fs = FileSystem.get(conf);
+				OutputStream os = fs.create(hdfsPath);
+			    BufferedWriter br = new BufferedWriter( new OutputStreamWriter( os, "UTF-8" ) );
+
+			    br.write(Gen +" "+tra+" "+tst+" "+num+" "+len + "\n");
+
+			    br.close();
+			    fs.close();
+			}
+			catch (IOException ex){
+				ex.printStackTrace();
+		    }
+
 		}else{
 			fileName = nameDir + "\\write\\" +pon2+repeat2+cv2+ "GEN" + ".txt";
+			try {
+		        FileWriter fw = new FileWriter(fileName, true);
+		        PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
+
+		        pw.println(Gen +" "+tra+" "+tst+" "+num+" "+len);
+		        pw.close();
+
+		        }
+			 catch (IOException ex) {
+		           ex.printStackTrace();
+			 }
 		}
-		 try {
-	        FileWriter fw = new FileWriter(fileName, true);
-	        PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
 
-	        pw.println(Gen +" "+tra+" "+tst+" "+num+" "+len);
-	        pw.close();
-
-	        }
-		 catch (IOException ex) {
-	           ex.printStackTrace();
-		 }
 	}
 
 	public void setRare(Pittsburgh best){
@@ -457,21 +399,39 @@ public class Resulton {
 		String fileName;
 		if(os == Cons.Uni){
 			fileName = nameDir + "/write/Allwrite" + ".txt";
+
+			Configuration conf = new Configuration();
+			Path hdfsPath = new Path( fileName );
+			try {
+				FileSystem fs = FileSystem.get(conf);
+				OutputStream os = fs.create(hdfsPath);
+			    BufferedWriter br = new BufferedWriter( new OutputStreamWriter( os, "UTF-8" ) );
+
+			    br.write(tra+" "+tst+" "+num+" "+len+ "\n");
+
+			    br.close();
+			    fs.close();
+			}
+			catch (IOException ex){
+				ex.printStackTrace();
+		    }
+
 		}else{
 			fileName = nameDir + "\\write\\Allwrite" + ".txt";
+			try {
+		        FileWriter fw = new FileWriter(fileName, true);
+		        PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
+
+		        pw.println(tra+" "+tst+" "+num+" "+len);
+
+		        pw.close();
+
+		        }
+			 catch (IOException ex) {
+		           ex.printStackTrace();
+			 }
 		}
-		 try {
-	        FileWriter fw = new FileWriter(fileName, true);
-	        PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
 
-	        pw.println(tra+" "+tst+" "+num+" "+len);
-
-	        pw.close();
-
-	        }
-		 catch (IOException ex) {
-	           ex.printStackTrace();
-		 }
 	}
 
 	public void setRareAve(){

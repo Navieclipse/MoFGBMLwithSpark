@@ -1,7 +1,8 @@
 package navier;
 
 import java.util.ArrayList;
-import java.util.concurrent.ForkJoinPool;
+
+import org.apache.spark.api.java.JavaRDD;
 
 import methods.Gmethod;
 import methods.MersenneTwisterFast;
@@ -13,12 +14,12 @@ public class RuleSet{
 	//コンストラクタ
 	RuleSet(){}
 
-	public RuleSet(MersenneTwisterFast rnd, int objectives, ForkJoinPool Dpop){
+	public RuleSet(MersenneTwisterFast rnd, int objectives){
 
 		this.rnd = rnd;
 		this.rnd2 = new MersenneTwisterFast(rnd.nextInt());
 		this.objectives = objectives;
-		this.Dpop = Dpop;
+		//this.Dpop = Dpop;
 
 	}
 
@@ -46,12 +47,12 @@ public class RuleSet{
 	int DataSizeTst;
 
 	int objectives;
-	ForkJoinPool Dpop;
+	//ForkJoinPool Dpop;
 
 	/******************************************************************************/
 	//メソッド
 
-	public void initialPal(Dataset data, int popSize){
+	public void initialPal(Dataset data, JavaRDD<String> rdd, int popSize){
 
 		Ndim = data.getNdim();
 		Cnum = data.getCnum();
@@ -59,7 +60,7 @@ public class RuleSet{
 
 		for(int i=0;i<popSize;i++){
 			pitsRules.add( new Pittsburgh( rnd, Ndim, Cnum, DataSize, DataSizeTst, objectives) );
-			pitsRules.get(i).initialMic(data, Dpop);
+			pitsRules.get(i).initialMic(data, rdd);
 		}
 
 		for(int i=0;i<popSize;i++){

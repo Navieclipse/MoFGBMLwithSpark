@@ -6,11 +6,11 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 
+import org.apache.spark.api.java.JavaRDD;
+
 import methods.Fmethod;
 import methods.Gmethod;
 import methods.MersenneTwisterFast;
-
-import org.apache.spark.api.java.JavaRDD;
 
 public class Pittsburgh implements java.io.Serializable{
 	/******************************************************************************/
@@ -153,11 +153,11 @@ public class Pittsburgh implements java.io.Serializable{
 	/******************************************************************************/
 	//メソッド
 
-	public void initialMic(Dataset data, ForkJoinPool Dpop){
+	public void initialMic(Dataset data, JavaRDD<String> rdd){
         do{
         	for(int i=0; i<Cons.Nini; i++){
 
-        		micRules.add( new Michigan(rnd2,Ndim,Cnum,DataSize,DataSizeTst) );
+        		micRules.add( new Michigan(rnd2, Ndim, Cnum, DataSize, DataSizeTst) );
         		micRules.get(i).setMic();
 
         		micRules.get(i).makeRuleRnd1(rnd4);
@@ -167,10 +167,10 @@ public class Pittsburgh implements java.io.Serializable{
 
         }while(micRules.size()==0);
 
-		setFitness(data, Dpop);
+		setFitness(data, rdd);
 	}
 
-	public void setFitness(Dataset data, ForkJoinPool Dpop){
+	public void setFitness(Dataset data, JavaRDD<String> rdd){
 
 		removeRule();
 		ruleNum = micRules.size();
@@ -182,9 +182,9 @@ public class Pittsburgh implements java.io.Serializable{
 		}
 		else{
 
-			double ans = CalcAccuracyPal(data, Dpop);
+			double ans = CalcAccuracyPal(rdd);
 			double acc = ans / data.getDataSize();
-			missRate = ((1 - acc) * 100);
+			missRate = ( (1.0 - acc) * 100 );
 
 			fitness = Fmethod.fitness(missRate, (double)ruleNum, (double)ruleLength);
 		}

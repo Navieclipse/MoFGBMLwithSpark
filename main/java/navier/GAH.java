@@ -5,15 +5,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ForkJoinPool;
+
+import org.apache.spark.api.java.JavaRDD;
 
 import methods.Gmethod;
 import methods.MersenneTwisterFast;
 import methods.Resulton;
 import moead.Moead;
 import nsga2.Nsga2;
-
-import org.apache.spark.api.java.JavaRDD;
 
 
 public class GAH {
@@ -26,7 +25,7 @@ public class GAH {
 
 	MersenneTwisterFast rnd;
 
-	ForkJoinPool Dpop;
+	//ForkJoinPool Dpop;
 	JavaRDD<String> rdd;
 
 	int way = Cons.Way;
@@ -43,7 +42,7 @@ public class GAH {
 	public static final int Son = 0;
 
 
-	public GAH( int popSize, RuleSet divideHyb, Nsga2 nsga2, Moead sai ,MersenneTwisterFast rnd, int objectives,int gen, ForkJoinPool Dpop, JavaRDD<String> rdd, int func, Resulton res) {
+	public GAH( int popSize, RuleSet divideHyb, Nsga2 nsga2, Moead sai ,MersenneTwisterFast rnd, int objectives,int gen, JavaRDD<String> rdd, int func, Resulton res) {
 
 		this.divideHyb = divideHyb;
 		nsg = nsga2;
@@ -56,7 +55,7 @@ public class GAH {
 
 		this.objectives = objectives;
 		this.GenNum = gen;
-		this.Dpop = Dpop;
+		//this.Dpop = Dpop;
 		this.func = func;
 		this.popSize = popSize;
 
@@ -69,7 +68,7 @@ public class GAH {
 		}
 	}
 
-	public void GAFrame(Dataset traData, Dataset tstData, int pon, int repeat, int cv){
+	public void GAFrame(Dataset traData, int pon, int repeat, int cv){
 
 		//初期個体群
 		GAini(traData);
@@ -87,8 +86,9 @@ public class GAH {
 			if(gen % Cons.ShowRate == 0){
 				System.out.print(".");
 			}
-			if(isNewGen){		//途中結果保持
-				genCheck(gen, tstData, pon, repeat, cv);
+
+			if(isNewGen){		//途中結果保持（テストデータは無理）
+				genCheck(gen, pon, repeat, cv);
 			}
 
 			//GA操作
@@ -101,7 +101,7 @@ public class GAH {
 		}
 	}
 
-	public void genCheck(int gen, Dataset tstData, int pon, int repeat, int cv){
+	public void genCheck(int gen, int pon, int repeat, int cv){
 		if( (gen+1) <=10 ||
 			(gen+1) %10==0 && gen<=100||
 			(gen+1) %100==0 && gen<=1000||
@@ -112,7 +112,7 @@ public class GAH {
 		){
 
 		Pittsburgh bestb;
-		bestb = bestGenCalc(tstData);
+		bestb = bestGenCalc();
 		double trat = bestb.getMissRate();
 		double tstt = bestb.GetTestMissRate();
 		double numr = bestb.getRuleNum();
@@ -315,7 +315,7 @@ public class GAH {
 	}
 
 	//ベスト系
-	public Pittsburgh bestGenCalc(Dataset tstData) {
+	public Pittsburgh bestGenCalc() {
 
 		Pittsburgh best;
 		best = new Pittsburgh(divideHyb.pitsRules.get(0));
@@ -350,14 +350,15 @@ public class GAH {
 			}
 		}
 
-		double accTest = (double) best.CalcAccuracyPal(tstData, Dpop) / tstData.DataSize;
-		best.SetTestMissRate((1 - accTest) * 100);
+		//途中で評価用の結果出すのはちょっとしんどい
+		//double accTest = (double) best.CalcAccuracyPal(tstData, Dpop) / tstData.DataSize;
+		//best.SetTestMissRate((1 - accTest) * 100);
 
 		return best;
 
 	}
 
-	public Pittsburgh GetBestRuleSet(int objectives, RuleSet all, Resulton res, Dataset data, boolean isTest) {
+	public Pittsburgh GetBestRuleSet(int objectives, RuleSet all, Resulton res, Dataset data, JavaRDD<String> rdd, boolean isTest) {
 
 		Pittsburgh best;
 
@@ -370,7 +371,7 @@ public class GAH {
 				all.pitsRules.get(i).setNumAndLength();
 
 				if(isTest){
-					double acc = (double) all.pitsRules.get(i).CalcAccuracyPal(data, Dpop);
+					double acc = (double) all.pitsRules.get(i).CalcAccuracyPal(rdd);
 					all.pitsRules.get(i).SetTestMissRate(((data.DataSize - acc)/data.DataSize) * 100);
 				}
 
@@ -448,7 +449,7 @@ public class GAH {
 
 		}
 		if(isTest){
-			double accTest = (double) best.CalcAccuracyPal(data, Dpop)	/ data.DataSize;
+			double accTest = (double) best.CalcAccuracyPal(rdd)	/ data.DataSize;
 			best.SetTestMissRate((1 - accTest) * 100);
 		}
 

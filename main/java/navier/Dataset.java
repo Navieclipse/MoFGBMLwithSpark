@@ -8,6 +8,14 @@ public class Dataset implements java.io.Serializable{
 	//コンストラクタ
 	Dataset(){}
 
+	public Dataset(String[] params){
+
+		this.DataSize = Integer.parseInt(params[0]);
+		this.Ndim = Integer.parseInt(params[1]);
+		this.Cnum = Integer.parseInt(params[2]);
+
+	}
+
 	public Dataset(int Ndim, int Cnum, int DataSize, ArrayList<Pattern2> patterns){
 
 		this.Ndim = Ndim;

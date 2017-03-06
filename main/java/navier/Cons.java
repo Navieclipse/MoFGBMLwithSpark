@@ -2,7 +2,6 @@ package navier;
 
 public class Cons {
 
-    public static final int Seed = 2016;					//乱数シード
     public static final int Len  = 5;						//L
     public static final double Dont = 0.8;					//どんとケア適応確率（合わせ用）
 

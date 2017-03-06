@@ -12,7 +12,8 @@ public class FizzBuzz {
         SparkConf sparkConf = new SparkConf()
                 .setMaster("local")
                 .setAppName("Example01");
-        JavaSparkContext sc = new JavaSparkContext(sparkConf);
+        @SuppressWarnings("resource")
+		JavaSparkContext sc = new JavaSparkContext(sparkConf);
         sc.parallelize(IntStream.range(1, 100).boxed().collect(Collectors.toList())).map(x -> {
             if (x % 15 == 0) {
                 return "FizzBuzz";
