@@ -1,24 +1,10 @@
 package methods;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-
-import navier.Cons;
 import navier.Pittsburgh;
 
 public class Gmethod {
@@ -26,19 +12,6 @@ public class Gmethod {
 	Gmethod(){}
 
 	//******************************************************************************//
-	//methods
-
-	//データファイル名作成
-	public static void makeFile(String dataName, String traFiles[][], String tstFiles[][], String hdfs){
-
-		for(int rep_i=0; rep_i<traFiles.length; rep_i++){
-			for(int cv_i=0; cv_i<traFiles[0].length; cv_i++){
-				 traFiles[rep_i][cv_i] = hdfs + dataName + "/a" + Integer.toString(rep_i) + "_" + Integer.toString(cv_i) + "_" +dataName + "-10tra.dat";
-				 tstFiles[rep_i][cv_i] = hdfs + dataName + "/a" + Integer.toString(rep_i) + "_" + Integer.toString(cv_i) + "_" +dataName + "-10tst.dat";
-			}
-		}
-
-	}
 
 	//非復元抽出
 	public static int [] sampringWithout(int num, int DataSize, MersenneTwisterFast rnd){
@@ -251,237 +224,6 @@ public class Gmethod {
 
 	}
 
-	//出力
-
-	public static void stringWrite(String file, String log){
-
-		String fileName = file + ".txt";
-
-		 try {
-	        //出力先を作成する
-	        FileWriter fw = new FileWriter(fileName, true);
-	        PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
-	        //内容を指定する
-	        	pw.println(log);
-	        	//ファイルに書き出す
-	            pw.close();
-		 }
-	     catch (IOException ex) {
-	        //例外時処理
-	         ex.printStackTrace();
-	     }
-	}
-	//HDFS
-	public static void stringWrite(String file, String hdfs,  String log){
-
-		Configuration conf = new Configuration();
-		Path hdfsPath = new Path( hdfs + file + ".txt");
-
-		 try {
-			FileSystem fs = FileSystem.get(conf);
-			OutputStream os = fs.create(hdfsPath);
-            BufferedWriter br = new BufferedWriter( new OutputStreamWriter( os, "UTF-8" ) );
-            br.write(log  + "\n");
-            br.close();
-            fs.close();
-		 }
-	     catch (IOException ex) {
-	        //例外時処理
-	         ex.printStackTrace();
-	     }
-	}
-
-	public static void writeExp(String name ,String dir ,String st, int os){
-		String fileName;
-
-		if(os == Cons.Uni){
-			fileName = dir + "/" + name + ".txt";
-		}else{
-			fileName = dir + "\\" + name + ".txt";
-		}
-
-		try {
-	        //出力先を作成する
-	        FileWriter fw = new FileWriter(fileName, false);
-	        PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
-	        pw.println(st);
-	        pw.close();
-	    }
-
-		catch (IOException ex){
-			ex.printStackTrace();
-	    }
-
-	}
-	//HDFS
-	public static void writeExp(String name ,String dir, String hdfs, String st){
-
-		Configuration conf = new Configuration();
-		Path hdfsPath = new Path( hdfs + dir + "/" + name + ".txt");
-
-		try {
-			FileSystem fs = FileSystem.get(conf);
-			OutputStream os = fs.create(hdfsPath);
-		    BufferedWriter br = new BufferedWriter( new OutputStreamWriter( os, "UTF-8" ) );
-		    br.write(st  + "\n");
-		    br.close();
-		    fs.close();
-		}
-		catch (IOException ex){
-			ex.printStackTrace();
-	    }
-
-	}
-
-	//file input
-	public static void write(String name ,String dir ,double ou[] ,int pp, int j, int os){
-
-		String fileName;
-
-		if(os == Cons.Uni){
-			fileName = dir + "/write/" + name + "_" + pp + "_" + j + ".txt";
-			Configuration conf = new Configuration();
-			Path hdfsPath = new Path( fileName );
-
-			 try {
-				FileSystem fs = FileSystem.get(conf);
-				OutputStream osa = fs.create(hdfsPath);
-	            BufferedWriter br = new BufferedWriter( new OutputStreamWriter( osa, "UTF-8" ) );
-
-	            for(int i=0;i<ou.length;i++){
-	            	br.write(ou[i]+ " " );
-		        }
-	            br.write("\n");
-	            br.close();
-	            fs.close();
-			 }
-		     catch (IOException ex) {
-		        //例外時処理
-		         ex.printStackTrace();
-		     }
-		}else{
-			fileName = dir + "\\write\\" + name + "_" + pp + "_" + j + ".txt";
-			try {
-		        //出力先を作成する
-		        FileWriter fw = new FileWriter(fileName, false);  //※１
-		        PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
-
-		        for(int i=0;i<ou.length;i++){
-		        	pw.print(ou[i]+ " " );
-		        }
-		        pw.println();
-		        pw.close();
-
-		        } catch (IOException ex) {
-		            //例外時処理
-		            ex.printStackTrace();
-		    }
-		}
-
-	}
-
-	public static String makeDir(String dataname, String hdfs, int methods, int seed, int os){
-
-		Calendar now = Calendar.getInstance();
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
-
-		String path = "";
-
-		//HDFS
-		if(os == Cons.Uni){
-			path = hdfs +  "/result_" +dataname + "_f" + methods + seed;
-			Path hdfsPath = new Path( path );
-
-			Configuration conf = new Configuration();
-			try{
-				FileSystem dfs = FileSystem.get(conf);
-				dfs.mkdirs(hdfsPath);
-			}
-			catch (IOException ex){
-				ex.printStackTrace();
-		    }
-
-		}else{
-			path = System.getProperty("user.dir");
-			path += "\\result_" +dataname + "_f" + methods + "_" +sdf.format(now.getTime());
-			File newdir = new File(path);
-			newdir.mkdir();
-		}
-
-		return path;
-	}
-
-/*	public static String makeDirName(String dataname, int methods, int Seed, int os){
-
-		String path = System.getProperty("user.dir");
-
-		if(os == Cons.Uni){
-			path += "/result_" +dataname + "_f" + methods + "_" + Seed;
-		}else{
-			path += "\\result_" +dataname + "_f" + methods + "_" + Seed;
-		}
-
-		return path;
-	}*/
-
-	/*public static String makeDirShort(String dataname, int methods, int Seed, int os){
-
-		String path = System.getProperty("user.dir");
-
-		if(os == Cons.Uni){
-			path += "/result_" +dataname + "_f" + methods + "_" + Seed;
-		}else{
-			path += "\\result_" +dataname + "_f" + methods + "_" + Seed;
-		}
-
-		File newdir = new File(path);
-		newdir.mkdir();
-		return path;
-	}*/
-
-	public static void makeDirHDFS(String dirName){
-		Path hdfsPath = new Path( dirName );
-		Configuration conf = new Configuration();
-		try{
-			FileSystem dfs = FileSystem.get(conf);
-			dfs.mkdirs(hdfsPath);
-		}
-		catch (IOException ex){
-			ex.printStackTrace();
-	    }
-	}
-
-	public static void makeDirRule(String dir, int os){
-
-		//HDFS
-		if(os == Cons.Uni){
-			makeDirHDFS(dir + "/ruleset");
-			makeDirHDFS(dir + "/vecset");
-			makeDirHDFS(dir + "/solution");
-			makeDirHDFS(dir + "/write");
-
-		}
-		else{
-			String path;
-			path = dir + "\\ruleset";
-			File newdir = new File(path);
-			newdir.mkdir();
-
-			path = dir + "\\vecset";
-			File newdir2 = new File(path);
-			newdir2.mkdir();
-
-			path = dir + "\\solution";
-			File newdir3 = new File(path);
-			newdir3.mkdir();
-
-			path = dir + "\\write";
-			File newdir4 = new File(path);
-			newdir4.mkdir();
-		}
-
-	}
-
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	public static void shuffle(List<?> list, MersenneTwisterFast rnd) {
 		int SHUFFLE_THRESHOLD = 5;
@@ -515,6 +257,5 @@ public class Gmethod {
 		arr[i] = arr[j];
 		arr[j] = tmp;
 	}
-
 
 }

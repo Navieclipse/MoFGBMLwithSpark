@@ -1,16 +1,6 @@
 package methods;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.util.ArrayList;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 
 import navier.Cons;
 import navier.Pittsburgh;
@@ -20,43 +10,23 @@ public class Resulton {
 
 	public Resulton() {}
 
-	public Resulton(int pon, int repeat, int cv, int gen, String nameDir, int os){
-
+	public Resulton(String nameDir, int os){
 		this.os = os;
-
-		this.pon = pon;
-		this.repeat = repeat;
-		this.cv = cv;
-		this.gen = gen;
 		this.nameDir = nameDir;
-
-		time = new double[cv * repeat * pon];
-		timeCount = 0;
 	}
 
 	/******************************************************************************/
-	int pon;
-	int repeat;
-	int cv;
-	int gen;
+	int os;
 	public String nameDir;
 
-	int os;
-
 	//時間
-	double time[];
-	double timeAve;
-	int timeCount;
+	ArrayList<Double> times = new ArrayList<Double>();
 
 	//最終結果用
-	double tra;
-	double tst;
-	double num;
-	double len;
-
-	double rareAve[] = new double[4];
-	double rareAveRep[] = new double[4];
-	double rareAveRepAll[] = new double[4];
+	ArrayList<Double> Trains = new ArrayList<Double>();
+	ArrayList<Double> Tests = new ArrayList<Double>();
+	ArrayList<Double> Rules = new ArrayList<Double>();
+	ArrayList<Double> Lengths = new ArrayList<Double>();
 
 	//非劣解
 	ArrayList<Double> Tra = new ArrayList<Double>();
@@ -71,7 +41,7 @@ public class Resulton {
 
 	/******************************************************************************/
 
-	public void setSolution( double rul,double traErr,double tstErr,double leng ,int claNum){
+	public void setSolution( double rul, double traErr, double tstErr, double leng , int claNum){
 			this.Rul.add(rul);
 			this.Tra.add(traErr);
 			this.Tst.add((tstErr));
@@ -90,407 +60,173 @@ public class Resulton {
 	public void outSolution(int cc, int rr, int pp){
 
 		String fileName;
-		if(os == Cons.Uni){
-			fileName = nameDir + "/solution/solution_"+pp+"_"+rr+"_"+cc+ "_" + Tra.size() +".txt";
-			Configuration conf = new Configuration();
-			Path hdfsPath = new Path( fileName);
-
-			try {
-				FileSystem fs = FileSystem.get(conf);
-				OutputStream os = fs.create(hdfsPath);
-			    BufferedWriter br = new BufferedWriter( new OutputStreamWriter( os, "UTF-8" ) );
-
-			    for(int i=0;i<Tra.size();i++){
-		        	br.write(Rul.get(i) + " " + Tra.get(i)+ " " + Tst.get(i)+ " " + Len.get(i)+ " " + Clanum.get(i) + "\n");
-		        }
-
-			    br.close();
-			    fs.close();
-			}
-			catch (IOException ex){
-				ex.printStackTrace();
-		    }
+		if(os == Cons.Win){
+			fileName = nameDir + "\\solution\\solution_"+pp+"_"+rr+"_"+cc+ "_" + Tra.size() +".txt";
 
 		}
 		else{
-			fileName = nameDir + "\\solution\\solution_"+pp+"_"+rr+"_"+cc+ "_" + Tra.size() +".txt";
-			try {
-				FileWriter fw = new FileWriter(fileName, false);
-				PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
-
-		        for(int i=0;i<Tra.size();i++){
-		        	pw.println(Rul.get(i) + " " + Tra.get(i)+ " " + Tst.get(i)+ " " + Len.get(i)+ " " + Clanum.get(i));
-		        }
-
-		        pw.close();
-			}
-			catch (IOException ex) {
-				ex.printStackTrace();
-		    }
+			fileName = nameDir + "/solution/solution_"+pp+"_"+rr+"_"+cc+ "_" + Tra.size() +".txt";
 		}
+
+		String[] strs = new String[Tra.size()];
+		for(int i=0; i<Tra.size(); i++){
+			strs[i] = Rul.get(i) + " " + Tra.get(i)+ " " + Tst.get(i)+ " " + Len.get(i)+ " " + Clanum.get(i);
+		}
+		Output.writeln(fileName, strs, os);
 
 	}
 
 	/******************************************************************************/
 	public void setTime(double time){
-		this.time[timeCount] = time;
-		timeCount++;
+		this.times.add(time);
 	}
 
-	public void setTimeAve(){
-		for(int i = 0; i < time.length; i++){
-			timeAve = 0.0;
-			timeAve += time[i];
-		}
-	}
-
-	public void writeTime(double sec, double ns){
+	public void writeTime(double sec, double ns, int cv, int rep, int pp){
 
 		String fileName;
-		if(os == Cons.Uni){
-
-			fileName = nameDir + "/write/Atime" + ".txt";
-			Configuration conf = new Configuration();
-			Path hdfsPath = new Path( fileName );
-			try {
-				FileSystem fs = FileSystem.get(conf);
-				OutputStream os = fs.create(hdfsPath);
-			    BufferedWriter br = new BufferedWriter( new OutputStreamWriter( os, "UTF-8" ) );
-
-			    br.write(sec + " " + ns + "\n");
-
-			    br.close();
-			    fs.close();
-			}
-			catch (IOException ex){
-				ex.printStackTrace();
-		    }
-
+		if(os == Cons.Win){
+			fileName = nameDir + "\\write\\Atime_" + pp + rep + cv + ".txt";
 		}
 		else{
-			fileName = nameDir + "\\write\\Atime" + ".txt";
-			try {
-		        FileWriter fw = new FileWriter(fileName, true);
-		        PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
-
-		        pw.println(sec + " " + ns);
-		        pw.close();
-
-		        }
-			 catch (IOException ex) {
-		           ex.printStackTrace();
-			 }
+			fileName = nameDir + "/write/Atime_" + pp + rep + cv + ".txt";
 		}
 
+		String str = sec + " " + ns;
+
+		Output.writeln(fileName, str, os);
 	}
 
 	public void writeAveTime(){
 
-		String fileName;
-
-		if(os == Cons.Uni){
-			fileName = nameDir + "/write/Avetime" + ".txt";
-
-			Configuration conf = new Configuration();
-			Path hdfsPath = new Path( fileName );
-			try {
-				FileSystem fs = FileSystem.get(conf);
-				OutputStream os = fs.create(hdfsPath);
-			    BufferedWriter br = new BufferedWriter( new OutputStreamWriter( os, "UTF-8" ) );
-			    br.write(timeAve + "\n");
-			    br.close();
-			    fs.close();
-			}
-			catch (IOException ex){
-				ex.printStackTrace();
-		    }
-
-		}else{
-
-			fileName = nameDir + "\\write\\Avetime" + ".txt";
-			try {
-		        FileWriter fw = new FileWriter(fileName, false);
-		        PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
-
-		        pw.println(timeAve);
-
-		        pw.close();
-
-		        }
-			 catch (IOException ex) {
-		           ex.printStackTrace();
-			 }
-
+		Double timeAve = 0.0;
+		for(int i=0; i<times.size(); i++){
+			timeAve += times.get(i);
 		}
+		timeAve /= times.size();
+
+		String fileName;
+		if(os == Cons.Win){
+			fileName = nameDir + "\\write\\Avetime" + ".txt";
+		}else{
+			fileName = nameDir + "/write/Avetime" + ".txt";
+		}
+
+		Output.writeln(fileName, String.valueOf(timeAve), os);
 
 	}
 
 	/******************************************************************************/
-
 	public void outputRules(RuleSet ruleset, int cc, int rr, int pp){
 		String fileName;
-		if(os == Cons.Uni){
-			fileName = nameDir + "/ruleset/rules"  +"_"+pp+"_"+rr+"_"+cc+ ".txt";
-
-			Configuration conf = new Configuration();
-			Path hdfsPath = new Path( fileName );
-			try {
-				FileSystem fs = FileSystem.get(conf);
-				OutputStream os = fs.create(hdfsPath);
-			    BufferedWriter br = new BufferedWriter( new OutputStreamWriter( os, "UTF-8" ) );
-
-			    for(int i=0;i<ruleset.pitsRules.size();i++){
-		        	br.write("rule: " + i + " " + ruleset.pitsRules.get(i).getVecNum() + "\n");
-		        	for(int f=0;f<ruleset.pitsRules.get(i).getMics().size();f++){
-		        		for(int g=0;g<ruleset.pitsRules.get(i).getMics().get(f).getNdim();g++){
-		        			br.write(ruleset.pitsRules.get(i).getMics().get(f).getRule(g)+" ");
-				        }
-		        		br.write(ruleset.pitsRules.get(i).getMics().get(f).getConc()+" ");
-		        		br.write(ruleset.pitsRules.get(i).getMics().get(f).getCf()+" ");
-		        		br.write("\n");
-			        }
-		        }
-			    br.close();
-			    fs.close();
-			}
-			catch (IOException ex){
-				ex.printStackTrace();
-		    }
-
-		}else{
+		if(os == Cons.Win){
 			fileName = nameDir + "\\ruleset\\rules"  +"_"+pp+"_"+rr+"_"+cc+ ".txt";
-
-			try {
-				FileWriter fw = new FileWriter(fileName, false);
-				PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
-
-		        for(int i=0;i<ruleset.pitsRules.size();i++){
-		        	pw.println("rule: " + i + " " + ruleset.pitsRules.get(i).getVecNum());
-		        	for(int f=0;f<ruleset.pitsRules.get(i).getMics().size();f++){
-		        		for(int g=0;g<ruleset.pitsRules.get(i).getMics().get(f).getNdim();g++){
-				        	pw.print(ruleset.pitsRules.get(i).getMics().get(f).getRule(g)+" ");
-				        }
-		        		pw.print(ruleset.pitsRules.get(i).getMics().get(f).getConc()+" ");
-		        		pw.print(ruleset.pitsRules.get(i).getMics().get(f).getCf()+" ");
-		        		pw.println();
-			        }
-		        }
-
-		        pw.close();
-			}
-			catch (IOException ex) {
-				ex.printStackTrace();
-		    }
-
+		}else{
+			fileName = nameDir + "/ruleset/rules"  +"_"+pp+"_"+rr+"_"+cc+ ".txt";
 		}
 
+		ArrayList<String> strs = new ArrayList<String>();
+		for(int i=0;i<ruleset.pitsRules.size();i++){
+			strs.add( "rule " + i + " " + ruleset.pitsRules.get(i).getVecNum() );
+        	for(int f=0;f<ruleset.pitsRules.get(i).getMics().size();f++){
+    			String str = "";
+        		for(int g=0;g<ruleset.pitsRules.get(i).getMics().get(f).getNdim();g++){
+		        	str += ruleset.pitsRules.get(i).getMics().get(f).getRule(g) + " " ;
+		        }
+        		str += ruleset.pitsRules.get(i).getMics().get(f).getConc() + " ";
+        		str += ruleset.pitsRules.get(i).getMics().get(f).getCf();
+        		strs.add( str );
+	        }
+        }
+
+		String[] array = (String[]) strs.toArray(new String[0]);
+		Output.writeln(fileName, array, os);
 	}
 
 	public void outputVec(RuleSet ruleset, int cc, int rr, int pp){
 		String fileName;
-		if(os == Cons.Uni){
-			fileName = nameDir+ "/vecset/vecs"  +"_"+pp+"_"+rr+"_"+cc+ ".txt";
-
-			Configuration conf = new Configuration();
-			Path hdfsPath = new Path( fileName );
-			try {
-				FileSystem fs = FileSystem.get(conf);
-				OutputStream os = fs.create(hdfsPath);
-			    BufferedWriter br = new BufferedWriter( new OutputStreamWriter( os, "UTF-8" ) );
-
-			    br.write("#ruleNum vecNum tra tst num len /n");
-		        for(int i=0;i<ruleset.pitsRules.size();i++){
-		        	br.write(i + " " + ruleset.pitsRules.get(i).getVecNum()
-		        			+" "+ ruleset.pitsRules.get(i).getMissRate()
-		        			+" "+ ruleset.pitsRules.get(i).GetTestMissRate()
-		        			+" "+ ruleset.pitsRules.get(i).getRuleNum()
-		        			+" "+ ruleset.pitsRules.get(i).getRuleLength() + "\n");
-		        }
-
-			    br.close();
-			    fs.close();
-			}
-			catch (IOException ex){
-				ex.printStackTrace();
-		    }
-
-		}else{
+		if(os == Cons.Win){
 			fileName = nameDir + "\\vecset\\vecs"  +"_"+pp+"_"+rr+"_"+cc+ ".txt";
-
-			try {
-				FileWriter fw = new FileWriter(fileName, false);
-				PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
-
-				pw.println("#ruleNum vecNum tra tst num len");
-
-		        for(int i=0;i<ruleset.pitsRules.size();i++){
-		        	pw.println(i + " " + ruleset.pitsRules.get(i).getVecNum()
-		        			+" "+ ruleset.pitsRules.get(i).getMissRate()
-		        			+" "+ ruleset.pitsRules.get(i).GetTestMissRate()
-		        			+" "+ ruleset.pitsRules.get(i).getRuleNum()
-		        			+" "+ ruleset.pitsRules.get(i).getRuleLength());
-		        }
-		        pw.close();
-			}
-			catch (IOException ex) {
-				ex.printStackTrace();
-		    }
-
+		}else{
+			fileName = nameDir+ "/vecset/vecs"  +"_"+pp+"_"+rr+"_"+cc+ ".txt";
 		}
 
+		ArrayList<String> strs = new ArrayList<String>();
+		for(int i=0;i<ruleset.pitsRules.size();i++){
+			strs.add( i + " " + ruleset.pitsRules.get(i).getVecNum()
+					+" "+ ruleset.pitsRules.get(i).getMissRate()
+					+" "+ ruleset.pitsRules.get(i).GetTestMissRate()
+					+" "+ ruleset.pitsRules.get(i).getRuleNum()
+					+" "+ ruleset.pitsRules.get(i).getRuleLength() );
+	    }
+
+		String[] array = (String[]) strs.toArray(new String[0]);
+		Output.writeln(fileName, array, os);
 	}
 
 	/******************************************************************************/
-
-	public void writeBestLog(double tra, double tst, double num, double len, int Gen, int pon2, int repeat2, int cv2){
+	public void writeBestLog(double tra, double tst, double num, double len, int Gen, int pon, int repeat, int cv){
 		String fileName;
-		if(os == Cons.Uni){
-			fileName = nameDir + "/write/" +pon2+repeat2+cv2+ "GEN" + ".txt";
-
-			Configuration conf = new Configuration();
-			Path hdfsPath = new Path( fileName );
-			try {
-				FileSystem fs = FileSystem.get(conf);
-				OutputStream os = fs.create(hdfsPath);
-			    BufferedWriter br = new BufferedWriter( new OutputStreamWriter( os, "UTF-8" ) );
-
-			    br.write(Gen +" "+tra+" "+tst+" "+num+" "+len + "\n");
-
-			    br.close();
-			    fs.close();
-			}
-			catch (IOException ex){
-				ex.printStackTrace();
-		    }
-
+		if(os == Cons.Win){
+			fileName = nameDir + "\\write\\" + pon + repeat + cv + "GEN" + ".txt";
 		}else{
-			fileName = nameDir + "\\write\\" +pon2+repeat2+cv2+ "GEN" + ".txt";
-			try {
-		        FileWriter fw = new FileWriter(fileName, true);
-		        PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
-
-		        pw.println(Gen +" "+tra+" "+tst+" "+num+" "+len);
-		        pw.close();
-
-		        }
-			 catch (IOException ex) {
-		           ex.printStackTrace();
-			 }
+			fileName = nameDir + "/write/" + pon + repeat + cv + "GEN" + ".txt";
 		}
 
+		String str = Gen + " " + tra + " " + tst +" "+ num +" "+ len;
+		Output.writeln(fileName, str, os);
 	}
 
-	public void setRare(Pittsburgh best){
-		double tra1 = best.getMissRate();
-		double tst1 = best.GetTestMissRate();
-		double num1 = best.getRuleNum();
-		double len1 = best.getRuleLength();
-		this.tra = tra1;
-		this.tst = tst1;
-		this.num = num1;
-		this.len = len1;
+	public void setBest(Pittsburgh best){
+		Trains.add( best.getMissRate() );
+		Tests.add( best.GetTestMissRate() );
+		Rules.add( (double)best.getRuleNum() );
+		Lengths.add( (double)best.getRuleLength() );
 	}
 
-	public void writeRare(Pittsburgh best){
-		double tra = best.getMissRate();
-		double tst = best.GetTestMissRate();
-		double num = best.getRuleNum();
-		double len = best.getRuleLength();
+	public void writeAllbest(Pittsburgh best, int cv, int rep, int pp){
+
 		String fileName;
-		if(os == Cons.Uni){
-			fileName = nameDir + "/write/Allwrite" + ".txt";
-
-			Configuration conf = new Configuration();
-			Path hdfsPath = new Path( fileName );
-			try {
-				FileSystem fs = FileSystem.get(conf);
-				OutputStream os = fs.create(hdfsPath);
-			    BufferedWriter br = new BufferedWriter( new OutputStreamWriter( os, "UTF-8" ) );
-
-			    br.write(tra+" "+tst+" "+num+" "+len+ "\n");
-
-			    br.close();
-			    fs.close();
-			}
-			catch (IOException ex){
-				ex.printStackTrace();
-		    }
-
+		if(os == Cons.Win){
+			fileName = nameDir + "\\write\\Allbest_" + pp + rep + cv + ".txt";
 		}else{
-			fileName = nameDir + "\\write\\Allwrite" + ".txt";
-			try {
-		        FileWriter fw = new FileWriter(fileName, true);
-		        PrintWriter pw = new PrintWriter(new BufferedWriter(fw));
-
-		        pw.println(tra+" "+tst+" "+num+" "+len);
-
-		        pw.close();
-
-		        }
-			 catch (IOException ex) {
-		           ex.printStackTrace();
-			 }
+			fileName = nameDir + "/write/Allbest_" + pp + rep + cv + ".txt";
 		}
 
+		String str = best.getMissRate() + " " +
+					 best.GetTestMissRate() + " " +
+					 best.getRuleNum() + " " +
+					 best.getRuleLength();
+
+		Output.writeln(fileName, str, os);
 	}
 
-	public void setRareAve(){
-		rareAve[0] += tra;
-		rareAve[1] += tst;
-		rareAve[2] += num;
-		rareAve[3] += len;
-	}
+	public void writeBestAve(){
 
-	public void setRareAveRep(int pp, int j){
+		Double trainAve = 0.0;
+		Double testAve = 0.0;
+		Double ruleAve = 0.0;
+		Double lengthAve = 0.0;
 
-		rareAve[0] /= (double)(cv);
-		rareAve[1] /= (double)(cv);
-		rareAve[2] /= (double)(cv);
-		rareAve[3] /= (double)(cv);
+		for(int i=0; i<Trains.size(); i++){
+			trainAve += Trains.get(i);
+			testAve += Tests.get(i);
+			ruleAve += Rules.get(i);
+			lengthAve += Lengths.get(i);
+		}
+		trainAve /= Trains.size();
+		testAve /= Tests.size();
+		ruleAve /= Rules.size();
+		lengthAve /= Lengths.size();
 
-		rareAveRep[0] += rareAve[0];
-		rareAveRep[1] += rareAve[1];
-		rareAveRep[2] += rareAve[2];
-		rareAveRep[3] += rareAve[3];
+		String fileName;
+		if(os == Cons.Win){
+			fileName = nameDir + "\\write\\" + "AllbestAve" + ".txt";
+		}else{
+			fileName = nameDir + "/write/" + "AllbestAve" + ".txt";
+		}
 
-		Gmethod.write("res", nameDir,rareAve, pp, j, os);
-
-		rareAve[0] = 0;
-		rareAve[1] = 0;
-		rareAve[2] = 0;
-		rareAve[3] = 0;
-
-	}
-
-	public void setRareAveRepAll(int pp){
-
-		rareAveRep[0] /= (double)(repeat);
-		rareAveRep[1] /= (double)(repeat);
-		rareAveRep[2] /= (double)(repeat);
-		rareAveRep[3] /= (double)(repeat);
-
-		rareAveRepAll[0] += rareAveRep[0];
-		rareAveRepAll[1] += rareAveRep[1];
-		rareAveRepAll[2] += rareAveRep[2];
-		rareAveRepAll[3] += rareAveRep[3];
-
-		Gmethod.write("res", nameDir,rareAveRep, pp, 100, os);
-
-		rareAveRep[0] = 0;
-		rareAveRep[1] = 0;
-		rareAveRep[2] = 0;
-		rareAveRep[3] = 0;
-	}
-
-	public void setRareAveRepAllFinal(){
-
-			rareAveRepAll[0] /= (double)(pon);
-			rareAveRepAll[1] /= (double)(pon);
-			rareAveRepAll[2] /= (double)(pon);
-			rareAveRepAll[3] /= (double)(pon);
-
-		Gmethod.write("res", nameDir,rareAveRepAll, 1000, 1000, os);
-
+		String str = trainAve +" "+  testAve +" "+  ruleAve +" "+  lengthAve;
+		Output.writeln(fileName, str, os);
 	}
 
 }

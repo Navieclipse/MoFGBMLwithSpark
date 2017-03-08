@@ -2,9 +2,9 @@ package navier;
 
 public class Cons {
 
+	//GBML's parameter
     public static final int Len  = 5;						//L
     public static final double Dont = 0.8;					//どんとケア適応確率（合わせ用）
-
     public static final int dWitch = 0;						//dontCare 0: Len, 1: Dont
 
     public static final int Fnum  = 14;						//ファジィ集合数
@@ -20,7 +20,7 @@ public class Cons {
 
 	public static final boolean isNewGen = false;			//ログでログを出力．
 
-    //MOEADパラメータ
+    //MOEAD's parameter
     public static final int H  = 59;						//分割数 //2:209,3:19
     public static final double alpha = 0.9;					//参照点のやつ
     public static final double theta = 5.0;					//シータ
@@ -43,16 +43,16 @@ public class Cons {
     public static final boolean isWSfromNadia = false;
 
 
-    //NSGA2パラメータ
+    //NSGA2's parameter
     public static final int nsga2 = 0;						//NSGA2の番号
     public static final int inclination = 0;				//目的関数の回転度
     public static final boolean isCDnormalize = false;
     public static final boolean isParent = false;
 
-    //繰り返し回数
+    //Others
     public static final int ShowRate  = 1000;			//表示する世代
 
-    //重み(一目的）
+    //One objective weights
     public static final int W1 = 100;
     public static final int W2  = 1;
     public static final int W3 = 1;
@@ -62,5 +62,6 @@ public class Cons {
     //OS
     public static final int Win = 0;						//windows
     public static final int Uni = 1;						//unix
+    public static final int HDFS= 2;						//HDFS
 
 }
