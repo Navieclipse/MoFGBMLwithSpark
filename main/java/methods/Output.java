@@ -25,8 +25,8 @@ public class Output {
 
 		for(int rep_i=0; rep_i<traFiles.length; rep_i++){
 			for(int cv_i=0; cv_i<traFiles[0].length; cv_i++){
-				 traFiles[rep_i][cv_i] = hdfs + dataName + "/a" + Integer.toString(rep_i) + "_" + Integer.toString(cv_i) + "_" +dataName + "-10tra.dat";
-				 tstFiles[rep_i][cv_i] = hdfs + dataName + "/a" + Integer.toString(rep_i) + "_" + Integer.toString(cv_i) + "_" +dataName + "-10tst.dat";
+				 traFiles[rep_i][cv_i] = hdfs + dataName + "/a" + Integer.toString(rep_i) + "_" + Integer.toString(cv_i) + "_" +dataName + "-10tra.csv";
+				 tstFiles[rep_i][cv_i] = hdfs + dataName + "/a" + Integer.toString(rep_i) + "_" + Integer.toString(cv_i) + "_" +dataName + "-10tst.csv";
 			}
 		}
 

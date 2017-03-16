@@ -2,6 +2,8 @@ package navier;
 
 import java.util.Arrays;
 
+import org.apache.spark.sql.Row;
+
 import methods.Fmethod;
 import methods.MersenneTwisterFast;
 
@@ -96,7 +98,7 @@ public class Michigan implements java.io.Serializable{
 			return ruleLength;
 		}
 
-		public double calcAdaptationPure(Dataset data,int dataNum){
+		public double calcAdaptationPure(DataSetInfo data,int dataNum){
 	    	return  Fmethod.menberMulPure(data, dataNum, rule, Ndim);
 		}
 
@@ -104,8 +106,8 @@ public class Michigan implements java.io.Serializable{
 	    	return  Fmethod.menberMulPure2(p, rule);
 		}
 
-		public double calcAdaptationPureSpark(double pattern[]){
-	    	return  Fmethod.menberMulPureSpark(pattern, rule);
+		public double calcAdaptationPureSpark(Row lines){
+	    	return  Fmethod.menberMulPureSpark(lines, rule);
 		}
 
 		public double getCf(){

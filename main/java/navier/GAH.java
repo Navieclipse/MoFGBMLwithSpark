@@ -6,7 +6,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 
 import methods.Gmethod;
 import methods.MersenneTwisterFast;
@@ -25,8 +26,7 @@ public class GAH {
 
 	MersenneTwisterFast rnd;
 
-	//ForkJoinPool Dpop;
-	JavaRDD<String> rdd;
+	Dataset<Row> df;
 
 	int way = Cons.Way;
 
@@ -42,15 +42,15 @@ public class GAH {
 	public static final int Son = 0;
 
 
-	public GAH( int popSize, RuleSet divideHyb, Nsga2 nsga2, Moead sai ,MersenneTwisterFast rnd, int objectives,int gen, JavaRDD<String> rdd, int func, Resulton res) {
+	public GAH( int popSize, RuleSet divideHyb, Nsga2 nsga2, Moead sai ,MersenneTwisterFast rnd,
+				int objectives,int gen, Dataset<Row> df, int func, Resulton res) {
 
 		this.divideHyb = divideHyb;
 		nsg = nsga2;
 		moe = sai;
 
-		this.rdd = rdd;
+		this.df = df;
 
-		this.rnd = rnd;
 		this.result = res;
 
 		this.objectives = objectives;
@@ -61,14 +61,14 @@ public class GAH {
 
 	}
 
-	public void GAini(Dataset data) {
+	public void GAini(DataSetInfo data) {
 		Evoluation(data, divideHyb, Parent);
 		if (objectives != 1 && func == 0){
 			nsg.DisideRank(divideHyb.pitsRules);
 		}
 	}
 
-	public void GAFrame(Dataset traData, int pon, int repeat, int cv){
+	public void GAFrame(DataSetInfo traData, int pon, int repeat, int cv){
 
 		//初期個体群
 		GAini(traData);
@@ -122,7 +122,7 @@ public class GAH {
 		}
 	}
 
-	public void GAStartNS(Dataset data, int gen) {
+	public void GAStartNS(DataSetInfo data, int gen) {
 
 		//UniformCross();
 		//Michigan();
@@ -140,7 +140,7 @@ public class GAH {
 
 	}
 
-	public void GAStartMO(Dataset data, int gen) {
+	public void GAStartMO(DataSetInfo data, int gen) {
 
 		for(int i = 0;i < divideHyb.pitsRules.size(); i++){
 			divideHyb.pitsRules.get(i).setSize(data.DataSize);
@@ -171,7 +171,7 @@ public class GAH {
 
 	}
 
-	public void Evoluation(Dataset data, RuleSet r, int PorS){
+	public void Evoluation(DataSetInfo data, RuleSet r, int PorS){
 
 
 		if(PorS ==Parent){
@@ -187,13 +187,12 @@ public class GAH {
 
 	}
 
-	public void EvoluationOne(Dataset data, Pittsburgh r) {
+	public void EvoluationOne(DataSetInfo data, Pittsburgh r) {
 
 		double fitness = 0;
 
 		if (r.getRuleNum() != 0) {
-			//double ans = r.CalcAccuracyPal(data, Dpop);
-			double ans = r.CalcAccuracyPal(rdd);
+			double ans = r.CalcAccuracyPalKai(df);
 			double acc = ans / data.getDataSize();
 			r.SetMissRate((1 - acc) * 100);
 			r.setNumAndLength();
@@ -358,7 +357,7 @@ public class GAH {
 
 	}
 
-	public Pittsburgh GetBestRuleSet(int objectives, RuleSet all, Resulton res, Dataset data, JavaRDD<String> rdd, boolean isTest) {
+	public Pittsburgh GetBestRuleSet(int objectives, RuleSet all, Resulton res, DataSetInfo data, Dataset<Row> df, boolean isTest) {
 
 		Pittsburgh best;
 
@@ -371,7 +370,7 @@ public class GAH {
 				all.pitsRules.get(i).setNumAndLength();
 
 				if(isTest){
-					double acc = (double) all.pitsRules.get(i).CalcAccuracyPal(rdd);
+					double acc = (double) all.pitsRules.get(i).CalcAccuracyPalKai(df);
 					all.pitsRules.get(i).SetTestMissRate(((data.DataSize - acc)/data.DataSize) * 100);
 				}
 
@@ -449,7 +448,7 @@ public class GAH {
 
 		}
 		if(isTest){
-			double accTest = (double) best.CalcAccuracyPal(rdd)	/ data.DataSize;
+			double accTest = (double) best.CalcAccuracyPalKai(df)	/ data.DataSize;
 			best.SetTestMissRate((1 - accTest) * 100);
 		}
 

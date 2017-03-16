@@ -3,20 +3,20 @@ package navier;
 import java.util.ArrayList;
 
 
-public class Dataset implements java.io.Serializable{
+public class DataSetInfo implements java.io.Serializable{
 
 	//コンストラクタ
-	Dataset(){}
+	DataSetInfo(){}
 
-	public Dataset(String[] params){
+	public DataSetInfo(int Datasize, int Ndim, int Cnum){
 
-		this.DataSize = Integer.parseInt(params[0]);
-		this.Ndim = Integer.parseInt(params[1]);
-		this.Cnum = Integer.parseInt(params[2]);
+		this.DataSize = Datasize;
+		this.Ndim = Ndim;
+		this.Cnum = Cnum;
 
 	}
 
-	public Dataset(int Ndim, int Cnum, int DataSize, ArrayList<Pattern2> patterns){
+	public DataSetInfo(int Ndim, int Cnum, int DataSize, ArrayList<Pattern2> patterns){
 
 		this.Ndim = Ndim;
 		this.Cnum = Cnum;

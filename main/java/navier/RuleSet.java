@@ -2,7 +2,8 @@ package navier;
 
 import java.util.ArrayList;
 
-import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 
 import methods.Gmethod;
 import methods.MersenneTwisterFast;
@@ -52,7 +53,7 @@ public class RuleSet{
 	/******************************************************************************/
 	//メソッド
 
-	public void initialPal(Dataset data, JavaRDD<String> rdd, int popSize){
+	public void initialPal(DataSetInfo data, Dataset<Row> df, int popSize){
 
 		Ndim = data.getNdim();
 		Cnum = data.getCnum();
@@ -60,7 +61,7 @@ public class RuleSet{
 
 		for(int i=0;i<popSize;i++){
 			pitsRules.add( new Pittsburgh( rnd, Ndim, Cnum, DataSize, DataSizeTst, objectives) );
-			pitsRules.get(i).initialMic(data, rdd);
+			pitsRules.get(i).initialMic(data, df);
 		}
 
 		for(int i=0;i<popSize;i++){

@@ -3,10 +3,9 @@ package navier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
 
-import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 
 import methods.Fmethod;
 import methods.Gmethod;
@@ -153,7 +152,7 @@ public class Pittsburgh implements java.io.Serializable{
 	/******************************************************************************/
 	//メソッド
 
-	public void initialMic(Dataset data, JavaRDD<String> rdd){
+	public void initialMic(DataSetInfo data, Dataset<Row> df){
         do{
         	for(int i=0; i<Cons.Nini; i++){
 
@@ -167,10 +166,10 @@ public class Pittsburgh implements java.io.Serializable{
 
         }while(micRules.size()==0);
 
-		setFitness(data, rdd);
+		setFitness(data, df);
 	}
 
-	public void setFitness(Dataset data, JavaRDD<String> rdd){
+	public void setFitness(DataSetInfo data, Dataset<Row> df){
 
 		removeRule();
 		ruleNum = micRules.size();
@@ -181,11 +180,9 @@ public class Pittsburgh implements java.io.Serializable{
 			missRate = 1000000;
 		}
 		else{
-
-			double ans = CalcAccuracyPal(rdd);
+			double ans = CalcAccuracyPalKai(df);
 			double acc = ans / data.getDataSize();
 			missRate = ( (1.0 - acc) * 100 );
-
 			fitness = Fmethod.fitness(missRate, (double)ruleNum, (double)ruleLength);
 		}
 
@@ -511,30 +508,18 @@ public class Pittsburgh implements java.io.Serializable{
 		return firstobj[num];
 	}
 
-	public int CalcAccuracyPal(Dataset data, ForkJoinPool forkJoinPool) {
+	public int CalcAccuracyPalKai(Dataset<Row> df) {
 
 		long collectNum = 0;
 
-		try {
-			collectNum = forkJoinPool.submit(() ->
-
-			data.getPattern().parallelStream()
-			.map(p -> CalcWinClassPal(p) == p.getConClass())		//合っていればtrueを返す
-			.filter(s -> s)											//trueのみフィルタを通す
-			.count()												//要素の個数を数える
-
-			).get();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} catch (ExecutionException e) {
-			e.printStackTrace();
-		}
-		//forkJoinPool.shutdown();
+		collectNum = df.toJavaRDD().map( lines -> CalcWinClassPalSpark(lines) == lines.getInt(Ndim) )
+		.filter(s -> s)
+		.count();
 
 		return (int) collectNum;
 	}
 
-	public int CalcWinClassPal(Pattern2 p){
+	public int CalcWinClassPalSpark(Row lines){
 
 		int ans = 0;
 		int kati = 0;
@@ -543,7 +528,7 @@ public class Pittsburgh implements java.io.Serializable{
 		double maax = 0;
 
 		for(int r=0;r<micRules.size();r++){
-			double seki = micRules.get(r).getCf() * micRules.get(r).calcAdaptationPure2(p);
+			double seki = micRules.get(r).getCf() * micRules.get(r).calcAdaptationPureSpark(lines);
 
 			if (maax < seki){
 				maax = seki;
@@ -564,87 +549,6 @@ public class Pittsburgh implements java.io.Serializable{
 
 		return ans;
 	}
-
-	public int CalcAccuracyPal(JavaRDD<String> rdd) {
-
-		long collectNum = 0;
-		final int Dimention = Ndim + 1;
-
-		collectNum = rdd
-			.map(lines -> {
-				List<String> line = Arrays.asList(lines.split(","));
-				if(line.size() == Dimention){
-					double[] pattern = line.stream().mapToDouble(f -> Double.parseDouble(f)).toArray();
-					return CalcWinClassPalSpark(pattern) == pattern[Ndim];
-				}else{
-					return false;
-				}
-			})
-			.filter(s -> s)											//trueのみフィルタを通す
-			.count();
-
-		return (int) collectNum;
-	}
-
-	public int CalcWinClassPalSpark(double pattern[]){
-
-		int ans = 0;
-		int kati = 0;
-
-		int noGameSign = 0;
-		double maax = 0;
-
-		for(int r=0;r<micRules.size();r++){
-			double seki = micRules.get(r).getCf() * micRules.get(r).calcAdaptationPureSpark(pattern);
-
-			if (maax < seki){
-				maax = seki;
-				kati = r;
-				noGameSign = 0;
-			}
-			else if(maax == seki && micRules.get(r).getConc() != micRules.get(kati).getConc()){
-				noGameSign = 1;
-			}
-
-		}
-		if(noGameSign==0 && maax != 0 ){
-			ans = micRules.get(kati).getConc();
-		}
-		else{
-			ans = -1;
-		}
-
-		return ans;
-	}
-
-
-
-	/*public int CalcWinClassPal2(Pattern2 p){
-
-		Michigan non = new Michigan(-1);
-		String ans =  micRules.stream()
-		.map(r -> {
-			Michigan win = non;
-			double max = 0.0;
-			double mul = r.getCf() * r.calcAdaptationPure2(p);
-			if (max < mul){
-				max = mul;
-				win = r;
-			}
-			else if(max == mul && r.getConc() != win.getConc()){
-				win = non;
-			}
-			return win;
-		}).map(s -> {
-			return s.getConc();
-		}).toString();
-
-		System.out.println(ans);
-		//Michigan a = (Michigan) ans;
-
-		return 1;
-	}
-*/
 
 	public void SetTestMissRate(double m){
 		testMissRate = m;

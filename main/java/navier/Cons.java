@@ -50,7 +50,7 @@ public class Cons {
     public static final boolean isParent = false;
 
     //Others
-    public static final int ShowRate  = 1000;			//表示する世代
+    public static final int ShowRate  = 100;			//表示する世代
 
     //One objective weights
     public static final int W1 = 100;

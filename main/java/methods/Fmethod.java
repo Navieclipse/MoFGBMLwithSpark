@@ -1,7 +1,9 @@
 package methods;
 
+import org.apache.spark.sql.Row;
+
 import navier.Cons;
-import navier.Dataset;
+import navier.DataSetInfo;
 import navier.Pattern2;
 
 public class Fmethod {
@@ -37,7 +39,7 @@ public class Fmethod {
 		}
 	}
 
-	public static double menberMulPure(Dataset data,int DataNum, int rule[], int Ndim){
+	public static double menberMulPure(DataSetInfo data,int DataNum, int rule[], int Ndim){
 
 		int i;
 		double ans = 1.0;
@@ -60,12 +62,12 @@ public class Fmethod {
 		return ans;
 	}
 
-	public static double menberMulPureSpark(double pattern[], int rule[]){
+	public static double menberMulPureSpark(Row lines, int rule[]){
 
 		double ans = 1.0;
 		int Ndim = rule.length;
 		for(int i=0; i<Ndim; i++){
-			ans *= menbershipCalc(rule[i], pattern[i]);
+			ans *= menbershipCalc(rule[i], lines.getDouble(i));
 		}
 
 		return ans;

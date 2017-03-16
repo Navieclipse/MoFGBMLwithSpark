@@ -7,12 +7,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import navier.Dataset;
+import navier.DataSetInfo;
 
 public class DataLoader {
 
 	//データ読み込み改
-	public static void inputFile(Dataset data, String fileName){
+	public static void inputFile(DataSetInfo data, String fileName){
 
 		List<Double[]> lines = null;
 		try (Stream<String> line = Files.lines(Paths.get(fileName))) {
