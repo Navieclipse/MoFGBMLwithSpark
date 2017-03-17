@@ -75,15 +75,13 @@ public class Fmethod {
 
 	public static double menbershipCalc(int num, double x){
 		double uuu = 0.0;
-		double a, b;
 
-		if(num==0){
+		if(num == 0){
 			uuu = 1.0;
 		}
 		else{
-
-			a = (double)(kk[num]-1) / (double)(KK[num]-1);
-			b = 1.0/(double)(KK[num]-1);
+			double a = (double)(kk[num]-1) / (double)(KK[num]-1);
+			double b = 1.0 / (double)(KK[num]-1);
 
 			uuu = 1.0 - ( Math.abs(x - a) / b );
 

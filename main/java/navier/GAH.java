@@ -124,9 +124,7 @@ public class GAH {
 
 	public void GAStartNS(DataSetInfo data, int gen) {
 
-		//UniformCross();
-		//Michigan();
-		PitsAndMic();
+		GeneticOperation();
 		Delete();
 
 		Evoluation(data, divideHyb, Son);
@@ -276,7 +274,7 @@ public class GAH {
 		}
 	}
 
-	public void PitsAndMic(){
+	public void GeneticOperation(){
 
 		int length = divideHyb.pitsRules.size();
 		divideHyb.newPitsRules.clear();

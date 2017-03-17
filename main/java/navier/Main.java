@@ -8,6 +8,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.storage.StorageLevel;
 
 import methods.CLineMethod;
 import methods.Fmethod;
@@ -178,7 +179,7 @@ public class Main {
 				.load(traFile);
 
 		df.repartition(PartitionSize);
-		df.persist();
+		df.persist(StorageLevel.MEMORY_AND_DISK());
 
 		//データの属性数を把握
 		int Ndim = df.first().length() - 1;

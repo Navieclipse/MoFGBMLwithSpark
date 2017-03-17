@@ -519,6 +519,42 @@ public class Pittsburgh implements java.io.Serializable{
 		return (int) collectNum;
 	}
 
+	public int CalcWinClassPalSpark2(Row lines){
+
+		int ans = 0;
+		int kati = 0;
+
+		ArrayList<Double> multi = new ArrayList<Double>();
+
+		int noGameSign = 0;
+		double maax = 0;
+
+		micRules.parallelStream()
+				.forEach(   rule -> multi.add( rule.getCf() * rule.calcAdaptationPureSpark(lines) )  );
+
+		for(int r=0;r<micRules.size();r++){
+			double seki = micRules.get(r).getCf() * micRules.get(r).calcAdaptationPureSpark(lines);
+
+			if (maax < seki){
+				maax = seki;
+				kati = r;
+				noGameSign = 0;
+			}
+			else if(maax == seki && micRules.get(r).getConc() != micRules.get(kati).getConc()){
+				noGameSign = 1;
+			}
+
+		}
+		if(noGameSign==0 && maax != 0 ){
+			ans = micRules.get(kati).getConc();
+		}
+		else{
+			ans = -1;
+		}
+
+		return ans;
+	}
+
 	public int CalcWinClassPalSpark(Row lines){
 
 		int ans = 0;
