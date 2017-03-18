@@ -3,6 +3,7 @@ package methods;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -12,20 +13,27 @@ import navier.DataSetInfo;
 public class DataLoader {
 
 	//データ読み込み改
+
 	public static void inputFile(DataSetInfo data, String fileName){
 
-		List<Double[]> lines = null;
+		List<Double[]> lines = new ArrayList<Double[]>();
 		try (Stream<String> line = Files.lines(Paths.get(fileName))) {
 		    lines =
-		    	line.map(s ->{
+		    	line.sequential().map(s ->{
 		    	String[] numbers = s.split(",");
 		    	Double[] nums = new Double[numbers.length];
+
+		    	//値が無い場合の例外処理
 		    	for (int i = 0; i < nums.length; i++) {
-					nums[i] = Double.parseDouble(numbers[i]);
+		    		try {
+		    			nums[i] = Double.parseDouble(numbers[i]);
+					} catch (Exception e) {
+						nums[i] = 0.0;
+					}
 				}
 		    	return nums;
 		    })
-		    .collect(Collectors.toList());
+		    .collect( Collectors.toList() );
 
 		} catch (IOException e) {
 		    e.printStackTrace();
