@@ -171,7 +171,6 @@ public class GAH {
 
 	public void Evoluation(DataSetInfo data, RuleSet r, int PorS){
 
-
 		if(PorS ==Parent){
 			for (int i = 0; i < r.pitsRules.size(); i++) {
 				EvoluationOne(data, r.pitsRules.get(i));

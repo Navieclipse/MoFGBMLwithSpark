@@ -25,10 +25,22 @@ public class Output {
 
 		for(int rep_i=0; rep_i<traFiles.length; rep_i++){
 			for(int cv_i=0; cv_i<traFiles[0].length; cv_i++){
-				 traFiles[rep_i][cv_i] = hdfs + dataName + "/a" + Integer.toString(rep_i) + "_" + Integer.toString(cv_i) + "_" +dataName + "-10tra.csv";
-				 tstFiles[rep_i][cv_i] = hdfs + dataName + "/a" + Integer.toString(rep_i) + "_" + Integer.toString(cv_i) + "_" +dataName + "-10tst.csv";
+				 traFiles[rep_i][cv_i] = makeFileNameOne(dataName, hdfs, cv_i, rep_i, true);
+				 tstFiles[rep_i][cv_i] = makeFileNameOne(dataName, hdfs, cv_i, rep_i, false);
 			}
 		}
+
+	}
+
+	public static String makeFileNameOne(String dataName, String hdfs, int cv_i, int rep_i, boolean isTra){
+
+		String fileName = "";
+		if(isTra){
+			fileName = hdfs + dataName + "/a" + Integer.toString(rep_i) + "_" + Integer.toString(cv_i) + "_" +dataName + "-10tra.csv";
+		}else{
+			fileName = hdfs + dataName + "/a" + Integer.toString(rep_i) + "_" + Integer.toString(cv_i) + "_" +dataName + "-10tst.csv";
+		}
+		return fileName;
 
 	}
 
@@ -106,6 +118,21 @@ public class Output {
 		}
 
 		writeln(fileName, st, os);
+	}
+
+	public static String makeDirName(String dataname, String hdfs, int executors, int exeCores, int seed, int os){
+
+		String path = "";
+		//HDFS
+		if(os == Cons.Win){
+			path = System.getProperty("user.dir");
+			path += "\\result_" + dataname + "_e" + executors + "_c" + exeCores + "_" + seed;
+		}
+		else{
+			path = hdfs +  "/result_" + dataname + "_e" + executors + "_c" + exeCores + "_" + seed;
+		}
+
+		return path;
 	}
 
 	public static String makeDir(String dataname, String hdfs, int executors, int exeCores, int seed, int os){

@@ -172,6 +172,7 @@ public class Pittsburgh implements java.io.Serializable{
 	public void setFitness(DataSetInfo data, Dataset<Row> df){
 
 		removeRule();
+
 		ruleNum = micRules.size();
 		ruleLength = ruleLengthCalc();
 
@@ -512,9 +513,15 @@ public class Pittsburgh implements java.io.Serializable{
 
 		long collectNum = 0;
 
+		//Dataset<Row> dd = df;
+		//dd.repartition(1000);
+		//dd.persist( StorageLevel.MEMORY_ONLY() );
+
 		collectNum = df.toJavaRDD().map( lines -> CalcWinClassPalSpark(lines) == lines.getInt(Ndim) )
 		.filter(s -> s)
 		.count();
+
+		//dd.unpersist();
 
 		return (int) collectNum;
 	}

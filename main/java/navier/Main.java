@@ -77,12 +77,16 @@ public class Main {
 	    int exeCores = 0;
 	    if(os==Cons.HDFS) exeCores = Integer.parseInt(args[16]);
 
-		/******************************************************************************/
+	    //1回ずつ分ける（メモリのうまい使い方が不明）
+	    boolean isOne = true;
+	    if(os==Cons.HDFS) isOne = Boolean.parseBoolean(args[17]);
 
+		/******************************************************************************/
+	    //ファジィ分割の生成
 	    Fmethod kk = new Fmethod();
 	    kk.KKkk(Cons.MaxFnum);
-
 	    /******************************************************************************/
+	    //基本データ出力と実行（一回かまとめてか）
 
 	    Date date = new Date();
 		System.out.print("START: ");
@@ -100,7 +104,64 @@ public class Main {
 		}
 		System.out.println();
 
-		CC(Seed, executors, exeCores, PartitionSize, dataName, hdfs, objectives, gen, dpop, spark, func, Npop, CV, Rep, Pon, os);
+		if(isOne){
+			One(Seed, executors, exeCores, PartitionSize, dataName, hdfs, objectives, gen, dpop, spark, func, Npop, CV, Rep, Pon, os);
+		}else{
+			CC(Seed, executors, exeCores, PartitionSize, dataName, hdfs, objectives, gen, dpop, spark, func, Npop, CV, Rep, Pon, os);
+		}
+		/******************************************************************************/
+	}
+
+	static public void One(int Seed, int executors, int exeCores, int PartitionSize, String dataName, String hdfs,
+			  int objectives, int gen,int dpop, SparkSession spark, int func, int Npop, int CV, int Rep, int Pon ,int os){
+
+		/************************************************************/
+		//読み込みファイル名とディレクトリ名
+		String traFile = Output.makeFileNameOne(dataName, hdfs, CV, Rep, true);
+		String tstFile = Output.makeFileNameOne(dataName, hdfs, CV, Rep, false);
+		String resultDir = Output.makeDirName(dataName, hdfs, executors, exeCores, Seed, os);
+
+		//実験パラメータ出力 + ディレクトリ作成
+		if(CV == 0 && Rep == 0 && Pon == 0){
+			String st = "DataName: " + dataName + " 0: NSGAII, 1: WS, 2: TCH, 3: PBI, 4: IPBI, 5: SSF"
+				+ "\n gen: " + gen + " cv: " + CV + " Rep: " + Rep + " Pon: " + Pon + " seed: " + Seed + " 2objWay: " + Cons.Way
+				+ "\n Npop: " + Npop + " Nini: " + Cons.Nini + "objectives: " + objectives + " dpop: " + dpop + " func: " + func
+				+ "\n Len: " + Cons.Len + " Dont: " + Cons.Dont + " dWitch: " + Cons.dWitch
+				+ "\n Fnum: " + Cons.Fnum + " MaxFnum: " + Cons.MaxFnum + " Rmax: " + Cons.Rmax + " Rmin: " + Cons.Rmin
+				+ "\n micope: " + Cons.Micope + " micNum: " + Cons.MicNum + " CrossM: " + Cons.CrossM + " CrossP: " + Cons.CrossP
+				+ "\n Fnum: " + Cons.Fnum + " MaxFnum: " + Cons.MaxFnum + " Rmax: " + Cons.Rmax + " Rmin: " + Cons.Rmin
+				+ "\n inclination: " + Cons.inclination + " isCDnormalize: " + Cons.isCDnormalize + " isParent: " + Cons.isParent
+				+ "\n neiPerSwhit: " + Cons.neiPerSwit + " Neiper: " + Cons.neiPer+ " H: " + Cons.H + " alpha: " + Cons.alpha + " theta: "+ Cons.theta
+				+ "\n seleN: " + Cons.seleN + " upN: " +Cons.upN  + " normalization: " +Cons.Normalization + " isBias: " +Cons.isBias
+				+ "\n idealDown: " + Cons.idealDown + " isWSfromNadia: " +Cons.isWSfromNadia  + " isNewGen: " +Cons.isNewGen + " ShowRate: " +Cons.ShowRate
+				;
+
+			resultDir = Output.makeDir(dataName, hdfs, executors, exeCores, Seed, os);
+			Output.makeDirRule(resultDir, os);
+			Output.writeExp(dataName, resultDir, st, os);
+	    }
+
+		//出力専用クラス
+		Resulton res = new Resulton(resultDir, os);
+		/************************************************************/
+		//繰り返しなし
+		int pp = Pon;
+		int j = Rep;
+		int i = CV;
+
+		MersenneTwisterFast rand = new MersenneTwisterFast( Seed * (pp+1) );
+
+		System.out.print(pp + " " + j + " " + i);
+		pall(traFile, tstFile, spark, PartitionSize, rand, objectives, gen, func, Npop, res, i, j, pp, os);
+		System.out.println();
+
+		/************************************************************/
+		//出力
+		res.writeAveTime();
+		res.writeBestAve();
+		Date end = new Date();
+		System.out.println("END: " + end);
+		/************************************************************/
 
 	}
 
@@ -170,7 +231,6 @@ public class Main {
 
 		/************************************************************/
 		//データを読み込む
-
 		SQLContext sqlc = new SQLContext(spark);
 
 		Dataset<Row> df = sqlc.read()
@@ -178,14 +238,16 @@ public class Main {
 				.option("inferSchema", "true")
 				.load(traFile);
 
+		//データを論理的に分割して永続化（高速化のため）
 		df.repartition(PartitionSize);
-		df.persist(StorageLevel.MEMORY_AND_DISK());
+		df.persist( StorageLevel.MEMORY_ONLY() );
 
 		//データの属性数を把握
 		int Ndim = df.first().length() - 1;
 		int DataSize = (int) df.count();
 		String rowName = "_c" + Ndim;
 		int Cnum= (int) df.dropDuplicates(rowName).count();
+
 		DataSetInfo traData = new DataSetInfo(DataSize, Ndim, Cnum);
 
 		/************************************************************/
@@ -206,6 +268,7 @@ public class Main {
 		res.setTime(time.getSec());
 		res.writeTime(time.getSec(), time.getNano(), CV, Rep, Pon);
 
+		//永続化終了（メモリにはまだ残っているのでOutOfMemoryする）
 		df.unpersist();
 
 		/***********************これ以降出力操作************************/
@@ -229,7 +292,8 @@ public class Main {
 			res.resetSolution();
 		}
 		/************************************************************/
-
 	}
+
+
 }
 

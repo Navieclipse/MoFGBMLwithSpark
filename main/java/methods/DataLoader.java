@@ -19,17 +19,17 @@ public class DataLoader {
 		List<Double[]> lines = new ArrayList<Double[]>();
 		try (Stream<String> line = Files.lines(Paths.get(fileName))) {
 		    lines =
-		    	line.sequential().map(s ->{
+		    	line.map(s ->{
 		    	String[] numbers = s.split(",");
 		    	Double[] nums = new Double[numbers.length];
 
 		    	//値が無い場合の例外処理
 		    	for (int i = 0; i < nums.length; i++) {
-		    		try {
+		    		if (numbers[i].matches("^([1-9][0-9]*|0)(.[0-9]+)?$") ){
 		    			nums[i] = Double.parseDouble(numbers[i]);
-					} catch (Exception e) {
-						nums[i] = 0.0;
-					}
+		    		}else{
+		    			nums[i] = 0.0;	
+		    		}
 				}
 		    	return nums;
 		    })

@@ -67,7 +67,11 @@ public class Fmethod {
 		double ans = 1.0;
 		int Ndim = rule.length;
 		for(int i=0; i<Ndim; i++){
-			ans *= menbershipCalc(rule[i], lines.getDouble(i));
+			try{
+				ans *= menbershipCalc(rule[i], lines.getDouble(i));
+			}catch (Exception e) {
+				menbershipCalc(rule[i], 0.0);
+			}
 		}
 
 		return ans;
