@@ -55,14 +55,13 @@ public class GAH {
 
 		this.objectives = objectives;
 		this.GenNum = gen;
-		//this.Dpop = Dpop;
 		this.func = func;
 		this.popSize = popSize;
 
 	}
 
 	public void GAini(DataSetInfo data) {
-		Evoluation(data, divideHyb, Parent);
+		Evoluation_Parent(data, divideHyb);
 		if (objectives != 1 && func == 0){
 			nsg.DisideRank(divideHyb.pitsRules);
 		}
@@ -124,10 +123,16 @@ public class GAH {
 
 	public void GAStartNS(DataSetInfo data, int gen) {
 
-		GeneticOperation();
+		boolean isHeuris = Cons.isHeuris;
+		if(isHeuris){
+			UniformCross();
+			Michigan();
+		}else{
+			GeneticOperation();
+		}
 		Delete();
 
-		Evoluation(data, divideHyb, Son);
+		Evoluation_Child(data, divideHyb);
 
 		if(objectives == 1){
 			oneObjUpdate();
@@ -158,10 +163,11 @@ public class GAH {
 
 			divideHyb.pitsCrossRam(nowVec, popSize, moe);
 			divideHyb.pitsMutation(nowVec);
-			divideHyb.micGA(nowVec);
+			divideHyb.micGA(nowVec, df);
 
 			divideHyb.newPitsRules.get(nowVec).removeRule();
-			EvoluationOne(data, divideHyb.newPitsRules.get(nowVec));
+			divideHyb.newPitsRules.get(nowVec).EvoluationOne(data, df, objectives, way);
+			//EvoluationOne(data, divideHyb.newPitsRules.get(nowVec));
 
 			moe.updateReference(divideHyb.newPitsRules.get(nowVec));
 			moe.updateNeighbors(divideHyb.newPitsRules.get(nowVec), divideHyb.pitsRules,nowVec, func);
@@ -169,85 +175,22 @@ public class GAH {
 
 	}
 
-	public void Evoluation(DataSetInfo data, RuleSet r, int PorS){
+	public void Evoluation_Parent(DataSetInfo data, RuleSet r){
 
-		if(PorS ==Parent){
-			for (int i = 0; i < r.pitsRules.size(); i++) {
-				EvoluationOne(data, r.pitsRules.get(i));
-			}
-		}
-		else if(PorS == Son){
-			for (int i = 0; i < r.newPitsRules.size(); i++) {
-				EvoluationOne(data, r.newPitsRules.get(i));
-			}
-		}
-
+		r.pitsRules	.parallelStream()
+					.forEach( rule -> rule.EvoluationOne(data, df, objectives, way) );
 	}
 
-	public void EvoluationOne(DataSetInfo data, Pittsburgh r) {
+	public void Evoluation_Child(DataSetInfo data, RuleSet r){
 
-		double fitness = 0;
-
-		if (r.getRuleNum() != 0) {
-			double ans = r.CalcAccuracyPalKai(df);
-			double acc = ans / data.getDataSize();
-			r.SetMissRate((1 - acc) * 100);
-			r.setNumAndLength();
-
-			if (objectives == 1) {
-				fitness = Cons.W1 * r.getMissRate() + Cons.W2 * r.getRuleNum() + Cons.W3 * r.getRuleLength();
-				r.SetFitness(fitness, 0);
-			}
-
-			else if (objectives == 2) {
-				r.SetFitness((r.getMissRate() ), 0);
-				r.SetFitness((out2obje(r, way)), 1);
-			}
-
-			else if (objectives == 3) {
-				r.SetFitness(r.getMissRate(), 0);
-				r.SetFitness(r.getRuleNum(), 1);
-				r.SetFitness(r.getRuleLength(), 2);
-			}
-
-			else {
-				System.out.println("not be difined");
-			}
-
-			if(r.getRuleLength() == 0){
-				for (int o = 0; o < objectives; o++) {
-					fitness = 100000;
-					r.SetFitness(fitness, o);
-				}
-			}
-		}
-		else {
-			for (int o = 0; o < objectives; o++) {
-				fitness = 100000;
-				r.SetFitness(fitness, o);
-			}
-		}
-	}
-
-	//2目的目変更
-	double out2obje(Pittsburgh pit, int way){
-		if(way == 4){
-			return (double)(pit.getRuleLength() / pit.getRuleNum());
-		}else if(way == 3){
-			return (double)(pit.getRuleNum() + pit.getRuleLength());
-		}else if(way == 2){
-			return (double)(pit.getRuleNum() * pit.getRuleLength());
-		}else if(way == 1){
-			return (double)(pit.getRuleLength());
-		}else {
-			return (double)(pit.getRuleNum());
-		}
+		r.newPitsRules	.parallelStream()
+						.forEach( rule -> rule.EvoluationOne(data, df, objectives, way) );
 	}
 
 	public void Michigan() {
 		int size =  divideHyb.newPitsRules.size();
 		for (int i = 0; i < size; i++) {
-			divideHyb.micGA(i);
+			divideHyb.micGA(i, df);
 		}
 	}
 
@@ -263,25 +206,22 @@ public class GAH {
 
 		//子個体初期化
 		divideHyb.newPitsRules.clear();
-		for(int i = 0;i < length; i++){
-			divideHyb.newPitsCreat();
-		}
 
 		for (int s = 0; s < length; s++) {
+			divideHyb.newPitsCreat();
 			divideHyb.pitsCross(s, popSize);
 			divideHyb.pitsMutation(s);
 		}
+
 	}
 
 	public void GeneticOperation(){
 
 		int length = divideHyb.pitsRules.size();
 		divideHyb.newPitsRules.clear();
-		for(int i = 0;i < length; i++){
-			divideHyb.newPitsCreat();
-		}
 
 		for (int s = 0; s < length; s++) {
+			divideHyb.newPitsCreat();
 			divideHyb.pitsAndMic(s, popSize);
 			divideHyb.pitsMutation(s);
 		}
@@ -378,7 +318,7 @@ public class GAH {
 					all.pitsRules.get(i).SetFitness(fitness, 0);
 				} else if (objectives == 2) {
 					all.pitsRules.get(i).SetFitness(all.pitsRules.get(i).getMissRate(), 0);
-					all.pitsRules.get(i).SetFitness(out2obje(all.pitsRules.get(i), way), 1);
+					all.pitsRules.get(i).SetFitness(all.pitsRules.get(i).out2obje(way), 1);
 				} else if (objectives == 3) {
 					all.pitsRules.get(i).SetFitness(all.pitsRules.get(i).getMissRate(), 0);
 					all.pitsRules.get(i).SetFitness(all.pitsRules.get(i).getRuleNum(), 1);
@@ -422,7 +362,7 @@ public class GAH {
 
 				if (all.pitsRules.get(i).GetRank() == 0) {
 
-					res.setSolution(out2obje(all.pitsRules.get(i), way),
+					res.setSolution(all.pitsRules.get(i).out2obje(way),
 									all.pitsRules.get(i).GetFitness(0),
 									all.pitsRules.get(i).GetTestMissRate(),
 									out2objeAnother(all.pitsRules.get(i), way),

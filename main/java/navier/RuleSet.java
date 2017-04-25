@@ -82,9 +82,9 @@ public class RuleSet{
 		}
 	}
 
-	void micGA(int num){
+	void micGA(int num, Dataset<Row> df){
 		if(rnd.nextDouble() < Cons.Micope && newPitsRules.get(num).getRuleNum() != 0){
-			newPitsRules.get(num).micGen();
+			newPitsRules.get(num).micGenHeuris(df);
 		}
 	}
 
@@ -170,7 +170,7 @@ public class RuleSet{
 			newPitsRules.get(num).setRuleNum();
 
 			if(newPitsRules.get(num).getRuleNum() != 0){
-				newPitsRules.get(num).micGen();
+				newPitsRules.get(num).micGenRandom();
 			}
 		}else{
 			if(rnd.nextDouble() < (double)(Cons.CrossP)){							//半分ピッツ

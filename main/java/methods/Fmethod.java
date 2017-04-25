@@ -1,10 +1,11 @@
 package methods;
 
+import java.util.ArrayList;
+
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
 import navier.Cons;
-import navier.DataSetInfo;
-import navier.Pattern2;
 
 public class Fmethod {
 
@@ -18,9 +19,8 @@ public class Fmethod {
 
 	static double w[]  = {100.0, 1.0, 1.0};							//ウェイト
 
-	//******************************************************************************//*
-    //関数
-
+	/************************************************************************************************************/
+	//ファジィ分割の初期化
 	public void KKkk(int maxFnum){
 		int arrayNum = 0;
 		for(int i=0; i<maxFnum; i++){
@@ -38,46 +38,94 @@ public class Fmethod {
 			}
 		}
 	}
+	/************************************************************************************************************/
+	//結論部の計算
 
-	public static double menberMulPure(DataSetInfo data,int DataNum, int rule[], int Ndim){
+	//信頼度  （データから直接なので，データが大きいと結構重い処理（O[n]
+	public static double[] calcTrust(Dataset<Row> df, int[] rule, int Cnum){
 
-		int i;
-		double ans = 1.0;
+		int Ndim = df.first().length() - 1;
 
-		for(i=0;i<Ndim;i++){
-			ans *= menbershipCalc(rule[i], data.getPattern().get(DataNum).getX(i));
+		ArrayList<Double> part = new ArrayList<Double>();
+		for(int c=0; c<Cnum; c++){
+			final int CLASSNUM = c;
+			part.add(df
+					.javaRDD()
+					.filter(s -> s.getInt(Ndim) == CLASSNUM )
+					.map( s -> menberMulPureSpark(s, rule) )
+					.reduce( (l,r) -> l+r )
+					);
 		}
 
-		return ans;
-	}
-
-	public static double menberMulPure2(Pattern2 p, int rule[]){
-
-		double ans = 1.0;
-		int Ndim = rule.length;
-		for(int i=0; i<Ndim; i++){
-			ans *= menbershipCalc(rule[i], p.getX(i));
+		double all = 0.0;
+		for (int c = 0; c < part.size(); c++) {
+			all += part.get(c);
 		}
 
-		return ans;
+		double[] trust = new double[Cnum];
+		if( all != 0.0 ){
+			for (int c=0; c<Cnum; c++){
+				trust[c] = part.get(c) / all;
+			}
+		}
+
+		return trust;
 	}
 
-	public static double menberMulPureSpark(Row lines, int rule[]){
+	//結論部クラス
+	public static int calcConclusion(double trust[], int Cnum){
 
-		double ans = 1.0;
-		int Ndim = rule.length;
-		for(int i=0; i<Ndim; i++){
-			try{
-				ans *= menbershipCalc(rule[i], lines.getDouble(i));
-			}catch (Exception e) {
-				menbershipCalc(rule[i], 0.0);
+		int ans = 0;
+		double max = 0.0;
+		for (int i = 0; i < Cnum; i++){
+			if (max < trust[i]){
+				max = trust[i];
+				ans = i;
+			}
+			else if(max == trust[i]){
+				ans = -1;
 			}
 		}
 
 		return ans;
 	}
 
-	public static double menbershipCalc(int num, double x){
+	//ルール重み
+	public static double calcCf(int conCla, double trust[], int Cnum){
+
+		double ans = 0.0;
+		if(conCla == -1 || trust[conCla] <= 0.5){
+			ans = 0;
+		}else{
+			double sum = 0.0;
+			for (int i = 0; i < Cnum; i++){
+					sum += trust[i];
+			}
+			ans = trust[conCla] + trust[conCla] - sum;
+		}
+
+		return ans;
+	}
+
+	//適合度
+	public static double menberMulPureSpark(Row lines, int rule[]){
+
+		double ans = 1.0;
+		int Ndim = rule.length;
+		for(int i=0; i<Ndim; i++){
+			try{
+				ans *= calcMenbership(rule[i], lines.getDouble(i));
+			}catch (Exception e) {
+				calcMenbership(rule[i], 0.0);
+			}
+		}
+
+		return ans;
+	}
+
+	//メンバシップ値
+	public static double calcMenbership(int num, double x){
+
 		double uuu = 0.0;
 
 		if(num == 0){
@@ -93,9 +141,50 @@ public class Fmethod {
 				uuu = 0.0;
 			}
 		}
+
 		return uuu;
 	}
 
+	/************************************************************************************************************/
+	//１つのパターンからルール生成
+	public static int[] selectSingle(Row line, int Ndim, MersenneTwisterFast rnd){
+
+		int rule[] = new int[Ndim];
+		int select = Cons.dWitch;
+		double dcRate;
+		if(select== 0){
+			dcRate = (double)(((double)Ndim - (double)Cons.Len)/(double)Ndim);
+		}
+		else{
+			dcRate = Cons.Dont;
+		}
+
+		double[] membershipValueRulet = new double[Cons.Fnum];
+
+		for (int n = 0; n < Ndim; n++) {
+			if (rnd.nextDouble() < dcRate) {
+				rule[n] = 0;
+			} else {
+				double sumMembershipValue = 0.0;
+				membershipValueRulet[0] = 0.0;
+				for (int f = 0; f < Cons.Fnum; f++) {
+					sumMembershipValue += calcMenbership( f+1, line.getDouble(n) );
+					membershipValueRulet[f] = sumMembershipValue;
+				}
+				double rr = rnd.nextDouble() * sumMembershipValue;
+				for (int f = 0; f < Cons.Fnum; f++) {
+					if (rr < membershipValueRulet[f]) {
+						rule[n] = f + 1;
+						break;
+					}
+				}	//for f
+			}	//else
+		}	//for n
+
+		return rule;
+	}
+
+	//ランダムにルール生成
 	public static int[] selectRnd(int Ndim, MersenneTwisterFast rnd){
 
 		int rule[] = new int[Ndim];
@@ -119,9 +208,10 @@ public class Fmethod {
 		return rule;
 	}
 
+	/************************************************************************************************************/
 	//適応度関数
 	public static double fitness(double f1, double f2, double f3){
 		return (double)(w[0] *  f1) + (double)(w[1] * f2) + (double)(w[2] * f3);
 	}
-
+	/************************************************************************************************************/
 }

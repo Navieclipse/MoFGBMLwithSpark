@@ -6,6 +6,7 @@ public class Cons {
     public static final int Len  = 5;						//L
     public static final double Dont = 0.8;					//どんとケア適応確率（合わせ用）
     public static final int dWitch = 0;						//dontCare 0: Len, 1: Dont
+    public static final boolean isHeuris = true;			//ヒューリスティック生成法を行う
 
     public static final int Fnum  = 14;						//ファジィ集合数
     public static final int MaxFnum = 5;					//条件部の分割数の最大値

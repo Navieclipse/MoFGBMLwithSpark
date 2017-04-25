@@ -2,6 +2,7 @@ package navier;
 
 import java.util.Arrays;
 
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
 import methods.Fmethod;
@@ -72,6 +73,19 @@ public class Michigan implements java.io.Serializable{
 			this.TstDataSize = size;
 		}
 
+		public void makeRuleSingle(Row line, MersenneTwisterFast rnd2){
+			rule = Fmethod.selectSingle(line, Ndim, rnd2);
+		}
+
+		public void calcRuleConc(Dataset<Row> df){
+
+			double[] trust = Fmethod.calcTrust(df, rule, Cnum);
+			conclution = Fmethod.calcConclusion(trust, Cnum);
+			cf = Fmethod.calcCf(conclution, trust, Cnum);
+
+	        ruleLength = ruleLengthCalc();
+		}
+
 		public void makeRuleRnd1(MersenneTwisterFast rnd2){
 			rule = Fmethod.selectRnd(Ndim, rnd2);
 		}
@@ -96,14 +110,6 @@ public class Michigan implements java.io.Serializable{
 
 		public int getRuleLength(){
 			return ruleLength;
-		}
-
-		public double calcAdaptationPure(DataSetInfo data,int dataNum){
-	    	return  Fmethod.menberMulPure(data, dataNum, rule, Ndim);
-		}
-
-		public double calcAdaptationPure2(Pattern2 p){
-	    	return  Fmethod.menberMulPure2(p, rule);
 		}
 
 		public double calcAdaptationPureSpark(Row lines){

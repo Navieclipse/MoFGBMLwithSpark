@@ -106,8 +106,8 @@ public class Pittsburgh implements java.io.Serializable{
 		this.crowding = pits.crowding;
 		fitnesses = Arrays.copyOf(pits.fitnesses, pits.fitnesses.length);
 		firstobj = Arrays.copyOf(pits.firstobj, pits.fitnesses.length);
-
 	}
+
 	/******************************************************************************/
 	//引数
 	MersenneTwisterFast rnd;
@@ -151,20 +151,32 @@ public class Pittsburgh implements java.io.Serializable{
 
 	/******************************************************************************/
 	//メソッド
-
 	public void initialMic(DataSetInfo data, Dataset<Row> df){
-        do{
+		//ヒューリスティック生成を行う場合
+		boolean isHeuris = Cons.isHeuris;
+        Dataset<Row> dfsample;
+        List<Row> samples = null;
+        if(isHeuris){ //サンプリング
+			double sampleSize = (double)(Cons.Nini+10) / (double)DataSize;
+			dfsample = df.sample( false, sampleSize, rnd4.nextInt() );
+			samples = dfsample.collectAsList();
+        }
+        do{ //while( micRules.size() == 0)
         	for(int i=0; i<Cons.Nini; i++){
-
         		micRules.add( new Michigan(rnd2, Ndim, Cnum, DataSize, DataSizeTst) );
         		micRules.get(i).setMic();
 
-        		micRules.get(i).makeRuleRnd1(rnd4);
-            	micRules.get(i).makeRuleRnd2();
+        		if(isHeuris){		//ヒューリスティック生成
+					micRules.get(i).makeRuleSingle(samples.get(i), rnd4);
+					micRules.get(i).calcRuleConc(df);
+        		}else{				//完全ランダム生成
+					micRules.get(i).makeRuleRnd1(rnd4);
+					micRules.get(i).makeRuleRnd2();
+        		}
         	}
         	removeRule();
 
-        }while(micRules.size()==0);
+        }while( micRules.size()==0 );
 
 		setFitness(data, df);
 	}
@@ -255,7 +267,7 @@ public class Pittsburgh implements java.io.Serializable{
 		micRules.get(num).mutation(i, rnd5);
 	}
 
-	public void micGen(){
+	public void micGenRandom(){
 
 		//交叉個体数（ルールの20％）あるいは１個
 		int snum;
@@ -281,8 +293,57 @@ public class Pittsburgh implements java.io.Serializable{
 			micge(i);
 		}
 
-		for(int i=genNum;i<snum;i++){
-			heuris(i);
+		for(int i=genNum; i<snum; i++){
+			randomGeneration(i);
+		}
+
+		//旧個体の削除，新個体の追加
+		micUpdate(snum);
+
+	}
+
+	public void micGenHeuris(Dataset<Row> df){
+
+		//交叉個体数（ルールの20％）あるいは１個
+		int snum;
+		if(rnd.nextDouble() < (double)Cons.Micope){
+			snum = (int)((ruleNum - 0.00001) * Cons.MicNum) + 1;
+		}else{
+			snum = 1;
+		}
+
+		//合計生成個体数
+		int heuNum, genNum = 0;
+		if(snum % 2 == 0){
+			heuNum = snum/2;
+			genNum = snum/2;
+		}
+		else{
+			int plus = rnd4.nextInt(2);
+			heuNum = (snum-1)/2 + plus;
+			genNum = snum - heuNum;
+		}
+
+		//ヒューリスティック生成の誤識別パターン(クソ重い処理なんじゃ)
+		Dataset<Row> dfmisspat = df.filter( s -> CalcWinClassPalSpark(s) != s.getInt(Ndim) );
+		int MissDataNum = (int)dfmisspat.count();
+		if(MissDataNum < heuNum) dfmisspat = df;  //ミスパターンがない場合はパターン全体から
+
+		double sampleSize = (double)(heuNum) / (double)MissDataNum;
+		int increment = 0;
+		Dataset<Row> dfmisspatSample;
+		do{
+			dfmisspatSample = dfmisspat.sample( false, sampleSize, rnd2.nextInt() );
+			sampleSize = (double)(heuNum+increment++) / (double)MissDataNum;
+		}while(dfmisspatSample.count() < heuNum);
+		List<Row> misspat = dfmisspatSample.collectAsList();
+
+		for(int i=0;i<genNum;i++){
+			micge(i);
+		}
+		int missPatIndex = 0;
+		for(int i=genNum; i<snum; i++){
+			heuristicGeneration( i, misspat.get(missPatIndex++), df);
 		}
 
 		//旧個体の削除，新個体の追加
@@ -372,8 +433,7 @@ public class Pittsburgh implements java.io.Serializable{
 		return noClass;
 	}
 
-	public void heuris(int num){
-
+	public void randomGeneration(int num){
 		//足りていないクラスの個体生成を優先
 		//識別器中のクラス判別
 		int noCla[] = calcNoClass();
@@ -386,6 +446,13 @@ public class Pittsburgh implements java.io.Serializable{
 			newMicRules.get(num).makeRuleNoCla(noCla);
 		}
 
+	}
+
+	public void heuristicGeneration(int num, Row line, Dataset<Row> df){
+		newMicRules.add( new Michigan(rnd2, Ndim, Cnum, DataSize, DataSizeTst) );
+		newMicRules.get(num).setMic();
+		newMicRules.get(num).makeRuleSingle(line, rnd4);
+		newMicRules.get(num).calcRuleConc(df);
 	}
 
 	public void micUpdate(int snum){
@@ -509,57 +576,68 @@ public class Pittsburgh implements java.io.Serializable{
 		return firstobj[num];
 	}
 
+	double out2obje(int way){
+		if(way == 4){
+			return (double)(getRuleLength() / getRuleNum());
+		}else if(way == 3){
+			return (double)(getRuleNum() + getRuleLength());
+		}else if(way == 2){
+			return (double)(getRuleNum() * getRuleLength());
+		}else if(way == 1){
+			return (double)(getRuleLength());
+		}else {
+			return (double)(getRuleNum());
+		}
+	}
+
+	public void EvoluationOne(DataSetInfo data, Dataset<Row> df, int objectives, int way) {
+
+		if (getRuleNum() != 0) {
+			double ans = CalcAccuracyPalKai(df);
+			double acc = ans / data.getDataSize();
+			SetMissRate( (1 - acc) * 100 );
+			setNumAndLength();
+
+			if (objectives == 1) {
+				double fitness = Cons.W1 * getMissRate() + Cons.W2 * getRuleNum() + Cons.W3 * getRuleLength();
+				SetFitness(fitness, 0);
+			}
+			else if (objectives == 2) {
+				SetFitness( (getMissRate() ), 0 );
+				SetFitness( (out2obje(way) ), 1 );
+			}
+			else if (objectives == 3) {
+				SetFitness( getMissRate(), 0 );
+				SetFitness( getRuleNum(), 1 );
+				SetFitness( getRuleLength(), 2 );
+			}
+			else {
+				System.out.println("not be difined");
+			}
+			if(getRuleLength() == 0){
+				for (int o = 0; o < objectives; o++) {
+					SetFitness(100000, o);
+				}
+			}
+		}
+		else {
+			for (int o = 0; o < objectives; o++) {
+				SetFitness(100000, o);
+			}
+		}
+
+	}
+
 	public int CalcAccuracyPalKai(Dataset<Row> df) {
 
 		long collectNum = 0;
 
-		//Dataset<Row> dd = df;
-		//dd.repartition(1000);
-		//dd.persist( StorageLevel.MEMORY_ONLY() );
-
-		collectNum = df.toJavaRDD().map( lines -> CalcWinClassPalSpark(lines) == lines.getInt(Ndim) )
+		collectNum = df.toJavaRDD()
+		.map( lines -> CalcWinClassPalSpark(lines) == lines.getInt(Ndim) )
 		.filter(s -> s)
 		.count();
 
-		//dd.unpersist();
-
 		return (int) collectNum;
-	}
-
-	public int CalcWinClassPalSpark2(Row lines){
-
-		int ans = 0;
-		int kati = 0;
-
-		ArrayList<Double> multi = new ArrayList<Double>();
-
-		int noGameSign = 0;
-		double maax = 0;
-
-		micRules.parallelStream()
-				.forEach(   rule -> multi.add( rule.getCf() * rule.calcAdaptationPureSpark(lines) )  );
-
-		for(int r=0;r<micRules.size();r++){
-			double seki = micRules.get(r).getCf() * micRules.get(r).calcAdaptationPureSpark(lines);
-
-			if (maax < seki){
-				maax = seki;
-				kati = r;
-				noGameSign = 0;
-			}
-			else if(maax == seki && micRules.get(r).getConc() != micRules.get(kati).getConc()){
-				noGameSign = 1;
-			}
-
-		}
-		if(noGameSign==0 && maax != 0 ){
-			ans = micRules.get(kati).getConc();
-		}
-		else{
-			ans = -1;
-		}
-
-		return ans;
 	}
 
 	public int CalcWinClassPalSpark(Row lines){
