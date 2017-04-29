@@ -7,9 +7,9 @@ import org.apache.spark.sql.Row;
 
 import gbml.Consts;
 
-public class FuzzyFunc {
+public class StaticFuzzyFunc {
 
-	public FuzzyFunc(){}
+	public StaticFuzzyFunc(){}
 
 	static int KK[] = {1,2,2,3,3,3,4,4,4,4,5,5,5,5,5,6,6,6,6,6,6,7,7,7,7,7,7,7};					//メンバシップの時のK
 	static int kk[] = {1,1,2,1,2,3,1,2,3,4,1,2,3,4,5,1,2,3,4,5,6,1,2,3,4,5,6,7};					//メンバシップの時のk

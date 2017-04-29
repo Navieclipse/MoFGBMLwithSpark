@@ -5,8 +5,8 @@ import java.util.ArrayList;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-import methods.GeneralFunc;
 import methods.MersenneTwisterFast;
+import methods.StaticGeneralFunc;
 import moead.Moead;
 
 
@@ -99,11 +99,11 @@ public class Classifier{
 
 		boolean hasParent = Consts.HAS_PARENT;
 		if(!hasParent){
-			mom = GeneralFunc.binaryT4(pitsRules, rnd, popSize, objectives);
-			pop = GeneralFunc.binaryT4(pitsRules, rnd, popSize, objectives);
+			mom = StaticGeneralFunc.binaryT4(pitsRules, rnd, popSize, objectives);
+			pop = StaticGeneralFunc.binaryT4(pitsRules, rnd, popSize, objectives);
 		}
 		else{
-			int[] parent = GeneralFunc.binaryTRand(pitsRules, rnd, popSize, objectives);
+			int[] parent = StaticGeneralFunc.binaryTRand(pitsRules, rnd, popSize, objectives);
 			mom = parent[0];
 			pop = parent[1];
 		}
@@ -128,16 +128,16 @@ public class Classifier{
 	        int pmom[] = new int[Nmom];
 	        int ppop[] = new int[Npop];
 
-	        pmom = GeneralFunc.sampringWithout2(Nmom, pitsRules.get(mom).getRuleNum(), rnd);
-	        ppop = GeneralFunc.sampringWithout2(Npop, pitsRules.get(pop).getRuleNum(), rnd);
+	        pmom = StaticGeneralFunc.sampringWithout2(Nmom, pitsRules.get(mom).getRuleNum(), rnd);
+	        ppop = StaticGeneralFunc.sampringWithout2(Npop, pitsRules.get(pop).getRuleNum(), rnd);
 
 	        newPitsRules.get(num).micRules.clear();
 
 	        for(int j=0;j<Nmom;j++){
-	        	newPitsRules.get(num).setMicRule(pitsRules.get(mom).getMicRule(pmom[j]));
+	        	newPitsRules.get(num).setMicRule( pitsRules.get(mom).getMicRule(pmom[j]) );
 	        }
 	        for(int j=0;j<Npop;j++){
-	        	newPitsRules.get(num).setMicRule(pitsRules.get(pop).getMicRule(ppop[j]));
+	        	newPitsRules.get(num).setMicRule( pitsRules.get(pop).getMicRule(ppop[j]) );
 	        }
 
 		}
@@ -155,21 +155,25 @@ public class Classifier{
 
 	}
 
-	void pitsAndMic(int num, int popSize){
+	void pitsAndMic(int num, int popSize, Dataset<Row> df){
 
 		int mom, pop;
 		int Nmom, Npop;
 
 		//親選択
-		mom = GeneralFunc.binaryT4(pitsRules,rnd, popSize, objectives);
-		pop = GeneralFunc.binaryT4(pitsRules,rnd, popSize, objectives);
+		mom = StaticGeneralFunc.binaryT4(pitsRules,rnd, popSize, objectives);
+		pop = StaticGeneralFunc.binaryT4(pitsRules,rnd, popSize, objectives);
 
 		if(rnd.nextDouble() < (double)Consts.RULE_OPE_RT){									//半分ミシガン
-			RuleSet deep = new RuleSet(pitsRules.get(mom));
+			RuleSet deep = new RuleSet( pitsRules.get(mom) );
 			newPitsRules.get(num).pitsCopy(deep);
 			newPitsRules.get(num).setRuleNum();
 
 			if(newPitsRules.get(num).getRuleNum() != 0){
+				boolean doHeuris = Consts.DO_HEURISTIC_GENERATION_IN_GA;
+				if(doHeuris){
+					newPitsRules.get(num).micGenHeuris(df);
+				}
 				newPitsRules.get(num).micGenRandom();
 			}
 		}else{
@@ -192,8 +196,8 @@ public class Classifier{
 		        int pmom[] = new int[Nmom];
 		        int ppop[] = new int[Npop];
 
-		        pmom = GeneralFunc.sampringWithout2(Nmom, pitsRules.get(mom).getRuleNum(), rnd);
-		        ppop = GeneralFunc.sampringWithout2(Npop, pitsRules.get(pop).getRuleNum(), rnd);
+		        pmom = StaticGeneralFunc.sampringWithout2(Nmom, pitsRules.get(mom).getRuleNum(), rnd);
+		        ppop = StaticGeneralFunc.sampringWithout2(Npop, pitsRules.get(pop).getRuleNum(), rnd);
 
 		        newPitsRules.get(num).micRules.clear();
 
@@ -259,8 +263,8 @@ public class Classifier{
 	        int pmom[] = new int[Nmom];
 	        int ppop[] = new int[Npop];
 
-	        pmom = GeneralFunc.sampringWithout2(Nmom, pitsRules.get(mom).getRuleNum(), rnd);
-	        ppop = GeneralFunc.sampringWithout2(Npop, pitsRules.get(pop).getRuleNum(), rnd);
+	        pmom = StaticGeneralFunc.sampringWithout2(Nmom, pitsRules.get(mom).getRuleNum(), rnd);
+	        ppop = StaticGeneralFunc.sampringWithout2(Npop, pitsRules.get(pop).getRuleNum(), rnd);
 
 	        for(int j=0;j<Nmom;j++){
 	        	newPitsRules.get(num).setMicRule(pitsRules.get(mom).getMicRule(pmom[j]));

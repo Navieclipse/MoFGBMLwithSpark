@@ -7,9 +7,9 @@ import java.util.List;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-import methods.FuzzyFunc;
-import methods.GeneralFunc;
 import methods.MersenneTwisterFast;
+import methods.StaticFuzzyFunc;
+import methods.StaticGeneralFunc;
 
 public class RuleSet implements java.io.Serializable{
 	/******************************************************************************/
@@ -64,7 +64,7 @@ public class RuleSet implements java.io.Serializable{
 		firstobj = Arrays.copyOf(pits.firstobj, pits.fitnesses.length);
 
 		this.dfmisspat = pits.dfmisspat;
-		this.MissPatNum = pits.MissPatNum;
+		this.MissPatNum = pits.MissPatNum;  //もしかしたらシャロー
 
 	}
 
@@ -222,7 +222,7 @@ public class RuleSet implements java.io.Serializable{
 			double ans = CalcAccuracyPalKai(df);
 			double acc = ans / data.getDataSize();
 			missRate = ( acc * 100.0 );
-			fitness = FuzzyFunc.fitness(missRate, (double)ruleNum, (double)ruleLength);
+			fitness = StaticFuzzyFunc.fitness(missRate, (double)ruleNum, (double)ruleLength);
 		}
 
 	}
@@ -316,7 +316,7 @@ public class RuleSet implements java.io.Serializable{
 		}
 
 		for(int i=0;i<genNum;i++){
-			micge(i);
+			ruleCross(i);
 		}
 
 		for(int i=genNum; i<snum; i++){
@@ -350,9 +350,7 @@ public class RuleSet implements java.io.Serializable{
 			genNum = snum - heuNum;
 		}
 
-		//ヒューリスティック生成の誤識別パターン(クソ重い処理なんじゃ)
-		//dfmisspat = df.filter( s -> CalcWinClassPalSpark(s) != s.getInt(Ndim) );
-		//int MissDataNum = (int)dfmisspat.count();
+		//ヒューリスティック生成の誤識別パターン
 		double sampleSize = (double)(heuNum) / (double)MissPatNum;
 		int usingDataSize = MissPatNum;
 		if(MissPatNum < heuNum){
@@ -370,7 +368,7 @@ public class RuleSet implements java.io.Serializable{
 		List<Row> misspat = dfmisspatSample.collectAsList();
 
 		for(int i=0;i<genNum;i++){
-			micge(i);
+			ruleCross(i);
 		}
 		int missPatIndex = 0;
 		for(int i=genNum; i<snum; i++){
@@ -382,14 +380,20 @@ public class RuleSet implements java.io.Serializable{
 
 	}
 
-	public void micge(int num){
+	public void ruleCross(int num){
 
 		newMicRules.add( new Rule(rnd2, Ndim, Cnum, DataSize, DataSizeTst) );
 		newMicRules.get(num).setMic();
 
-		//mom
+		//親個体選択（バイナリトーナメントは計算量が異常にかかるので，同じ結論部の個体同士で交叉，無ければ諦める(ルール数回で）
+		//ルール重みでバイナリトーナメントしても面白いかもしれない（TO　DO）
 		int mom = rnd2.nextInt(ruleNum);
 		int pop = rnd2.nextInt(ruleNum);
+		int count = 0;
+		while( micRules.get(pop).getConc() != micRules.get(mom).getConc() && count < ruleNum){
+			pop = rnd2.nextInt(ruleNum);
+			count++;
+		}
 
 		if(rnd2.nextDouble() < (Consts.RULE_CROSS_RT)){
 			//一様交叉
@@ -431,11 +435,13 @@ public class RuleSet implements java.io.Serializable{
 			}
 		}
 
-		//後件部momに合わす．
-		newMicRules.get(num).makeRuleCross(micRules.get(mom).getConc(), micRules.get(mom).getCf());
+		//結論部はmomに合わす．ルール重みはランダムな割合で合計
+		double cfRate = rnd2.nextDouble();
+		double newCf = micRules.get(mom).getCf() * cfRate + micRules.get(pop).getCf() * (1.0-cfRate);
 
-		//newMicRules.get(num).makeRuleRnd2();
+		newMicRules.get(num).makeRuleCross( micRules.get(mom).getConc(), newCf );
 
+		//newMicRules.get(num).calcRuleConc(df);//これも時間かかるので
 	}
 
 	int[] calcHaveClass(){
@@ -488,7 +494,7 @@ public class RuleSet implements java.io.Serializable{
 
 	public void micUpdate(int snum){
 
-		int repNum[] = GeneralFunc.sampringWithout2(snum, micRules.size(), rnd2);
+		int repNum[] = StaticGeneralFunc.sampringWithout2(snum, micRules.size(), rnd2);
 		for(int i=0; i<snum; i++){
 			micRules.get(repNum[i]).micCopy(newMicRules.get(i));
 		}
@@ -631,7 +637,6 @@ public class RuleSet implements java.io.Serializable{
 		MissPatNum = (int)dfmisspat.count();
 
 		return MissPatNum;
-
 	}
 
 	public int CalcWinClassPalSpark(Row lines){

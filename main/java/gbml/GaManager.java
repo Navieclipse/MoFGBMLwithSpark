@@ -9,9 +9,9 @@ import java.util.List;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-import methods.GeneralFunc;
 import methods.MersenneTwisterFast;
 import methods.ResultMaster;
+import methods.StaticGeneralFunc;
 import moead.Moead;
 import nsga2.Nsga2;
 
@@ -123,13 +123,7 @@ public class GaManager {
 
 	public void GAStartNS(DataSetInfo data, int gen) {
 
-		boolean isHeuris = Consts.DO_HEURISTIC_GENERATION_IN_GA;
-		if(isHeuris){
-			UniformCross();
-			Michigan();
-		}else{
-			GeneticOperation();
-		}
+		GeneticOperation();
 		Delete();
 
 		Evoluation_Child(data, divideHyb);
@@ -222,7 +216,7 @@ public class GaManager {
 
 		for (int s = 0; s < length; s++) {
 			divideHyb.newPitsCreat();
-			divideHyb.pitsAndMic(s, popSize);
+			divideHyb.pitsAndMic(s, popSize, df);
 			divideHyb.pitsMutation(s);
 		}
 
@@ -235,7 +229,7 @@ public class GaManager {
 
 		ArrayList<RuleSet> temp = new ArrayList<RuleSet>();
 
-		GeneralFunc.mergeSort(temp, divideHyb.pitsRules, divideHyb.newPitsRules);
+		StaticGeneralFunc.mergeSort(temp, divideHyb.pitsRules, divideHyb.newPitsRules);
 
 		divideHyb.pitsRules = new ArrayList<RuleSet>(temp);
 		divideHyb.newPitsRules.clear();

@@ -5,8 +5,8 @@ import java.util.Arrays;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-import methods.FuzzyFunc;
 import methods.MersenneTwisterFast;
+import methods.StaticFuzzyFunc;
 
 public class Rule implements java.io.Serializable{
 
@@ -15,6 +15,7 @@ public class Rule implements java.io.Serializable{
 
 		Rule(){}
 
+		//Copy construct
 		public Rule(Rule mic){
 			this.rnd = mic.rnd;
 
@@ -28,7 +29,6 @@ public class Rule implements java.io.Serializable{
 			this.conclution = mic.conclution;
 			this.cf = mic.cf;
 			this.ruleLength = mic.ruleLength;
-
 		}
 
 		Rule(MersenneTwisterFast rnd, int Ndim, int Cnum, int DataSize, int TstDataSize){
@@ -39,15 +39,10 @@ public class Rule implements java.io.Serializable{
 			this.TstDataSize = TstDataSize;
 		}
 
-		Rule(int conc){
-			this.conclution = conc;
-		}
-
 		/******************************************************************************/
-		//引数
+		//ランダム
 		MersenneTwisterFast rnd;
 
-		//******************************************************************************//
 	    //学習用
 		int Ndim;												//次元
 		int Cnum;												//クラス数
@@ -55,11 +50,10 @@ public class Rule implements java.io.Serializable{
 		int TstDataSize;										//パターン数
 
 		//基本値
-		int rule[];
-
-		int conclution;
-		double cf;
-		int ruleLength;
+		int rule[];	//ルールの前件部
+		int conclution;	//ルールの結論部クラス
+		double cf; //ルール重み
+		int ruleLength;	//ルール長
 
 		/******************************************************************************/
 		//method
@@ -74,20 +68,20 @@ public class Rule implements java.io.Serializable{
 		}
 
 		public void makeRuleSingle(Row line, MersenneTwisterFast rnd2){
-			rule = FuzzyFunc.selectSingle(line, Ndim, rnd2);
+			rule = StaticFuzzyFunc.selectSingle(line, Ndim, rnd2);
 		}
 
 		public void calcRuleConc(Dataset<Row> df){
 
-			double[] trust = FuzzyFunc.calcTrust(df, rule, Cnum);
-			conclution = FuzzyFunc.calcConclusion(trust, Cnum);
-			cf = FuzzyFunc.calcCf(conclution, trust, Cnum);
+			double[] trust = StaticFuzzyFunc.calcTrust(df, rule, Cnum);
+			conclution = StaticFuzzyFunc.calcConclusion(trust, Cnum);
+			cf = StaticFuzzyFunc.calcCf(conclution, trust, Cnum);
 
 	        ruleLength = ruleLengthCalc();
 		}
 
 		public void makeRuleRnd1(MersenneTwisterFast rnd2){
-			rule = FuzzyFunc.selectRnd(Ndim, rnd2);
+			rule = StaticFuzzyFunc.selectRnd(Ndim, rnd2);
 		}
 
 		public void makeRuleRnd2(){
@@ -113,22 +107,11 @@ public class Rule implements java.io.Serializable{
 		}
 
 		public double calcAdaptationPureSpark(Row lines){
-	    	return  FuzzyFunc.menberMulPureSpark(lines, rule);
+	    	return  StaticFuzzyFunc.menberMulPureSpark(lines, rule);
 		}
 
 		public double getCf(){
 			return cf;
-		}
-
-		public void changeCF(){
-			if(cf!=0){
-				cf += rnd.nextDouble()/50 - 0.01;
-				if(cf<0){
-					cf = 0;
-				}else if(cf > 1){
-					cf = 1;
-				}
-			}
 		}
 
 		public int getConc(){
@@ -174,7 +157,7 @@ public class Rule implements java.io.Serializable{
 
 		//NSGA2用
 		public void CalcMuData2(double pattern[][], int newDataSize){
-			FuzzyFunc kk = new FuzzyFunc();
+			StaticFuzzyFunc kk = new StaticFuzzyFunc();
 			kk.KKkk(Consts.MAX_FUZZY_DIVIDE_NUM);
 			this.DataSize = newDataSize;
 		}

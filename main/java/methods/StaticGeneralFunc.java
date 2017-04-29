@@ -8,9 +8,9 @@ import java.util.RandomAccess;
 import gbml.Consts;
 import gbml.RuleSet;
 
-public class GeneralFunc {
+public class StaticGeneralFunc {
 
-	GeneralFunc(){}
+	StaticGeneralFunc(){}
 
 	//******************************************************************************//
 

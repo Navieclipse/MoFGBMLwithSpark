@@ -11,8 +11,8 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.storage.StorageLevel;
 
 import methods.CommandLineFunc;
-import methods.FuzzyFunc;
-import methods.GeneralFunc;
+import methods.StaticFuzzyFunc;
+import methods.StaticGeneralFunc;
 import methods.MersenneTwisterFast;
 import methods.OsSpecified;
 import methods.Output;
@@ -84,7 +84,7 @@ public class Main {
 
 		/******************************************************************************/
 	    //ファジィ分割の生成
-	    FuzzyFunc kk = new FuzzyFunc();
+	    StaticFuzzyFunc kk = new StaticFuzzyFunc();
 	    kk.KKkk(Consts.MAX_FUZZY_DIVIDE_NUM);
 	    /******************************************************************************/
 	    //基本データ出力と実行（一回かまとめてか）
@@ -121,7 +121,7 @@ public class Main {
 
 		//実験パラメータ出力 + ディレクトリ作成
 		if(CV == 0 && Rep == 0 && Pon == 0){
-			String st = GeneralFunc.getExperimentSettings(args);
+			String st = StaticGeneralFunc.getExperimentSettings(args);
 			resultDir = Output.makeDir(dataName, hdfs, executors, exeCores, Seed, os);
 			Output.makeDirRule(resultDir, os);
 			Output.writeExp(dataName, resultDir, st, os);
@@ -167,7 +167,7 @@ public class Main {
 	    Output.makeDirRule(resultDir, os);
 
 	    //実験パラメータ出力
-		String st = GeneralFunc.getExperimentSettings(args);
+		String st = StaticGeneralFunc.getExperimentSettings(args);
 	    Output.writeExp(dataName, resultDir, st, os);
 
 	    //出力専用クラス
