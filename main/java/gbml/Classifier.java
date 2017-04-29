@@ -1,21 +1,21 @@
-package navier;
+package gbml;
 
 import java.util.ArrayList;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-import methods.Gmethod;
+import methods.GeneralFunc;
 import methods.MersenneTwisterFast;
 import moead.Moead;
 
 
-public class RuleSet{
+public class Classifier{
 
 	//コンストラクタ
-	RuleSet(){}
+	Classifier(){}
 
-	public RuleSet(MersenneTwisterFast rnd, int objectives){
+	public Classifier(MersenneTwisterFast rnd, int objectives){
 
 		this.rnd = rnd;
 		this.rnd2 = new MersenneTwisterFast(rnd.nextInt());
@@ -32,11 +32,11 @@ public class RuleSet{
 	//******************************************************************************//
 
 	//基本
-	public ArrayList<Pittsburgh> pitsRules = new ArrayList<Pittsburgh>();
+	public ArrayList<RuleSet> pitsRules = new ArrayList<RuleSet>();
 
-	public ArrayList<Pittsburgh> newPitsRules = new ArrayList<Pittsburgh>();
+	public ArrayList<RuleSet> newPitsRules = new ArrayList<RuleSet>();
 
-	public ArrayList<Pittsburgh> allPitsRules = new ArrayList<Pittsburgh>();
+	public ArrayList<RuleSet> allPitsRules = new ArrayList<RuleSet>();
 
 	//読み取った値
 	int GenNum;
@@ -60,12 +60,12 @@ public class RuleSet{
 		DataSize = data.getDataSize();
 
 		for(int i=0;i<popSize;i++){
-			pitsRules.add( new Pittsburgh( rnd, Ndim, Cnum, DataSize, DataSizeTst, objectives) );
+			pitsRules.add( new RuleSet( rnd, Ndim, Cnum, DataSize, DataSizeTst, objectives) );
 			pitsRules.get(i).initialMic(data, df);
 		}
 
 		for(int i=0;i<popSize;i++){
-			newPitsRules.add( new Pittsburgh( rnd2, Ndim, Cnum, DataSize, DataSizeTst, objectives) );
+			newPitsRules.add( new RuleSet( rnd2, Ndim, Cnum, DataSize, DataSizeTst, objectives) );
 		}
 
 	}
@@ -83,13 +83,13 @@ public class RuleSet{
 	}
 
 	void micGA(int num, Dataset<Row> df){
-		if(rnd.nextDouble() < Cons.Micope && newPitsRules.get(num).getRuleNum() != 0){
+		if(rnd.nextDouble() < Consts.RULE_OPE_RT && newPitsRules.get(num).getRuleNum() != 0){
 			newPitsRules.get(num).micGenHeuris(df);
 		}
 	}
 
 	void newPitsCreat(){
-		newPitsRules.add( new Pittsburgh(rnd, Ndim, Cnum, DataSize, DataSizeTst, objectives) );
+		newPitsRules.add( new RuleSet(rnd, Ndim, Cnum, DataSize, DataSizeTst, objectives) );
 	}
 
 	void pitsCross(int num, int popSize){
@@ -97,24 +97,24 @@ public class RuleSet{
 		int mom, pop;
 		int Nmom, Npop;
 
-		boolean isParent = Cons.isParent;
-		if(!isParent){
-			mom = Gmethod.binaryT4(pitsRules,rnd, popSize, objectives);
-			pop = Gmethod.binaryT4(pitsRules,rnd, popSize, objectives);
+		boolean hasParent = Consts.HAS_PARENT;
+		if(!hasParent){
+			mom = GeneralFunc.binaryT4(pitsRules, rnd, popSize, objectives);
+			pop = GeneralFunc.binaryT4(pitsRules, rnd, popSize, objectives);
 		}
 		else{
-			int[] parent = Gmethod.binaryTRand(pitsRules, rnd, popSize, objectives);
+			int[] parent = GeneralFunc.binaryTRand(pitsRules, rnd, popSize, objectives);
 			mom = parent[0];
 			pop = parent[1];
 		}
 
-		if(rnd.nextDouble() < (double)(Cons.CrossP)){
+		if(rnd.nextDouble() < (double)(Consts.RULESET_CROSS_RT)){
 
 			Nmom = rnd.nextInt(pitsRules.get(mom).getRuleNum()) + 1;
 			Npop = rnd.nextInt(pitsRules.get(pop).getRuleNum()) + 1;
 
-			if((Nmom + Npop) > Cons.Rmax){
-				int delNum = Nmom + Npop - Cons.Rmax;
+			if((Nmom + Npop) > Consts.MAX_RULE_NUM){
+				int delNum = Nmom + Npop - Consts.MAX_RULE_NUM;
 				for(int v=0;v<delNum;v++){
 					if(rnd.nextBoolean()){
 						Nmom--;
@@ -128,8 +128,8 @@ public class RuleSet{
 	        int pmom[] = new int[Nmom];
 	        int ppop[] = new int[Npop];
 
-	        pmom = Gmethod.sampringWithout2(Nmom, pitsRules.get(mom).getRuleNum(), rnd);
-	        ppop = Gmethod.sampringWithout2(Npop, pitsRules.get(pop).getRuleNum(), rnd);
+	        pmom = GeneralFunc.sampringWithout2(Nmom, pitsRules.get(mom).getRuleNum(), rnd);
+	        ppop = GeneralFunc.sampringWithout2(Npop, pitsRules.get(pop).getRuleNum(), rnd);
 
 	        newPitsRules.get(num).micRules.clear();
 
@@ -143,11 +143,11 @@ public class RuleSet{
 		}
 		else{//親をそのまま子個体に
 			if(rnd.nextBoolean()){
-				Pittsburgh deep = new Pittsburgh(pitsRules.get(mom));
+				RuleSet deep = new RuleSet(pitsRules.get(mom));
 				newPitsRules.get(num).pitsCopy(deep);
 			}
 			else{
-				Pittsburgh deep = new Pittsburgh(pitsRules.get(pop));
+				RuleSet deep = new RuleSet(pitsRules.get(pop));
 				newPitsRules.get(num).pitsCopy(deep);
 			}
 		}
@@ -161,11 +161,11 @@ public class RuleSet{
 		int Nmom, Npop;
 
 		//親選択
-		mom = Gmethod.binaryT4(pitsRules,rnd, popSize, objectives);
-		pop = Gmethod.binaryT4(pitsRules,rnd, popSize, objectives);
+		mom = GeneralFunc.binaryT4(pitsRules,rnd, popSize, objectives);
+		pop = GeneralFunc.binaryT4(pitsRules,rnd, popSize, objectives);
 
-		if(rnd.nextDouble() < (double)Cons.Micope){									//半分ミシガン
-			Pittsburgh deep = new Pittsburgh(pitsRules.get(mom));
+		if(rnd.nextDouble() < (double)Consts.RULE_OPE_RT){									//半分ミシガン
+			RuleSet deep = new RuleSet(pitsRules.get(mom));
 			newPitsRules.get(num).pitsCopy(deep);
 			newPitsRules.get(num).setRuleNum();
 
@@ -173,12 +173,12 @@ public class RuleSet{
 				newPitsRules.get(num).micGenRandom();
 			}
 		}else{
-			if(rnd.nextDouble() < (double)(Cons.CrossP)){							//半分ピッツ
+			if(rnd.nextDouble() < (double)(Consts.RULESET_CROSS_RT)){							//半分ピッツ
 				Nmom = rnd.nextInt(pitsRules.get(mom).getRuleNum()) + 1;
 				Npop = rnd.nextInt(pitsRules.get(pop).getRuleNum()) + 1;
 
-				if((Nmom + Npop) > Cons.Rmax){
-					int delNum = Nmom + Npop - Cons.Rmax;
+				if((Nmom + Npop) > Consts.MAX_RULE_NUM){
+					int delNum = Nmom + Npop - Consts.MAX_RULE_NUM;
 					for(int v=0;v<delNum;v++){
 						if(rnd.nextBoolean()){
 							Nmom--;
@@ -192,8 +192,8 @@ public class RuleSet{
 		        int pmom[] = new int[Nmom];
 		        int ppop[] = new int[Npop];
 
-		        pmom = Gmethod.sampringWithout2(Nmom, pitsRules.get(mom).getRuleNum(), rnd);
-		        ppop = Gmethod.sampringWithout2(Npop, pitsRules.get(pop).getRuleNum(), rnd);
+		        pmom = GeneralFunc.sampringWithout2(Nmom, pitsRules.get(mom).getRuleNum(), rnd);
+		        ppop = GeneralFunc.sampringWithout2(Npop, pitsRules.get(pop).getRuleNum(), rnd);
 
 		        newPitsRules.get(num).micRules.clear();
 
@@ -207,11 +207,11 @@ public class RuleSet{
 			}
 			else{//親をそのまま子個体に
 				if(rnd.nextBoolean()){
-					Pittsburgh deep = new Pittsburgh(pitsRules.get(mom));
+					RuleSet deep = new RuleSet(pitsRules.get(mom));
 					newPitsRules.get(num).pitsCopy(deep);
 				}
 				else{
-					Pittsburgh deep = new Pittsburgh(pitsRules.get(pop));
+					RuleSet deep = new RuleSet(pitsRules.get(pop));
 					newPitsRules.get(num).pitsCopy(deep);
 				}
 			}
@@ -222,7 +222,7 @@ public class RuleSet{
 
 	void addNewPits(int num){
 		for(int i = 0; i<num; i++){
-			newPitsRules.add( new Pittsburgh(rnd,Ndim,Cnum,DataSize,DataSizeTst,objectives) );
+			newPitsRules.add( new RuleSet(rnd,Ndim,Cnum,DataSize,DataSizeTst,objectives) );
 		}
 	}
 
@@ -239,13 +239,13 @@ public class RuleSet{
 		mom = numOfParents[0];
 		pop = numOfParents[1];
 
-		if(rnd.nextDouble() < (double)(Cons.CrossP)){
+		if(rnd.nextDouble() < (double)(Consts.RULESET_CROSS_RT)){
 
 			Nmom = rnd.nextInt(pitsRules.get(mom).getRuleNum()) + 1;
 			Npop = rnd.nextInt(pitsRules.get(pop).getRuleNum()) + 1;
 
-			if((Nmom + Npop) > Cons.Rmax){
-				int delNum = Nmom + Npop - Cons.Rmax;
+			if((Nmom + Npop) > Consts.MAX_RULE_NUM){
+				int delNum = Nmom + Npop - Consts.MAX_RULE_NUM;
 				for(int v=0;v<delNum;v++){
 					if(rnd.nextBoolean()){
 						Nmom--;
@@ -259,8 +259,8 @@ public class RuleSet{
 	        int pmom[] = new int[Nmom];
 	        int ppop[] = new int[Npop];
 
-	        pmom = Gmethod.sampringWithout2(Nmom, pitsRules.get(mom).getRuleNum(), rnd);
-	        ppop = Gmethod.sampringWithout2(Npop, pitsRules.get(pop).getRuleNum(), rnd);
+	        pmom = GeneralFunc.sampringWithout2(Nmom, pitsRules.get(mom).getRuleNum(), rnd);
+	        ppop = GeneralFunc.sampringWithout2(Npop, pitsRules.get(pop).getRuleNum(), rnd);
 
 	        for(int j=0;j<Nmom;j++){
 	        	newPitsRules.get(num).setMicRule(pitsRules.get(mom).getMicRule(pmom[j]));

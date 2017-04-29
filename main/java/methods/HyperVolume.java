@@ -3,11 +3,11 @@ package methods;
 import java.util.ArrayList;
 import java.util.Comparator;
 
-import navier.Pittsburgh;
+import gbml.RuleSet;
 
-public class HV {
+public class HyperVolume {
 
-	public  double execute(int objectives, double[] refPoint, ArrayList<Pittsburgh> pitsRules ) {
+	public  double execute(int objectives, double[] refPoint, ArrayList<RuleSet> pitsRules ) {
 
 		double[] referencePoint = refPoint;
 		Double[][] points = new Double[pitsRules.size()][objectives];

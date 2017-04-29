@@ -2,15 +2,15 @@ package methods;
 
 import java.util.ArrayList;
 
-import navier.Cons;
-import navier.Pittsburgh;
-import navier.RuleSet;
+import gbml.Consts;
+import gbml.RuleSet;
+import gbml.Classifier;
 
-public class Resulton {
+public class ResultMaster {
 
-	public Resulton() {}
+	public ResultMaster() {}
 
-	public Resulton(String nameDir, int os){
+	public ResultMaster(String nameDir, int os){
 		this.os = os;
 		this.nameDir = nameDir;
 	}
@@ -60,7 +60,7 @@ public class Resulton {
 	public void outSolution(int cc, int rr, int pp){
 
 		String fileName;
-		if(os == Cons.Win){
+		if(os == Consts.WINDOWS){
 			fileName = nameDir + "\\solution\\solution_"+pp+"_"+rr+"_"+cc+ "_" + Tra.size() +".txt";
 
 		}
@@ -84,7 +84,7 @@ public class Resulton {
 	public void writeTime(double sec, double ns, int cv, int rep, int pp){
 
 		String fileName;
-		if(os == Cons.Win){
+		if(os == Consts.WINDOWS){
 			fileName = nameDir + "\\write\\Atime_" + pp + rep + cv + ".txt";
 		}
 		else{
@@ -105,7 +105,7 @@ public class Resulton {
 		timeAve /= times.size();
 
 		String fileName;
-		if(os == Cons.Win){
+		if(os == Consts.WINDOWS){
 			fileName = nameDir + "\\write\\Avetime" + ".txt";
 		}else{
 			fileName = nameDir + "/write/Avetime" + ".txt";
@@ -116,9 +116,9 @@ public class Resulton {
 	}
 
 	/******************************************************************************/
-	public void outputRules(RuleSet ruleset, int cc, int rr, int pp){
+	public void outputRules(Classifier ruleset, int cc, int rr, int pp){
 		String fileName;
-		if(os == Cons.Win){
+		if(os == Consts.WINDOWS){
 			fileName = nameDir + "\\ruleset\\rules"  +"_"+pp+"_"+rr+"_"+cc+ ".txt";
 		}else{
 			fileName = nameDir + "/ruleset/rules"  +"_"+pp+"_"+rr+"_"+cc+ ".txt";
@@ -142,9 +142,9 @@ public class Resulton {
 		Output.writeln(fileName, array, os);
 	}
 
-	public void outputVec(RuleSet ruleset, int cc, int rr, int pp){
+	public void outputVec(Classifier ruleset, int cc, int rr, int pp){
 		String fileName;
-		if(os == Cons.Win){
+		if(os == Consts.WINDOWS){
 			fileName = nameDir + "\\vecset\\vecs"  +"_"+pp+"_"+rr+"_"+cc+ ".txt";
 		}else{
 			fileName = nameDir+ "/vecset/vecs"  +"_"+pp+"_"+rr+"_"+cc+ ".txt";
@@ -166,7 +166,7 @@ public class Resulton {
 	/******************************************************************************/
 	public void writeBestLog(double tra, double tst, double num, double len, int Gen, int pon, int repeat, int cv){
 		String fileName;
-		if(os == Cons.Win){
+		if(os == Consts.WINDOWS){
 			fileName = nameDir + "\\write\\" + pon + repeat + cv + "GEN" + ".txt";
 		}else{
 			fileName = nameDir + "/write/" + pon + repeat + cv + "GEN" + ".txt";
@@ -176,17 +176,17 @@ public class Resulton {
 		Output.writeln(fileName, str, os);
 	}
 
-	public void setBest(Pittsburgh best){
+	public void setBest(RuleSet best){
 		Trains.add( best.getMissRate() );
 		Tests.add( best.GetTestMissRate() );
 		Rules.add( (double)best.getRuleNum() );
 		Lengths.add( (double)best.getRuleLength() );
 	}
 
-	public void writeAllbest(Pittsburgh best, int cv, int rep, int pp){
+	public void writeAllbest(RuleSet best, int cv, int rep, int pp){
 
 		String fileName;
-		if(os == Cons.Win){
+		if(os == Consts.WINDOWS){
 			fileName = nameDir + "\\write\\Allbest_" + pp + rep + cv + ".txt";
 		}else{
 			fileName = nameDir + "/write/Allbest_" + pp + rep + cv + ".txt";
@@ -219,7 +219,7 @@ public class Resulton {
 		lengthAve /= Lengths.size();
 
 		String fileName;
-		if(os == Cons.Win){
+		if(os == Consts.WINDOWS){
 			fileName = nameDir + "\\write\\" + "AllbestAve" + ".txt";
 		}else{
 			fileName = nameDir + "/write/" + "AllbestAve" + ".txt";

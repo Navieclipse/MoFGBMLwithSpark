@@ -12,7 +12,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
-import navier.Cons;
+import gbml.Consts;
 
 public class Output {
 
@@ -49,7 +49,7 @@ public class Output {
 
 		try {
 			//HDFSへの書き込み
-			if(os == Cons.HDFS){
+			if(os == Consts.HDFS){
 				Configuration conf = new Configuration();
 				Path hdfsPath = new Path(fileName);
 				FileSystem fs = FileSystem.get(conf);
@@ -79,7 +79,7 @@ public class Output {
 
 		try {
 			//HDFSへの書き込み
-			if(os == Cons.HDFS){
+			if(os == Consts.HDFS){
 				Configuration conf = new Configuration();
 				Path hdfsPath = new Path(fileName);
 				FileSystem fs = FileSystem.get(conf);
@@ -111,7 +111,7 @@ public class Output {
 	public static void writeExp(String name ,String dir ,String st, int os){
 
 		String fileName;
-		if(os == Cons.Win){
+		if(os == Consts.WINDOWS){
 			fileName = dir + "\\" + name + ".txt";
 		}else{
 			fileName = dir + "/" + name + ".txt";
@@ -124,7 +124,7 @@ public class Output {
 
 		String path = "";
 		//HDFS
-		if(os == Cons.Win){
+		if(os == Consts.WINDOWS){
 			path = System.getProperty("user.dir");
 			path += "\\result_" + dataname + "_e" + executors + "_c" + exeCores + "_" + seed;
 		}
@@ -139,7 +139,7 @@ public class Output {
 
 		String path = "";
 		//HDFS
-		if(os == Cons.Win){
+		if(os == Consts.WINDOWS){
 			path = System.getProperty("user.dir");
 			path += "\\result_" + dataname + "_e" + executors + "_c" + exeCores + "_" + seed;
 			File newdir = new File(path);
@@ -177,7 +177,7 @@ public class Output {
 	public static void makeDirRule(String dir, int os){
 
 		//HDFS
-		if(os == Cons.Uni){
+		if(os == Consts.UNIX){
 			makeDirHDFS(dir + "/ruleset");
 			makeDirHDFS(dir + "/vecset");
 			makeDirHDFS(dir + "/solution");

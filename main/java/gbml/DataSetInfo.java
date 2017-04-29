@@ -1,4 +1,4 @@
-package navier;
+package gbml;
 
 import java.util.ArrayList;
 
@@ -16,7 +16,7 @@ public class DataSetInfo implements java.io.Serializable{
 
 	}
 
-	public DataSetInfo(int Ndim, int Cnum, int DataSize, ArrayList<Pattern2> patterns){
+	public DataSetInfo(int Ndim, int Cnum, int DataSize, ArrayList<Pattern> patterns){
 
 		this.Ndim = Ndim;
 		this.Cnum = Cnum;
@@ -32,17 +32,17 @@ public class DataSetInfo implements java.io.Serializable{
 	int Cnum;
 	int DataSize;
 
-	ArrayList<Pattern2> patterns = new ArrayList<Pattern2>();
+	ArrayList<Pattern> patterns = new ArrayList<Pattern>();
 
 	/******************************************************************************/
 	//メソッド
 
-	public void setPattern(ArrayList<Pattern2> patterns){
+	public void setPattern(ArrayList<Pattern> patterns){
 		this.patterns = patterns;
 	}
 
 	public void addPattern(Double[] pattern){
-		patterns.add(new Pattern2(pattern));
+		patterns.add(new Pattern(pattern));
 	}
 
 	public void setNdim(int num){
@@ -57,7 +57,7 @@ public class DataSetInfo implements java.io.Serializable{
 		DataSize = num;
 	}
 
-	public ArrayList<Pattern2> getPattern(){
+	public ArrayList<Pattern> getPattern(){
 		return patterns;
 	}
 

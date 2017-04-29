@@ -1,6 +1,6 @@
 package methods;
 
-public class CLineMethod {
+public class CommandLineFunc {
 
 	public static void lessArgs(String[] args, int argsLen){
 		if (args.length < argsLen){

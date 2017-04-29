@@ -1,21 +1,21 @@
-package navier;
+package gbml;
 
 import java.util.Arrays;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-import methods.Fmethod;
+import methods.FuzzyFunc;
 import methods.MersenneTwisterFast;
 
-public class Michigan implements java.io.Serializable{
+public class Rule implements java.io.Serializable{
 
 		/******************************************************************************/
 		//コンストラクタ
 
-		Michigan(){}
+		Rule(){}
 
-		public Michigan(Michigan mic){
+		public Rule(Rule mic){
 			this.rnd = mic.rnd;
 
 			this.Ndim = mic.Ndim;
@@ -31,7 +31,7 @@ public class Michigan implements java.io.Serializable{
 
 		}
 
-		Michigan(MersenneTwisterFast rnd, int Ndim, int Cnum, int DataSize, int TstDataSize){
+		Rule(MersenneTwisterFast rnd, int Ndim, int Cnum, int DataSize, int TstDataSize){
 			this.rnd = new MersenneTwisterFast(rnd.nextInt());
 			this.Ndim = Ndim;
 			this.Cnum = Cnum;
@@ -39,7 +39,7 @@ public class Michigan implements java.io.Serializable{
 			this.TstDataSize = TstDataSize;
 		}
 
-		Michigan(int conc){
+		Rule(int conc){
 			this.conclution = conc;
 		}
 
@@ -74,20 +74,20 @@ public class Michigan implements java.io.Serializable{
 		}
 
 		public void makeRuleSingle(Row line, MersenneTwisterFast rnd2){
-			rule = Fmethod.selectSingle(line, Ndim, rnd2);
+			rule = FuzzyFunc.selectSingle(line, Ndim, rnd2);
 		}
 
 		public void calcRuleConc(Dataset<Row> df){
 
-			double[] trust = Fmethod.calcTrust(df, rule, Cnum);
-			conclution = Fmethod.calcConclusion(trust, Cnum);
-			cf = Fmethod.calcCf(conclution, trust, Cnum);
+			double[] trust = FuzzyFunc.calcTrust(df, rule, Cnum);
+			conclution = FuzzyFunc.calcConclusion(trust, Cnum);
+			cf = FuzzyFunc.calcCf(conclution, trust, Cnum);
 
 	        ruleLength = ruleLengthCalc();
 		}
 
 		public void makeRuleRnd1(MersenneTwisterFast rnd2){
-			rule = Fmethod.selectRnd(Ndim, rnd2);
+			rule = FuzzyFunc.selectRnd(Ndim, rnd2);
 		}
 
 		public void makeRuleRnd2(){
@@ -113,7 +113,7 @@ public class Michigan implements java.io.Serializable{
 		}
 
 		public double calcAdaptationPureSpark(Row lines){
-	    	return  Fmethod.menberMulPureSpark(lines, rule);
+	    	return  FuzzyFunc.menberMulPureSpark(lines, rule);
 		}
 
 		public double getCf(){
@@ -161,7 +161,7 @@ public class Michigan implements java.io.Serializable{
 
 			int v;
 			do {
-				v = rnd2.nextInt(Cons.Fnum + 1);
+				v = rnd2.nextInt(Consts.FUZZY_SET_NUM + 1);
 			} while (v == rule[i]);
 			rule[i] = v;
 
@@ -174,8 +174,8 @@ public class Michigan implements java.io.Serializable{
 
 		//NSGA2用
 		public void CalcMuData2(double pattern[][], int newDataSize){
-			Fmethod kk = new Fmethod();
-			kk.KKkk(Cons.MaxFnum);
+			FuzzyFunc kk = new FuzzyFunc();
+			kk.KKkk(Consts.MAX_FUZZY_DIVIDE_NUM);
 			this.DataSize = newDataSize;
 		}
 
@@ -191,7 +191,7 @@ public class Michigan implements java.io.Serializable{
 			return Ndim;
 		}
 
-		public void micCopy(Michigan mic){
+		public void micCopy(Rule mic){
 			this.rnd = new MersenneTwisterFast(rnd.nextInt());
 
 			this.Ndim = mic.Ndim;

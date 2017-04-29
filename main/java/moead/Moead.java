@@ -3,9 +3,9 @@ package moead;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import gbml.Consts;
+import gbml.RuleSet;
 import methods.MersenneTwisterFast;
-import navier.Cons;
-import navier.Pittsburgh;
 
 public class Moead{
 
@@ -52,9 +52,9 @@ public class Moead{
 		selectNeighborSize_ = seleN;
 		updateNeighborSize_ = updaN;
 
-		int pers = Cons.neiPerSwit;
+		boolean isNeighbor = Consts.IS_NEIGHBOR_SIZE;
 
-		if(pers == 1){
+		if(!isNeighbor){
 			parcentNeighborSize = calcNeiPer();
 			if(parcentNeighborSize <= 0){
 				parcentNeighborSize = 1;
@@ -81,9 +81,9 @@ public class Moead{
 		this.updateNeighborSize_ = moe.updateNeighborSize_;
 		populationSize_ = popSize;
 
-		int pers = Cons.neiPerSwit;
+		boolean isNeighbor = Consts.IS_NEIGHBOR_SIZE;
 
-		if(pers == 1){
+		if(!isNeighbor){
 			parcentNeighborSize = calcNeiPer();
 			if(parcentNeighborSize <= 0){
 				parcentNeighborSize = 1;
@@ -107,7 +107,7 @@ public class Moead{
 
 	int calcNeiPer(){
 		int nei = 0;
-		nei = (int)((populationSize_ * Cons.neiPer) / 100);
+		nei = (int)((populationSize_ * Consts.NEIGHBOR_SIZE_RT) / 100);
 		return nei;
 	}
 
@@ -139,7 +139,7 @@ public class Moead{
 
 	}
 
-	public void inidvi(ArrayList<Pittsburgh> pitsRules){
+	public void inidvi(ArrayList<RuleSet> pitsRules){
 		initNeighborhood();
 
 		for (int i = 0; i <  populationSize_; i++) {
@@ -160,7 +160,7 @@ public class Moead{
 			if (objective == 2) {
 				double[] weight = new double[2];
 
-				boolean bias = Cons.isBias;
+				boolean bias = Consts.IS_BIAS_VECTOR;
 				if(bias){
 					weight[1] = imada(i / (double) m);
 					weight[0] = 1.0 - imada(i / (double) m);
@@ -233,7 +233,7 @@ public class Moead{
 		}
 	}
 
-	public void updateReference(Pittsburgh individual) {
+	public void updateReference(RuleSet individual) {
 		for (int n = 0; n < objective; n++) {
 
 			if (individual.GetFitness(n) < 1) continue;
@@ -244,7 +244,7 @@ public class Moead{
 			z_[n] = base_z_[n] * alpha_;
 
 			if(n == 0){
-				z_[n] = base_z_[n] - base_z_[n] * Cons.idealDown;
+				z_[n] = base_z_[n] - base_z_[n] * Consts.IS_FIRST_IDEAL_DOWN;
 			}
 		}
 
@@ -275,16 +275,16 @@ public class Moead{
 		return numOfParents;
 	}
 
-	public void updateNeighbors(Pittsburgh offSpring, ArrayList<Pittsburgh> population_, int cid, int func) {
+	public void updateNeighbors(RuleSet offSpring, ArrayList<RuleSet> population_, int cid, int func) {
 
 		for (int j = 0; j < updateNeighborSize_; j++) {
 			int weightIndex = neighborhood_.get(cid)[j];
-			Pittsburgh sol = population_.get(weightIndex);
+			RuleSet sol = population_.get(weightIndex);
 			double f1 = fitnessFunction(offSpring, lambda_.get(weightIndex), func);
 			double f2 = fitnessFunction(sol, lambda_.get(weightIndex), func);
 
 			if (f1 <= f2 && offSpring.getRuleNum() > 0)
-				population_.get(weightIndex).replace(new Pittsburgh(offSpring, vecNum[weightIndex]));
+				population_.get(weightIndex).replace(new RuleSet(offSpring, vecNum[weightIndex]));
 		}
 
 	}
@@ -305,15 +305,15 @@ public class Moead{
 		return normalized;
 	}
 
-	private double fitnessFunction(Pittsburgh individual, double[] lambda, int func) {
+	private double fitnessFunction(RuleSet individual, double[] lambda, int func) {
 
-		int normal = Cons.Normalization;
-		if (func == Cons.Tcheby) {
+		boolean doNormalize = Consts.DO_NORMALIZE;
+		if (func == Consts.TCHEBY) {
 			double maxFun = -1.0 * Double.MAX_VALUE;
 
 			for (int n = 0; n < objective; n++) {
 				double diff = 0;
-				if(normal == 1){
+				if(doNormalize){
 					diff = Math.abs( normalizationTch(individual.GetFitness(n), n) );
 				}else{
 					diff = Math.abs(individual.GetFitness(n) - z_[n]);
@@ -332,10 +332,10 @@ public class Moead{
 			return maxFun;
 		}
 
-		else if (func == Cons.WS) {
-			boolean isNadia = Cons.isWSfromNadia;
+		else if (func == Consts.WS) {
+			boolean isNadia = Consts.IS_WS_FROM_NADIA;
 			double sum = 0;
-			if(normal == 1){
+			if(doNormalize){
 				for (int n = 0; n < objective; n++) {
 					sum += normalizationWS(individual.GetFitness(n), n) * lambda[n];
 				}
@@ -353,7 +353,7 @@ public class Moead{
 			return sum;
 		}
 
-		else if (func == Cons.PBI) {
+		else if (func == Consts.PBI) {
 			double d1, d2;
 			double nd = Utils.norm_vector(lambda);
 			double[] namda = new double[lambda.length];
@@ -366,7 +366,7 @@ public class Moead{
 			double[] realB = new double[objective];
 
 			for (int n = 0; n < realA.length; n++) {
-				if(normal == 1){
+				if(doNormalize){
 					realA[n] = normalizationTch(individual.GetFitness(n), n);
 				}else{
 					realA[n] = (individual.GetFitness(n) - z_[n]);
@@ -376,7 +376,7 @@ public class Moead{
 			d1 = Math.abs(Utils.prod_vector(realA, namda));
 
 			for (int n = 0; n < realB.length; n++) {
-				if(normal == 1){
+				if(doNormalize){
 					realB[n] = normalizationTch(individual.GetFitness(n), n) - d1 * namda[n];
 				}else{
 					realB[n] = (individual.GetFitness(n) - z_[n]) - d1 * namda[n];
@@ -385,11 +385,11 @@ public class Moead{
 
 			d2 = Utils.norm_vector(realB);
 
-			return d1 + Cons.theta * d2;
+			return d1 + Consts.MOEAD_THETA * d2;
 
 		}
 
-		else if (func == Cons.IPBI) {
+		else if (func == Consts.IPBI) {
 			double d1, d2;
 			double nd = Utils.norm_vector(lambda);
 			double[] namda = new double[lambda.length];
@@ -413,11 +413,11 @@ public class Moead{
 
 			d2 = Utils.norm_vector(realB);
 
-			return -(d1 - Cons.theta  * d2);
+			return -(d1 - Consts.MOEAD_THETA  * d2);
 
 		}
 
-		else if (func == Cons.SSF) {
+		else if (func == Consts.SSF) {
 			double SF = 0;
 
 			double S = individual.getRuleNum();

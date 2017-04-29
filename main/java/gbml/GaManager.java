@@ -1,4 +1,4 @@
-package navier;
+package gbml;
 
 
 import java.util.ArrayList;
@@ -9,16 +9,16 @@ import java.util.List;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-import methods.Gmethod;
+import methods.GeneralFunc;
 import methods.MersenneTwisterFast;
-import methods.Resulton;
+import methods.ResultMaster;
 import moead.Moead;
 import nsga2.Nsga2;
 
 
-public class GAH {
+public class GaManager {
 
-	RuleSet divideHyb;
+	Classifier divideHyb;
 
 	Nsga2 nsg;
 
@@ -28,9 +28,9 @@ public class GAH {
 
 	Dataset<Row> df;
 
-	int way = Cons.Way;
+	int way = Consts.SECOND_OBJECTIVE_TYPE;
 
-	Resulton result;
+	ResultMaster result;
 
 	int objectives;
 	long GenNum;
@@ -42,8 +42,8 @@ public class GAH {
 	public static final int Son = 0;
 
 
-	public GAH( int popSize, RuleSet divideHyb, Nsga2 nsga2, Moead sai ,MersenneTwisterFast rnd,
-				int objectives,int gen, Dataset<Row> df, int func, Resulton res) {
+	public GaManager( int popSize, Classifier divideHyb, Nsga2 nsga2, Moead sai ,MersenneTwisterFast rnd,
+				int objectives,int gen, Dataset<Row> df, int func, ResultMaster res) {
 
 		this.divideHyb = divideHyb;
 		nsg = nsga2;
@@ -78,11 +78,11 @@ public class GAH {
 			moe.inidvi(divideHyb.pitsRules);
 		}
 
-		boolean isNewGen = Cons.isNewGen;
+		boolean isNewGen = Consts.DO_LOG_PER_LOG;
 
 		for (int gen = 0; gen < GenNum; gen++) {
 
-			if(gen % Cons.ShowRate == 0){
+			if(gen % Consts.PER_SHOW_GENERATION_NUM == 0){
 				System.out.print(".");
 			}
 
@@ -110,7 +110,7 @@ public class GAH {
 			(gen+1) %1000000==0
 		){
 
-		Pittsburgh bestb;
+		RuleSet bestb;
 		bestb = bestGenCalc();
 		double trat = bestb.getMissRate();
 		double tstt = bestb.GetTestMissRate();
@@ -123,7 +123,7 @@ public class GAH {
 
 	public void GAStartNS(DataSetInfo data, int gen) {
 
-		boolean isHeuris = Cons.isHeuris;
+		boolean isHeuris = Consts.DO_HEURISTIC_GENERATION_IN_GA;
 		if(isHeuris){
 			UniformCross();
 			Michigan();
@@ -175,13 +175,13 @@ public class GAH {
 
 	}
 
-	public void Evoluation_Parent(DataSetInfo data, RuleSet r){
+	public void Evoluation_Parent(DataSetInfo data, Classifier r){
 
 		r.pitsRules	.parallelStream()
 					.forEach( rule -> rule.EvoluationOne(data, df, objectives, way) );
 	}
 
-	public void Evoluation_Child(DataSetInfo data, RuleSet r){
+	public void Evoluation_Child(DataSetInfo data, Classifier r){
 
 		r.newPitsRules	.parallelStream()
 						.forEach( rule -> rule.EvoluationOne(data, df, objectives, way) );
@@ -233,16 +233,16 @@ public class GAH {
 		Collections.sort(divideHyb.pitsRules, new PittsComparator());
 		Collections.sort(divideHyb.newPitsRules, new PittsComparator());
 
-		ArrayList<Pittsburgh> temp = new ArrayList<Pittsburgh>();
+		ArrayList<RuleSet> temp = new ArrayList<RuleSet>();
 
-		Gmethod.mergeSort(temp, divideHyb.pitsRules, divideHyb.newPitsRules);
+		GeneralFunc.mergeSort(temp, divideHyb.pitsRules, divideHyb.newPitsRules);
 
-		divideHyb.pitsRules = new ArrayList<Pittsburgh>(temp);
+		divideHyb.pitsRules = new ArrayList<RuleSet>(temp);
 		divideHyb.newPitsRules.clear();
 
 	}
 
-	double out2objeAnother(Pittsburgh pit, int way){
+	double out2objeAnother(RuleSet pit, int way){
 		if(way == 0){
 			return (double)(pit.getRuleLength());
 		}else {
@@ -251,18 +251,18 @@ public class GAH {
 	}
 
 	//ベスト系
-	public Pittsburgh bestGenCalc() {
+	public RuleSet bestGenCalc() {
 
-		Pittsburgh best;
-		best = new Pittsburgh(divideHyb.pitsRules.get(0));
+		RuleSet best;
+		best = new RuleSet(divideHyb.pitsRules.get(0));
 		if (objectives == 1) {
 			for (int i = 0; i < divideHyb.pitsRules.size(); i++) {
 				if (divideHyb.pitsRules.get(i).GetFitness(0) < best.GetFitness(0)) {
-					best = new Pittsburgh(divideHyb.pitsRules.get(i));
+					best = new RuleSet(divideHyb.pitsRules.get(i));
 				}
 				else if (divideHyb.pitsRules.get(i).GetFitness(0) == best.GetFitness(0)) {
 					if (divideHyb.pitsRules.get(i).getMissRate() < best.getMissRate()) {
-						best = new Pittsburgh(divideHyb.pitsRules.get(i));
+						best = new RuleSet(divideHyb.pitsRules.get(i));
 					}
 				}
 			}
@@ -273,12 +273,12 @@ public class GAH {
 			for (int i = 0; i < divideHyb.pitsRules.size(); i++) {
 				if (divideHyb.pitsRules.get(i).GetRank() == 0) {
 					if (divideHyb.pitsRules.get(i).getMissRate() < best.getMissRate()) {
-						best = new Pittsburgh(divideHyb.pitsRules.get(i));
+						best = new RuleSet(divideHyb.pitsRules.get(i));
 					}
 					else if (divideHyb.pitsRules.get(i).getMissRate() == best.getMissRate()) {
 						if (divideHyb.pitsRules.get(i).getRuleNum() <= best.getRuleNum()) {
 							if (divideHyb.pitsRules.get(i).getRuleLength() <= best.getRuleLength()) {
-								best = new Pittsburgh(divideHyb.pitsRules.get(i));
+								best = new RuleSet(divideHyb.pitsRules.get(i));
 							}
 						}
 					}
@@ -294,9 +294,9 @@ public class GAH {
 
 	}
 
-	public Pittsburgh GetBestRuleSet(int objectives, RuleSet all, Resulton res, DataSetInfo data, Dataset<Row> df, boolean isTest) {
+	public RuleSet GetBestRuleSet(int objectives, Classifier all, ResultMaster res, DataSetInfo data, Dataset<Row> df, boolean isTest) {
 
-		Pittsburgh best;
+		RuleSet best;
 
 		for (int i = 0; i < all.pitsRules.size(); i++) {
 
@@ -308,13 +308,13 @@ public class GAH {
 
 				if(isTest){
 					double acc = (double) all.pitsRules.get(i).CalcAccuracyPalKai(df);
-					all.pitsRules.get(i).SetTestMissRate(((data.DataSize - acc)/data.DataSize) * 100);
+					all.pitsRules.get(i).SetTestMissRate( ( acc / (double)data.DataSize ) * 100.0 );
 				}
 
 				all.pitsRules.get(i).setNumAndLength();
 
 				if (objectives == 1) {
-					fitness = Cons.W1 * all.pitsRules.get(i).getMissRate() + Cons.W2 * all.pitsRules.get(i).getRuleNum() + Cons.W3 * all.pitsRules.get(i).getRuleLength();
+					fitness = Consts.W1 * all.pitsRules.get(i).getMissRate() + Consts.W2 * all.pitsRules.get(i).getRuleNum() + Consts.W3 * all.pitsRules.get(i).getRuleLength();
 					all.pitsRules.get(i).SetFitness(fitness, 0);
 				} else if (objectives == 2) {
 					all.pitsRules.get(i).SetFitness(all.pitsRules.get(i).getMissRate(), 0);
@@ -337,17 +337,17 @@ public class GAH {
 		}
 
 
-		best = new Pittsburgh(all.pitsRules.get(0));
+		best = new RuleSet(all.pitsRules.get(0));
 		if (objectives == 1) {
 			for (int i = 0; i < all.pitsRules.size(); i++) {
 
 				if (all.pitsRules.get(i).GetFitness(0) < best.GetFitness(0)) {
-					best = new Pittsburgh(all.pitsRules.get(i));
+					best = new RuleSet(all.pitsRules.get(i));
 				}
 
 				else if (all.pitsRules.get(i).GetFitness(0) == best.GetFitness(0)) {
 					if (all.pitsRules.get(i).getMissRate() < best.getMissRate()) {
-						best = new Pittsburgh(all.pitsRules.get(i));
+						best = new RuleSet(all.pitsRules.get(i));
 					}
 				}
 
@@ -370,12 +370,12 @@ public class GAH {
 
 
 					if (all.pitsRules.get(i).GetFitness(0) < best.GetFitness(0)) {
-						best = new Pittsburgh(all.pitsRules.get(i));
+						best = new RuleSet(all.pitsRules.get(i));
 					}
 					else if (all.pitsRules.get(i).GetFitness(0) == best.GetFitness(0)) {
 						if (all.pitsRules.get(i).GetFitness(1) <= best.GetFitness(1)) {
 							if (all.pitsRules.get(i).getRuleLength() <= best.getRuleLength()) {
-								best = new Pittsburgh(all.pitsRules.get(i));
+								best = new RuleSet(all.pitsRules.get(i));
 							}
 						}
 					}
@@ -395,20 +395,20 @@ public class GAH {
 
 	}
 
-	void RandomShuffle(ArrayList<Pittsburgh> rules) {
+	void RandomShuffle(ArrayList<RuleSet> rules) {
 		for (int i = rules.size() - 1; i > 0; i--) {
 			int t = rnd.nextInt(i + 1);
 
-			Pittsburgh tmp = rules.get(i);
+			RuleSet tmp = rules.get(i);
 			rules.get(i).pitsCopy(rules.get(t));
 			rules.get(t).pitsCopy(tmp);
 
 		}
 	}
 
-	public class PittsComparator implements Comparator<Pittsburgh> {
+	public class PittsComparator implements Comparator<RuleSet> {
 	    //比較メソッド（データクラスを比較して-1, 0, 1を返すように記述する）
-	    public int compare(Pittsburgh a, Pittsburgh b) {
+	    public int compare(RuleSet a, RuleSet b) {
 	        double no1 = a.GetFitness(0);
 	        double no2 = b.GetFitness(0);
 

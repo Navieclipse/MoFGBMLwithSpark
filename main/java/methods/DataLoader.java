@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import navier.DataSetInfo;
+import gbml.DataSetInfo;
 
 public class DataLoader {
 

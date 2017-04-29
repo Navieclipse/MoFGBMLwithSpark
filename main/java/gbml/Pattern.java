@@ -1,11 +1,11 @@
-package navier;
+package gbml;
 
-public class Pattern2 implements java.io.Serializable {
+public class Pattern implements java.io.Serializable {
 
 	//コンストラクタ
-	Pattern2(){}
+	Pattern(){}
 
-	public Pattern2(Double[] pattern){
+	public Pattern(Double[] pattern){
 
 		int Ndim = pattern.length - 1;
 

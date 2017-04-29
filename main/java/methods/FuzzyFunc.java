@@ -5,11 +5,11 @@ import java.util.ArrayList;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-import navier.Cons;
+import gbml.Consts;
 
-public class Fmethod {
+public class FuzzyFunc {
 
-	public Fmethod(){}
+	public FuzzyFunc(){}
 
 	static int KK[] = {1,2,2,3,3,3,4,4,4,4,5,5,5,5,5,6,6,6,6,6,6,7,7,7,7,7,7,7};					//メンバシップの時のK
 	static int kk[] = {1,1,2,1,2,3,1,2,3,4,1,2,3,4,5,1,2,3,4,5,6,1,2,3,4,5,6,7};					//メンバシップの時のk
@@ -150,16 +150,16 @@ public class Fmethod {
 	public static int[] selectSingle(Row line, int Ndim, MersenneTwisterFast rnd){
 
 		int rule[] = new int[Ndim];
-		int select = Cons.dWitch;
+		boolean isProb = Consts.IS_PROBABILITY_DONT_CARE;
 		double dcRate;
-		if(select== 0){
-			dcRate = (double)(((double)Ndim - (double)Cons.Len)/(double)Ndim);
+		if(isProb){
+			dcRate = Consts.DONT_CAlE_RT;
 		}
 		else{
-			dcRate = Cons.Dont;
+			dcRate = (double)(((double)Ndim - (double)Consts.ANTECEDENT_LEN)/(double)Ndim);
 		}
 
-		double[] membershipValueRulet = new double[Cons.Fnum];
+		double[] membershipValueRulet = new double[Consts.FUZZY_SET_NUM];
 
 		for (int n = 0; n < Ndim; n++) {
 			if (rnd.nextDouble() < dcRate) {
@@ -167,12 +167,12 @@ public class Fmethod {
 			} else {
 				double sumMembershipValue = 0.0;
 				membershipValueRulet[0] = 0.0;
-				for (int f = 0; f < Cons.Fnum; f++) {
+				for (int f = 0; f < Consts.FUZZY_SET_NUM; f++) {
 					sumMembershipValue += calcMenbership( f+1, line.getDouble(n) );
 					membershipValueRulet[f] = sumMembershipValue;
 				}
 				double rr = rnd.nextDouble() * sumMembershipValue;
-				for (int f = 0; f < Cons.Fnum; f++) {
+				for (int f = 0; f < Consts.FUZZY_SET_NUM; f++) {
 					if (rr < membershipValueRulet[f]) {
 						rule[n] = f + 1;
 						break;
@@ -188,20 +188,20 @@ public class Fmethod {
 	public static int[] selectRnd(int Ndim, MersenneTwisterFast rnd){
 
 		int rule[] = new int[Ndim];
-		int select = Cons.dWitch;
+		boolean isProb = Consts.IS_PROBABILITY_DONT_CARE;
 		double dcRate;
-		if(select== 0){
-			dcRate = (double)(((double)Ndim - (double)Cons.Len)/(double)Ndim);
+		if(isProb){
+			dcRate = Consts.DONT_CAlE_RT;
 		}
 		else{
-			dcRate = rnd.nextDouble();
+			dcRate = (double)(((double)Ndim - (double)Consts.ANTECEDENT_LEN)/(double)Ndim);
 		}
 
 		for (int n = 0; n < Ndim; n++) {
 			if (rnd.nextDouble() < dcRate) {
 				rule[n] = 0;
 			} else {
-				rule[n] = rnd.nextInt(Cons.Fnum) + 1;
+				rule[n] = rnd.nextInt(Consts.FUZZY_SET_NUM) + 1;
 			}
 		}
 

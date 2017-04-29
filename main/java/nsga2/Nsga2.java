@@ -4,10 +4,10 @@ import static java.util.Comparator.*;
 
 import java.util.ArrayList;
 
+import gbml.Consts;
+import gbml.RuleSet;
+import gbml.Classifier;
 import methods.MersenneTwisterFast;
-import navier.Cons;
-import navier.Pittsburgh;
-import navier.RuleSet;
 
 public class Nsga2 {
 
@@ -21,11 +21,11 @@ public class Nsga2 {
 
 	MersenneTwisterFast rnd;
 
-	ArrayList<Pittsburgh> rankedList = new ArrayList<Pittsburgh>();
+	ArrayList<RuleSet> rankedList = new ArrayList<RuleSet>();
 
 	//メソッド
 
-	public void GenChange(RuleSet ruleset) {
+	public void GenChange(Classifier ruleset) {
 
 		ruleset.allPitsRules.clear();
 		int lengthSize =ruleset.pitsRules.size();
@@ -38,8 +38,8 @@ public class Nsga2 {
 		DisideRank(ruleset.allPitsRules);
 
 		//ランクとCDでソート
-		ruleset.allPitsRules.sort(comparing(Pittsburgh::GetRank).reversed() //打ち消しのリバース
-									.thenComparing(Pittsburgh::GetCrowding).reversed());
+		ruleset.allPitsRules.sort(comparing(RuleSet::GetRank).reversed() //打ち消しのリバース
+									.thenComparing(RuleSet::GetCrowding).reversed());
 
 		//次世代に個体を格納
 		for (int i = 0; i < lengthSize; i++) {
@@ -48,7 +48,7 @@ public class Nsga2 {
 
 	}
 
-	public void DisideRank(ArrayList<Pittsburgh> rules) {
+	public void DisideRank(ArrayList<RuleSet> rules) {
 
 		rankedList.clear();
 		int[] n_i = new int[rules.size()];
@@ -79,7 +79,7 @@ public class Nsga2 {
 		int size = rules.size();
 		double FirstMax = 0;
 		double FirstMin = 100;
-		boolean isNormalize = Cons.isCDnormalize;
+		boolean isNormalize = Consts.DO_CD_NORMALIZE;
 		ArrayList<Double> firstObj = new ArrayList<Double>();
 		ArrayList<Double> nowFirst = new ArrayList<Double>();
 		if(isNormalize){
@@ -137,7 +137,7 @@ public class Nsga2 {
 		}
 	}
 
-	boolean dominate(int p, int q, ArrayList<Pittsburgh> rules) {
+	boolean dominate(int p, int q, ArrayList<RuleSet> rules) {
 		// minimize, fitness[0] is maximize
 		// if p dominate q then true else false
 		boolean ans = false;
@@ -154,7 +154,7 @@ public class Nsga2 {
 		return ans;
 	}
 
-	void CalcDistance(ArrayList<Pittsburgh> list) {
+	void CalcDistance(ArrayList<RuleSet> list) {
 		int size = list.size();
 		for (int i = 0; i < size; i++) {
 			list.get(i).SetCrowding(0);
@@ -166,7 +166,7 @@ public class Nsga2 {
 				for (int j = i; j >= 1
 						&& list.get(j - 1).getFirstObj(o) > list.get(j)
 								.getFirstObj(o); j--) {
-					Pittsburgh tmp = list.get(j);
+					RuleSet tmp = list.get(j);
 					list.set(j, list.get(j - 1));
 					list.set(j - 1, tmp);
 				}

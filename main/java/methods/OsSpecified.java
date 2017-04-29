@@ -1,6 +1,6 @@
 package methods;
 
-public class Osget {
+public class OsSpecified {
 
 
 	private static final String OS_NAME = System.getProperty("os.name").toLowerCase();

@@ -5,14 +5,28 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
 
-import navier.Pittsburgh;
+import gbml.Consts;
+import gbml.RuleSet;
 
-public class Gmethod {
+public class GeneralFunc {
 
-	Gmethod(){}
+	GeneralFunc(){}
 
 	//******************************************************************************//
 
+	//変数定数出力
+	public static String getExperimentSettings(String[] args){
+
+		String allSettings = "";
+		String endLine = System.lineSeparator();
+		for (int i = 0; i < args.length; i++) {
+			allSettings += args[i] + endLine;
+		}
+		Consts consts = new Consts();
+		allSettings += consts.getStaticValues();
+
+		return allSettings;
+	}
 	//非復元抽出
 	public static int [] sampringWithout(int num, int DataSize, MersenneTwisterFast rnd){
 
@@ -82,7 +96,7 @@ public class Gmethod {
 	}
 
 	//バイナリトーナメント
-	public static int binaryT4(ArrayList<Pittsburgh> pitsRules, MersenneTwisterFast rnd, int popSize, int objectives){
+	public static int binaryT4(ArrayList<RuleSet> pitsRules, MersenneTwisterFast rnd, int popSize, int objectives){
 		int ans = 0;
 		int sele1, sele2;
 
@@ -118,13 +132,13 @@ public class Gmethod {
 		return ans;
 	}
 
-	public static double distance(Pittsburgh a, Pittsburgh b){
+	public static double distance(RuleSet a, RuleSet b){
 		double dis = Math.abs(a.GetFitness(1) - b.GetFitness(1));
 		dis += Math.abs(a.GetFitness(0) - b.GetFitness(0));
 		return dis;
 	}
 
-	public static int[] binaryTRand(ArrayList<Pittsburgh> pitsRules, MersenneTwisterFast rnd, int popSize, int objectives){
+	public static int[] binaryTRand(ArrayList<RuleSet> pitsRules, MersenneTwisterFast rnd, int popSize, int objectives){
 		int[] ans = new int[2];
 		int sele1, sele2;
 
@@ -204,7 +218,7 @@ public class Gmethod {
 	}
 
 	//marge sort
-	public  static void mergeSort(ArrayList<Pittsburgh> temp, ArrayList<Pittsburgh> parent, ArrayList<Pittsburgh> child){
+	public  static void mergeSort(ArrayList<RuleSet> temp, ArrayList<RuleSet> parent, ArrayList<RuleSet> child){
 
 		int parentI = 0;
 		int childI = 0;

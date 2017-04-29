@@ -1,4 +1,4 @@
-package navier;
+package gbml;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,23 +7,19 @@ import java.util.List;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-import methods.Fmethod;
-import methods.Gmethod;
+import methods.FuzzyFunc;
+import methods.GeneralFunc;
 import methods.MersenneTwisterFast;
 
-public class Pittsburgh implements java.io.Serializable{
+public class RuleSet implements java.io.Serializable{
 	/******************************************************************************/
 	//コンストラクタ
 
-	Pittsburgh(){}
+	RuleSet(){}
 
-	Pittsburgh(MersenneTwisterFast rnd,int Ndim, int Cnum, int DataSize, int DataSizeTst, int objectibes){
+	RuleSet(MersenneTwisterFast rnd,int Ndim, int Cnum, int DataSize, int DataSizeTst, int objectibes){
 		this.rnd = rnd;
-		this.rnd2 = new MersenneTwisterFast(rnd.nextInt());
-		this.rnd3 = new MersenneTwisterFast(rnd.nextInt());
-		this.rnd4 = new MersenneTwisterFast(rnd.nextInt());
-		this.rnd5 = new MersenneTwisterFast(rnd.nextInt());
-		this.rnd6 = new MersenneTwisterFast(rnd.nextInt());
+		this.rnd2 = new MersenneTwisterFast( rnd.nextInt() );
 		this.Ndim = Ndim;
 		this.Cnum = Cnum;
 		this.DataSize = DataSize;
@@ -37,14 +33,10 @@ public class Pittsburgh implements java.io.Serializable{
 		this.firstobj = new double[objectibes];
 	}
 
-	public Pittsburgh(Pittsburgh pits){
+	public RuleSet(RuleSet pits){
 
 		this.rnd = pits.rnd;
 		this.rnd2 = pits.rnd2;
-		this.rnd3 = pits.rnd3;
-		this.rnd4 = pits.rnd4;
-		this.rnd5 = pits.rnd5;
-		this.rnd6 = pits.rnd6;
 		this.Ndim = pits.Ndim;
 		this.Cnum = pits.Cnum;
 		this.DataSize = pits.DataSize;
@@ -57,10 +49,10 @@ public class Pittsburgh implements java.io.Serializable{
 
 		this.vecNum = pits.vecNum;
 
-		Michigan a;
+		Rule a;
 		this.micRules.clear();
 		for(int i=0;i<pits.micRules.size();i++){
-			 a = new Michigan(pits.micRules.get(i));
+			 a = new Rule(pits.micRules.get(i));
 			this.micRules.add(a);
 		}
 
@@ -71,16 +63,15 @@ public class Pittsburgh implements java.io.Serializable{
 		fitnesses = Arrays.copyOf(pits.fitnesses, pits.fitnesses.length);
 		firstobj = Arrays.copyOf(pits.firstobj, pits.fitnesses.length);
 
+		this.dfmisspat = pits.dfmisspat;
+		this.MissPatNum = pits.MissPatNum;
+
 	}
 
-	public Pittsburgh(Pittsburgh pits, int vec){
+	public RuleSet(RuleSet pits, int vec){
 
 		this.rnd = pits.rnd;
 		this.rnd2 = pits.rnd2;
-		this.rnd3 = pits.rnd3;
-		this.rnd4 = pits.rnd4;
-		this.rnd5 = pits.rnd5;
-		this.rnd6 = pits.rnd6;
 		this.Ndim = pits.Ndim;
 		this.Cnum = pits.Cnum;
 		this.DataSize = pits.DataSize;
@@ -93,10 +84,10 @@ public class Pittsburgh implements java.io.Serializable{
 
 		this.vecNum = vec;
 
-		Michigan a;
+		Rule a;
 		this.micRules.clear();
 		for(int i=0;i<pits.micRules.size();i++){
-			 a = new Michigan(pits.micRules.get(i));
+			 a = new Rule(pits.micRules.get(i));
 			this.micRules.add(a);
 		}
 
@@ -106,18 +97,49 @@ public class Pittsburgh implements java.io.Serializable{
 		this.crowding = pits.crowding;
 		fitnesses = Arrays.copyOf(pits.fitnesses, pits.fitnesses.length);
 		firstobj = Arrays.copyOf(pits.firstobj, pits.fitnesses.length);
+
+		this.dfmisspat = pits.dfmisspat;
+		this.MissPatNum = pits.MissPatNum;
+	}
+
+	public void pitsCopy(RuleSet pits){
+		this.rnd = pits.rnd;
+		this.rnd2 = pits.rnd2;
+		this.Ndim = pits.Ndim;
+		this.Cnum = pits.Cnum;
+		this.DataSize = pits.DataSize;
+		this.DataSizeTst = pits.DataSizeTst;
+
+		this.missRate = pits.missRate;
+		this.ruleNum = pits.ruleNum;
+		this.ruleLength = pits.ruleLength;
+		this.fitness = pits.fitness;
+
+		this.vecNum = pits.vecNum;
+
+		this.evaflag = pits.evaflag;
+		this.testMissRate = pits.testMissRate;
+		this.rank = pits.rank;
+		this.crowding = pits.crowding;
+		this.fitnesses = Arrays.copyOf(pits.fitnesses, pits.fitnesses.length);
+		firstobj = Arrays.copyOf(pits.firstobj, pits.fitnesses.length);
+
+		Rule a;
+		this.micRules.clear();
+		for(int i=0;i<pits.micRules.size();i++){
+			 a = new Rule(pits.micRules.get(i));
+			this.micRules.add(a);
+		}
+
+		this.dfmisspat = pits.dfmisspat;
+		this.MissPatNum = pits.MissPatNum;
 	}
 
 	/******************************************************************************/
-	//引数
+	//ランダム
 	MersenneTwisterFast rnd;
 	MersenneTwisterFast rnd2;
-	MersenneTwisterFast rnd3;
-	MersenneTwisterFast rnd4;
-	MersenneTwisterFast rnd5;
-	MersenneTwisterFast rnd6;
 
-	//******************************************************************************//
     //学習用
 	int Ndim;												//次元
 	int Cnum;												//クラス数
@@ -125,14 +147,18 @@ public class Pittsburgh implements java.io.Serializable{
 	int DataSizeTst;										//パターン数
 
 	//基本値
-	ArrayList<Michigan> micRules = new ArrayList<Michigan>();
+	ArrayList<Rule> micRules = new ArrayList<Rule>();
 
-	ArrayList<Michigan> newMicRules = new ArrayList<Michigan>();
+	ArrayList<Rule> newMicRules = new ArrayList<Rule>();
 
 	double missRate;
 	double testMissRate;
 	int ruleNum;
 	int ruleLength;
+
+	//ミスパターン保存用リスト
+	Dataset<Row> dfmisspat;
+	int MissPatNum;
 
 	//並べ替えの基準(1obj)
 	double fitness;
@@ -153,24 +179,24 @@ public class Pittsburgh implements java.io.Serializable{
 	//メソッド
 	public void initialMic(DataSetInfo data, Dataset<Row> df){
 		//ヒューリスティック生成を行う場合
-		boolean isHeuris = Cons.isHeuris;
+		boolean isHeuris = Consts.DO_HEURISTIC_GENERATION_INIT;
         Dataset<Row> dfsample;
         List<Row> samples = null;
         if(isHeuris){ //サンプリング
-			double sampleSize = (double)(Cons.Nini+10) / (double)DataSize;
-			dfsample = df.sample( false, sampleSize, rnd4.nextInt() );
+			double sampleSize = (double)(Consts.INITIATION_RULE_NUM+10) / (double)DataSize;
+			dfsample = df.sample( false, sampleSize, rnd2.nextInt() );
 			samples = dfsample.collectAsList();
         }
         do{ //while( micRules.size() == 0)
-        	for(int i=0; i<Cons.Nini; i++){
-        		micRules.add( new Michigan(rnd2, Ndim, Cnum, DataSize, DataSizeTst) );
+        	for(int i=0; i<Consts.INITIATION_RULE_NUM; i++){
+        		micRules.add( new Rule(rnd2, Ndim, Cnum, DataSize, DataSizeTst) );
         		micRules.get(i).setMic();
 
         		if(isHeuris){		//ヒューリスティック生成
-					micRules.get(i).makeRuleSingle(samples.get(i), rnd4);
+					micRules.get(i).makeRuleSingle(samples.get(i), rnd2);
 					micRules.get(i).calcRuleConc(df);
         		}else{				//完全ランダム生成
-					micRules.get(i).makeRuleRnd1(rnd4);
+					micRules.get(i).makeRuleRnd1(rnd2);
 					micRules.get(i).makeRuleRnd2();
         		}
         	}
@@ -195,8 +221,8 @@ public class Pittsburgh implements java.io.Serializable{
 		else{
 			double ans = CalcAccuracyPalKai(df);
 			double acc = ans / data.getDataSize();
-			missRate = ( (1.0 - acc) * 100 );
-			fitness = Fmethod.fitness(missRate, (double)ruleNum, (double)ruleLength);
+			missRate = ( acc * 100.0 );
+			fitness = FuzzyFunc.fitness(missRate, (double)ruleNum, (double)ruleLength);
 		}
 
 	}
@@ -252,27 +278,27 @@ public class Pittsburgh implements java.io.Serializable{
 		return fitness;
 	}
 
-	public Michigan getMicRule(int num){
+	public Rule getMicRule(int num){
 		return micRules.get(num);
 	}
 
-	public void setMicRule(Michigan micrule){
+	public void setMicRule(Rule micrule){
 
-		Michigan mic = new Michigan(micrule);
+		Rule mic = new Rule(micrule);
 		micRules.add(mic);
 
 	}
 
 	public void micMutation(int num, int i){
-		micRules.get(num).mutation(i, rnd5);
+		micRules.get(num).mutation(i, rnd2);
 	}
 
 	public void micGenRandom(){
 
 		//交叉個体数（ルールの20％）あるいは１個
 		int snum;
-		if(rnd.nextDouble() < (double)Cons.Micope){
-			snum = (int)((ruleNum - 0.00001) * Cons.MicNum) + 1;
+		if(rnd2.nextDouble() < (double)Consts.RULE_OPE_RT){
+			snum = (int)((ruleNum - 0.00001) * Consts.RULE_CHANGE_RT) + 1;
 		}else{
 			snum = 1;
 		}
@@ -284,7 +310,7 @@ public class Pittsburgh implements java.io.Serializable{
 			genNum = snum/2;
 		}
 		else{
-			int plus = rnd4.nextInt(2);
+			int plus = rnd2.nextInt(2);
 			heuNum = (snum-1)/2 + plus;
 			genNum = snum - heuNum;
 		}
@@ -306,8 +332,8 @@ public class Pittsburgh implements java.io.Serializable{
 
 		//交叉個体数（ルールの20％）あるいは１個
 		int snum;
-		if(rnd.nextDouble() < (double)Cons.Micope){
-			snum = (int)((ruleNum - 0.00001) * Cons.MicNum) + 1;
+		if(rnd2.nextDouble() < (double)Consts.RULE_OPE_RT){
+			snum = (int)((ruleNum - 0.00001) * Consts.RULE_CHANGE_RT) + 1;
 		}else{
 			snum = 1;
 		}
@@ -319,23 +345,28 @@ public class Pittsburgh implements java.io.Serializable{
 			genNum = snum/2;
 		}
 		else{
-			int plus = rnd4.nextInt(2);
+			int plus = rnd2.nextInt(2);
 			heuNum = (snum-1)/2 + plus;
 			genNum = snum - heuNum;
 		}
 
 		//ヒューリスティック生成の誤識別パターン(クソ重い処理なんじゃ)
-		Dataset<Row> dfmisspat = df.filter( s -> CalcWinClassPalSpark(s) != s.getInt(Ndim) );
-		int MissDataNum = (int)dfmisspat.count();
-		if(MissDataNum < heuNum) dfmisspat = df;  //ミスパターンがない場合はパターン全体から
+		//dfmisspat = df.filter( s -> CalcWinClassPalSpark(s) != s.getInt(Ndim) );
+		//int MissDataNum = (int)dfmisspat.count();
+		double sampleSize = (double)(heuNum) / (double)MissPatNum;
+		int usingDataSize = MissPatNum;
+		if(MissPatNum < heuNum){
+			dfmisspat = df;  //ミスパターンがない場合はパターン全体から
+			sampleSize = (double)(heuNum) / (double)usingDataSize;
+		}
 
-		double sampleSize = (double)(heuNum) / (double)MissDataNum;
 		int increment = 0;
 		Dataset<Row> dfmisspatSample;
 		do{
 			dfmisspatSample = dfmisspat.sample( false, sampleSize, rnd2.nextInt() );
-			sampleSize = (double)(heuNum+increment++) / (double)MissDataNum;
+			sampleSize = (double)( heuNum+increment++ ) / (double)usingDataSize;
 		}while(dfmisspatSample.count() < heuNum);
+
 		List<Row> misspat = dfmisspatSample.collectAsList();
 
 		for(int i=0;i<genNum;i++){
@@ -353,31 +384,31 @@ public class Pittsburgh implements java.io.Serializable{
 
 	public void micge(int num){
 
-		newMicRules.add( new Michigan(rnd2, Ndim, Cnum, DataSize, DataSizeTst) );
+		newMicRules.add( new Rule(rnd2, Ndim, Cnum, DataSize, DataSizeTst) );
 		newMicRules.get(num).setMic();
 
 		//mom
-		int mom = rnd4.nextInt(ruleNum);
-		int pop = rnd3.nextInt(ruleNum);
+		int mom = rnd2.nextInt(ruleNum);
+		int pop = rnd2.nextInt(ruleNum);
 
-		if(rnd2.nextDouble() < (Cons.CrossM)){
+		if(rnd2.nextDouble() < (Consts.RULE_CROSS_RT)){
 			//一様交叉
 			int k=0;
 			int k2=0;
 			int o = 0;
 			for(int i=0;i<Ndim;i++){
-				k = rnd6.nextInt(2);
+				k = rnd2.nextInt(2);
 				if(k==0){
 					newMicRules.get(num).setRule(i, micRules.get(mom).getRule(i));
 				}
 				else{
 					newMicRules.get(num).setRule(i, micRules.get(pop).getRule(i));
 				}
-				k2 = rnd5.nextInt(Ndim);
+				k2 = rnd2.nextInt(Ndim);
 				//突然変異
 				if(k2==0){
 					do{
-						o = rnd4.nextInt(Cons.Fnum +1);
+						o = rnd2.nextInt(Consts.FUZZY_SET_NUM +1);
 					}while(o == newMicRules.get(num).getRule(i));
 					newMicRules.get(num).setRule(i, o);
 				}
@@ -390,10 +421,10 @@ public class Pittsburgh implements java.io.Serializable{
 			for(int i=0;i<Ndim;i++){
 				newMicRules.get(num).setRule(i, micRules.get(mom).getRule(i));
 				//突然変異
-				k2 = rnd3.nextInt(Ndim);
+				k2 = rnd2.nextInt(Ndim);
 				if(k2==0){
 					do{
-						o = rnd2.nextInt(Cons.Fnum +1);
+						o = rnd2.nextInt(Consts.FUZZY_SET_NUM +1);
 					}while(o == newMicRules.get(num).getRule(i));
 					newMicRules.get(num).setRule(i, o);
 				}
@@ -437,7 +468,7 @@ public class Pittsburgh implements java.io.Serializable{
 		//足りていないクラスの個体生成を優先
 		//識別器中のクラス判別
 		int noCla[] = calcNoClass();
-		newMicRules.add( new Michigan(rnd2, Ndim, Cnum, DataSize, DataSizeTst) );
+		newMicRules.add( new Rule(rnd2, Ndim, Cnum, DataSize, DataSizeTst) );
 		newMicRules.get(num).setMic();
 		newMicRules.get(num).makeRuleRnd1(rnd2);
 		if(noCla.length == 0){
@@ -449,58 +480,24 @@ public class Pittsburgh implements java.io.Serializable{
 	}
 
 	public void heuristicGeneration(int num, Row line, Dataset<Row> df){
-		newMicRules.add( new Michigan(rnd2, Ndim, Cnum, DataSize, DataSizeTst) );
+		newMicRules.add( new Rule(rnd2, Ndim, Cnum, DataSize, DataSizeTst) );
 		newMicRules.get(num).setMic();
-		newMicRules.get(num).makeRuleSingle(line, rnd4);
+		newMicRules.get(num).makeRuleSingle(line, rnd2);
 		newMicRules.get(num).calcRuleConc(df);
 	}
 
 	public void micUpdate(int snum){
 
-		int repNum[] = Gmethod.sampringWithout2(snum, micRules.size(), rnd);
+		int repNum[] = GeneralFunc.sampringWithout2(snum, micRules.size(), rnd2);
 		for(int i=0; i<snum; i++){
 			micRules.get(repNum[i]).micCopy(newMicRules.get(i));
 		}
 
 	}
 
-	public void pitsCopy(Pittsburgh pits){
-		this.rnd = pits.rnd;
-		this.rnd2 = pits.rnd2;
-		this.rnd3 = pits.rnd3;
-		this.rnd4 = pits.rnd4;
-		this.rnd5 = pits.rnd5;
-		this.rnd6 = pits.rnd6;
-		this.Ndim = pits.Ndim;
-		this.Cnum = pits.Cnum;
-		this.DataSize = pits.DataSize;
-		this.DataSizeTst = pits.DataSizeTst;
-
-		this.missRate = pits.missRate;
-		this.ruleNum = pits.ruleNum;
-		this.ruleLength = pits.ruleLength;
-		this.fitness = pits.fitness;
-
-		this.vecNum = pits.vecNum;
-
-		this.evaflag = pits.evaflag;
-		this.testMissRate = pits.testMissRate;
-		this.rank = pits.rank;
-		this.crowding = pits.crowding;
-		this.fitnesses = Arrays.copyOf(pits.fitnesses, pits.fitnesses.length);
-		firstobj = Arrays.copyOf(pits.firstobj, pits.fitnesses.length);
-
-		Michigan a;
-		this.micRules.clear();
-		for(int i=0;i<pits.micRules.size();i++){
-			 a = new Michigan(pits.micRules.get(i));
-			this.micRules.add(a);
-		}
-
-	}
 
 	//MOEAD
-	public void replace(Pittsburgh rules) {
+	public void replace(RuleSet rules) {
 		this.pitsCopy(rules);
 	}
 
@@ -595,11 +592,11 @@ public class Pittsburgh implements java.io.Serializable{
 		if (getRuleNum() != 0) {
 			double ans = CalcAccuracyPalKai(df);
 			double acc = ans / data.getDataSize();
-			SetMissRate( (1 - acc) * 100 );
+			SetMissRate( acc * 100.0 );
 			setNumAndLength();
 
 			if (objectives == 1) {
-				double fitness = Cons.W1 * getMissRate() + Cons.W2 * getRuleNum() + Cons.W3 * getRuleLength();
+				double fitness = Consts.W1 * getMissRate() + Consts.W2 * getRuleNum() + Consts.W3 * getRuleLength();
 				SetFitness(fitness, 0);
 			}
 			else if (objectives == 2) {
@@ -630,14 +627,11 @@ public class Pittsburgh implements java.io.Serializable{
 
 	public int CalcAccuracyPalKai(Dataset<Row> df) {
 
-		long collectNum = 0;
+		dfmisspat = df.filter( line -> CalcWinClassPalSpark(line) != line.getInt(Ndim) );
+		MissPatNum = (int)dfmisspat.count();
 
-		collectNum = df.toJavaRDD()
-		.map( lines -> CalcWinClassPalSpark(lines) == lines.getInt(Ndim) )
-		.filter(s -> s)
-		.count();
+		return MissPatNum;
 
-		return (int) collectNum;
 	}
 
 	public int CalcWinClassPalSpark(Row lines){
@@ -689,7 +683,7 @@ public class Pittsburgh implements java.io.Serializable{
 		ruleLength = ruleLengthCalc();
 	}
 
-	public ArrayList<Michigan> getMics(){
+	public ArrayList<Rule> getMics(){
 		return micRules;
 	}
 
