@@ -13,11 +13,10 @@ public class CommandLineFunc {
 			System.out.println("5 Population:	int");
 			System.out.println("6 CV:			int");
 			System.out.println("7 CVNum:		int");
-			System.out.println("8 repeatNum		int");
-			System.out.println("9 Seed			int");
-			System.out.println("10 master param:String");
-			System.out.println("11 AppName:		String");
-			System.out.println("12 Hdfs:		String");
+			System.out.println("8 Seed			int");
+			System.out.println("9 master param:String");
+			System.out.println("10 AppName:		String");
+			System.out.println("11 Hdfs:		String");
 			System.out.println("===============================");
 
 			System.exit(-1);

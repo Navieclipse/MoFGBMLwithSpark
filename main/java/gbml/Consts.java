@@ -8,8 +8,8 @@ public class Consts {
     public static final int ANTECEDENT_LEN  = 5;	//ドントケアにしない条件部の数
     public static final double DONT_CAlE_RT = 0.8;	//どんとケア適応確率（合わせ用）
     public static final boolean IS_PROBABILITY_DONT_CARE = false;	//ドントケアを確率で行う
-    public static final boolean DO_HEURISTIC_GENERATION_INIT = true;	//ヒューリスティック生成法を行う(初期生成）
-    public static final boolean DO_HEURISTIC_GENERATION_IN_GA = true;	//ヒューリスティック生成法（途中での世代）
+    public static final boolean DO_HEURISTIC_GENERATION_INIT = false;	//ヒューリスティック生成法を行う(初期生成）
+    public static final boolean DO_HEURISTIC_GENERATION_IN_GA = false;	//ヒューリスティック生成法（途中での世代）
 
     public static final int FUZZY_SET_NUM  = 14;	//ファジィ集合数
     public static final int MAX_FUZZY_DIVIDE_NUM = 5;	//条件部の分割数の最大値
@@ -62,6 +62,13 @@ public class Consts {
 
     public static final int TRAIN = 0;	//学習用
     public static final int TEST = 1;	//評価用
+
+    //Folders' name
+    public static final String ROOTFOLDER = "result";
+    public static final String RULESET = "ruleset";
+    public static final String SOLUTION = "solution";
+    public static final String VECSET = "vecset";
+    public static final String OTHERS = "write";
     //OS
     public static final int WINDOWS = 0;	//windows
     public static final int UNIX = 1;	//unix

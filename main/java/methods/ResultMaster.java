@@ -1,10 +1,11 @@
 package methods;
 
+import java.io.File;
 import java.util.ArrayList;
 
+import gbml.Classifier;
 import gbml.Consts;
 import gbml.RuleSet;
-import gbml.Classifier;
 
 public class ResultMaster {
 
@@ -57,16 +58,10 @@ public class ResultMaster {
 		Clanum.clear();
 	}
 
-	public void outSolution(int cc, int rr, int pp){
+	public void outSolution(int cc, int rr){
 
-		String fileName;
-		if(os == Consts.WINDOWS){
-			fileName = nameDir + "\\solution\\solution_"+pp+"_"+rr+"_"+cc+ "_" + Tra.size() +".txt";
-
-		}
-		else{
-			fileName = nameDir + "/solution/solution_"+pp+"_"+rr+"_"+cc+ "_" + Tra.size() +".txt";
-		}
+		String sep = File.separator;
+		String fileName = nameDir + sep + Consts.SOLUTION + sep + "solution_"+rr+"_"+cc+ "_" + Tra.size() +".txt";
 
 		String[] strs = new String[Tra.size()];
 		for(int i=0; i<Tra.size(); i++){
@@ -81,15 +76,10 @@ public class ResultMaster {
 		this.times.add(time);
 	}
 
-	public void writeTime(double sec, double ns, int cv, int rep, int pp){
+	public void writeTime(double sec, double ns, int cv, int rep){
 
-		String fileName;
-		if(os == Consts.WINDOWS){
-			fileName = nameDir + "\\write\\Atime_" + pp + rep + cv + ".txt";
-		}
-		else{
-			fileName = nameDir + "/write/Atime_" + pp + rep + cv + ".txt";
-		}
+		String sep = File.separator;
+		String fileName = nameDir + sep + Consts.OTHERS + sep + "Atime_0" + rep + cv + ".txt";
 
 		String str = sec + " " + ns;
 
@@ -104,25 +94,18 @@ public class ResultMaster {
 		}
 		timeAve /= times.size();
 
-		String fileName;
-		if(os == Consts.WINDOWS){
-			fileName = nameDir + "\\write\\Avetime" + ".txt";
-		}else{
-			fileName = nameDir + "/write/Avetime" + ".txt";
-		}
+		String sep = File.separator;
+		String fileName = nameDir + sep + Consts.OTHERS + sep + "Avetime.txt";
 
 		Output.writeln(fileName, String.valueOf(timeAve), os);
 
 	}
 
 	/******************************************************************************/
-	public void outputRules(Classifier ruleset, int cc, int rr, int pp){
-		String fileName;
-		if(os == Consts.WINDOWS){
-			fileName = nameDir + "\\ruleset\\rules"  +"_"+pp+"_"+rr+"_"+cc+ ".txt";
-		}else{
-			fileName = nameDir + "/ruleset/rules"  +"_"+pp+"_"+rr+"_"+cc+ ".txt";
-		}
+	public void outputRules(Classifier ruleset, int cc, int rr){
+
+		String sep = File.separator;
+		String fileName = nameDir + sep + Consts.RULESET + sep + "rules"  +"_"+rr+"_"+cc+ ".txt";
 
 		ArrayList<String> strs = new ArrayList<String>();
 		for(int i=0;i<ruleset.pitsRules.size();i++){
@@ -142,13 +125,10 @@ public class ResultMaster {
 		Output.writeln(fileName, array, os);
 	}
 
-	public void outputVec(Classifier ruleset, int cc, int rr, int pp){
-		String fileName;
-		if(os == Consts.WINDOWS){
-			fileName = nameDir + "\\vecset\\vecs"  +"_"+pp+"_"+rr+"_"+cc+ ".txt";
-		}else{
-			fileName = nameDir+ "/vecset/vecs"  +"_"+pp+"_"+rr+"_"+cc+ ".txt";
-		}
+	public void outputVec(Classifier ruleset, int cc, int rr){
+
+		String sep = File.separator;
+		String fileName = nameDir + sep + Consts.VECSET + sep + "vecs_"+rr+"_"+cc+ ".txt";
 
 		ArrayList<String> strs = new ArrayList<String>();
 		for(int i=0;i<ruleset.pitsRules.size();i++){
@@ -164,16 +144,14 @@ public class ResultMaster {
 	}
 
 	/******************************************************************************/
-	public void writeBestLog(double tra, double tst, double num, double len, int Gen, int pon, int repeat, int cv){
-		String fileName;
-		if(os == Consts.WINDOWS){
-			fileName = nameDir + "\\write\\" + pon + repeat + cv + "GEN" + ".txt";
-		}else{
-			fileName = nameDir + "/write/" + pon + repeat + cv + "GEN" + ".txt";
-		}
+	public void writeBestLog(double tra, double tst, double num, double len, int Gen, int repeat, int cv){
+
+		String sep = File.separator;
+		String fileName = nameDir + sep + Consts.VECSET + sep + "0" + repeat + cv + "GEN" + ".txt";
 
 		String str = Gen + " " + tra + " " + tst +" "+ num +" "+ len;
 		Output.writeln(fileName, str, os);
+
 	}
 
 	public void setBest(RuleSet best){
@@ -183,14 +161,10 @@ public class ResultMaster {
 		Lengths.add( (double)best.getRuleLength() );
 	}
 
-	public void writeAllbest(RuleSet best, int cv, int rep, int pp){
+	public void writeAllbest(RuleSet best, int cv, int rep){
 
-		String fileName;
-		if(os == Consts.WINDOWS){
-			fileName = nameDir + "\\write\\Allbest_" + pp + rep + cv + ".txt";
-		}else{
-			fileName = nameDir + "/write/Allbest_" + pp + rep + cv + ".txt";
-		}
+		String sep = File.separator;
+		String fileName = nameDir + sep + Consts.OTHERS + sep + "Allbest_" + rep + cv + ".txt";
 
 		String str = best.getMissRate() + " " +
 					 best.GetTestMissRate() + " " +
@@ -218,12 +192,8 @@ public class ResultMaster {
 		ruleAve /= Rules.size();
 		lengthAve /= Lengths.size();
 
-		String fileName;
-		if(os == Consts.WINDOWS){
-			fileName = nameDir + "\\write\\" + "AllbestAve" + ".txt";
-		}else{
-			fileName = nameDir + "/write/" + "AllbestAve" + ".txt";
-		}
+		String sep = File.separator;
+		String fileName = nameDir + sep + Consts.OTHERS + sep + "AllbestAve.txt";
 
 		String str = trainAve +" "+  testAve +" "+  ruleAve +" "+  lengthAve;
 		Output.writeln(fileName, str, os);

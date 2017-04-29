@@ -67,7 +67,7 @@ public class GaManager {
 		}
 	}
 
-	public void GAFrame(DataSetInfo traData, int pon, int repeat, int cv){
+	public void GAFrame(DataSetInfo traData, int repeat, int cv){
 
 		//初期個体群
 		GAini(traData);
@@ -87,7 +87,7 @@ public class GaManager {
 			}
 
 			if(isNewGen){		//途中結果保持（テストデータは無理）
-				genCheck(gen, pon, repeat, cv);
+				genCheck(gen, repeat, cv);
 			}
 
 			//GA操作
@@ -100,7 +100,7 @@ public class GaManager {
 		}
 	}
 
-	public void genCheck(int gen, int pon, int repeat, int cv){
+	public void genCheck(int gen, int repeat, int cv){
 		if( (gen+1) <=10 ||
 			(gen+1) %10==0 && gen<=100||
 			(gen+1) %100==0 && gen<=1000||
@@ -116,7 +116,7 @@ public class GaManager {
 		double tstt = bestb.GetTestMissRate();
 		double numr = bestb.getRuleNum();
 		double lengtht = bestb.getRuleLength();
-		result.writeBestLog(trat, tstt, numr, lengtht, gen+1, pon, repeat, cv);
+		result.writeBestLog(trat, tstt, numr, lengtht, gen+1, repeat, cv);
 
 		}
 	}

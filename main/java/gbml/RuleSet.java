@@ -19,7 +19,7 @@ public class RuleSet implements java.io.Serializable{
 
 	RuleSet(MersenneTwisterFast rnd,int Ndim, int Cnum, int DataSize, int DataSizeTst, int objectibes){
 		this.rnd = rnd;
-		this.rnd2 = new MersenneTwisterFast( rnd.nextInt() );
+		this.uniqueRnd = new MersenneTwisterFast( rnd.nextInt() );
 		this.Ndim = Ndim;
 		this.Cnum = Cnum;
 		this.DataSize = DataSize;
@@ -36,7 +36,7 @@ public class RuleSet implements java.io.Serializable{
 	public RuleSet(RuleSet pits){
 
 		this.rnd = pits.rnd;
-		this.rnd2 = pits.rnd2;
+		this.uniqueRnd = pits.uniqueRnd;
 		this.Ndim = pits.Ndim;
 		this.Cnum = pits.Cnum;
 		this.DataSize = pits.DataSize;
@@ -71,7 +71,7 @@ public class RuleSet implements java.io.Serializable{
 	public RuleSet(RuleSet pits, int vec){
 
 		this.rnd = pits.rnd;
-		this.rnd2 = pits.rnd2;
+		this.uniqueRnd = pits.uniqueRnd;
 		this.Ndim = pits.Ndim;
 		this.Cnum = pits.Cnum;
 		this.DataSize = pits.DataSize;
@@ -104,7 +104,7 @@ public class RuleSet implements java.io.Serializable{
 
 	public void pitsCopy(RuleSet pits){
 		this.rnd = pits.rnd;
-		this.rnd2 = pits.rnd2;
+		this.uniqueRnd = pits.uniqueRnd;
 		this.Ndim = pits.Ndim;
 		this.Cnum = pits.Cnum;
 		this.DataSize = pits.DataSize;
@@ -138,7 +138,7 @@ public class RuleSet implements java.io.Serializable{
 	/******************************************************************************/
 	//ランダム
 	MersenneTwisterFast rnd;
-	MersenneTwisterFast rnd2;
+	MersenneTwisterFast uniqueRnd;
 
     //学習用
 	int Ndim;												//次元
@@ -184,19 +184,19 @@ public class RuleSet implements java.io.Serializable{
         List<Row> samples = null;
         if(isHeuris){ //サンプリング
 			double sampleSize = (double)(Consts.INITIATION_RULE_NUM+10) / (double)DataSize;
-			dfsample = df.sample( false, sampleSize, rnd2.nextInt() );
+			dfsample = df.sample( false, sampleSize, uniqueRnd.nextInt() );
 			samples = dfsample.collectAsList();
         }
         do{ //while( micRules.size() == 0)
         	for(int i=0; i<Consts.INITIATION_RULE_NUM; i++){
-        		micRules.add( new Rule(rnd2, Ndim, Cnum, DataSize, DataSizeTst) );
+        		micRules.add( new Rule(uniqueRnd, Ndim, Cnum, DataSize, DataSizeTst) );
         		micRules.get(i).setMic();
 
         		if(isHeuris){		//ヒューリスティック生成
-					micRules.get(i).makeRuleSingle(samples.get(i), rnd2);
+					micRules.get(i).makeRuleSingle(samples.get(i), uniqueRnd);
 					micRules.get(i).calcRuleConc(df);
         		}else{				//完全ランダム生成
-					micRules.get(i).makeRuleRnd1(rnd2);
+					micRules.get(i).makeRuleRnd1(uniqueRnd);
 					micRules.get(i).makeRuleRnd2();
         		}
         	}
@@ -290,14 +290,14 @@ public class RuleSet implements java.io.Serializable{
 	}
 
 	public void micMutation(int num, int i){
-		micRules.get(num).mutation(i, rnd2);
+		micRules.get(num).mutation(i, uniqueRnd);
 	}
 
 	public void micGenRandom(){
 
 		//交叉個体数（ルールの20％）あるいは１個
 		int snum;
-		if(rnd2.nextDouble() < (double)Consts.RULE_OPE_RT){
+		if(uniqueRnd.nextDouble() < (double)Consts.RULE_OPE_RT){
 			snum = (int)((ruleNum - 0.00001) * Consts.RULE_CHANGE_RT) + 1;
 		}else{
 			snum = 1;
@@ -310,7 +310,7 @@ public class RuleSet implements java.io.Serializable{
 			genNum = snum/2;
 		}
 		else{
-			int plus = rnd2.nextInt(2);
+			int plus = uniqueRnd.nextInt(2);
 			heuNum = (snum-1)/2 + plus;
 			genNum = snum - heuNum;
 		}
@@ -332,7 +332,7 @@ public class RuleSet implements java.io.Serializable{
 
 		//交叉個体数（ルールの20％）あるいは１個
 		int snum;
-		if(rnd2.nextDouble() < (double)Consts.RULE_OPE_RT){
+		if(uniqueRnd.nextDouble() < (double)Consts.RULE_OPE_RT){
 			snum = (int)((ruleNum - 0.00001) * Consts.RULE_CHANGE_RT) + 1;
 		}else{
 			snum = 1;
@@ -345,7 +345,7 @@ public class RuleSet implements java.io.Serializable{
 			genNum = snum/2;
 		}
 		else{
-			int plus = rnd2.nextInt(2);
+			int plus = uniqueRnd.nextInt(2);
 			heuNum = (snum-1)/2 + plus;
 			genNum = snum - heuNum;
 		}
@@ -361,7 +361,7 @@ public class RuleSet implements java.io.Serializable{
 		int increment = 0;
 		Dataset<Row> dfmisspatSample;
 		do{
-			dfmisspatSample = dfmisspat.sample( false, sampleSize, rnd2.nextInt() );
+			dfmisspatSample = dfmisspat.sample( false, sampleSize, uniqueRnd.nextInt() );
 			sampleSize = (double)( heuNum+increment++ ) / (double)usingDataSize;
 		}while(dfmisspatSample.count() < heuNum);
 
@@ -382,37 +382,37 @@ public class RuleSet implements java.io.Serializable{
 
 	public void ruleCross(int num){
 
-		newMicRules.add( new Rule(rnd2, Ndim, Cnum, DataSize, DataSizeTst) );
+		newMicRules.add( new Rule(uniqueRnd, Ndim, Cnum, DataSize, DataSizeTst) );
 		newMicRules.get(num).setMic();
 
 		//親個体選択（バイナリトーナメントは計算量が異常にかかるので，同じ結論部の個体同士で交叉，無ければ諦める(ルール数回で）
 		//ルール重みでバイナリトーナメントしても面白いかもしれない（TO　DO）
-		int mom = rnd2.nextInt(ruleNum);
-		int pop = rnd2.nextInt(ruleNum);
+		int mom = uniqueRnd.nextInt(ruleNum);
+		int pop = uniqueRnd.nextInt(ruleNum);
 		int count = 0;
 		while( micRules.get(pop).getConc() != micRules.get(mom).getConc() && count < ruleNum){
-			pop = rnd2.nextInt(ruleNum);
+			pop = uniqueRnd.nextInt(ruleNum);
 			count++;
 		}
 
-		if(rnd2.nextDouble() < (Consts.RULE_CROSS_RT)){
+		if(uniqueRnd.nextDouble() < (Consts.RULE_CROSS_RT)){
 			//一様交叉
 			int k=0;
 			int k2=0;
 			int o = 0;
 			for(int i=0;i<Ndim;i++){
-				k = rnd2.nextInt(2);
+				k = uniqueRnd.nextInt(2);
 				if(k==0){
 					newMicRules.get(num).setRule(i, micRules.get(mom).getRule(i));
 				}
 				else{
 					newMicRules.get(num).setRule(i, micRules.get(pop).getRule(i));
 				}
-				k2 = rnd2.nextInt(Ndim);
+				k2 = uniqueRnd.nextInt(Ndim);
 				//突然変異
 				if(k2==0){
 					do{
-						o = rnd2.nextInt(Consts.FUZZY_SET_NUM +1);
+						o = uniqueRnd.nextInt(Consts.FUZZY_SET_NUM +1);
 					}while(o == newMicRules.get(num).getRule(i));
 					newMicRules.get(num).setRule(i, o);
 				}
@@ -425,10 +425,10 @@ public class RuleSet implements java.io.Serializable{
 			for(int i=0;i<Ndim;i++){
 				newMicRules.get(num).setRule(i, micRules.get(mom).getRule(i));
 				//突然変異
-				k2 = rnd2.nextInt(Ndim);
+				k2 = uniqueRnd.nextInt(Ndim);
 				if(k2==0){
 					do{
-						o = rnd2.nextInt(Consts.FUZZY_SET_NUM +1);
+						o = uniqueRnd.nextInt(Consts.FUZZY_SET_NUM +1);
 					}while(o == newMicRules.get(num).getRule(i));
 					newMicRules.get(num).setRule(i, o);
 				}
@@ -436,7 +436,7 @@ public class RuleSet implements java.io.Serializable{
 		}
 
 		//結論部はmomに合わす．ルール重みはランダムな割合で合計
-		double cfRate = rnd2.nextDouble();
+		double cfRate = uniqueRnd.nextDouble();
 		double newCf = micRules.get(mom).getCf() * cfRate + micRules.get(pop).getCf() * (1.0-cfRate);
 
 		newMicRules.get(num).makeRuleCross( micRules.get(mom).getConc(), newCf );
@@ -474,9 +474,9 @@ public class RuleSet implements java.io.Serializable{
 		//足りていないクラスの個体生成を優先
 		//識別器中のクラス判別
 		int noCla[] = calcNoClass();
-		newMicRules.add( new Rule(rnd2, Ndim, Cnum, DataSize, DataSizeTst) );
+		newMicRules.add( new Rule(uniqueRnd, Ndim, Cnum, DataSize, DataSizeTst) );
 		newMicRules.get(num).setMic();
-		newMicRules.get(num).makeRuleRnd1(rnd2);
+		newMicRules.get(num).makeRuleRnd1(uniqueRnd);
 		if(noCla.length == 0){
 			newMicRules.get(num).makeRuleRnd2();
 		}else{
@@ -486,15 +486,15 @@ public class RuleSet implements java.io.Serializable{
 	}
 
 	public void heuristicGeneration(int num, Row line, Dataset<Row> df){
-		newMicRules.add( new Rule(rnd2, Ndim, Cnum, DataSize, DataSizeTst) );
+		newMicRules.add( new Rule(uniqueRnd, Ndim, Cnum, DataSize, DataSizeTst) );
 		newMicRules.get(num).setMic();
-		newMicRules.get(num).makeRuleSingle(line, rnd2);
+		newMicRules.get(num).makeRuleSingle(line, uniqueRnd);
 		newMicRules.get(num).calcRuleConc(df);
 	}
 
 	public void micUpdate(int snum){
 
-		int repNum[] = StaticGeneralFunc.sampringWithout2(snum, micRules.size(), rnd2);
+		int repNum[] = StaticGeneralFunc.sampringWithout2(snum, micRules.size(), uniqueRnd);
 		for(int i=0; i<snum; i++){
 			micRules.get(repNum[i]).micCopy(newMicRules.get(i));
 		}

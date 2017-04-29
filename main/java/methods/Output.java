@@ -110,12 +110,8 @@ public class Output {
 	//パラメータ出力用
 	public static void writeExp(String name ,String dir ,String st, int os){
 
-		String fileName;
-		if(os == Consts.WINDOWS){
-			fileName = dir + "\\" + name + ".txt";
-		}else{
-			fileName = dir + "/" + name + ".txt";
-		}
+		String sep = File.separator;
+		String fileName = dir + sep + name + ".txt";
 
 		writeln(fileName, st, os);
 	}
@@ -123,13 +119,14 @@ public class Output {
 	public static String makeDirName(String dataname, String hdfs, int executors, int exeCores, int seed, int os){
 
 		String path = "";
+		String sep = File.separator;
 		//HDFS
 		if(os == Consts.WINDOWS){
 			path = System.getProperty("user.dir");
-			path += "\\result_" + dataname + "_e" + executors + "_c" + exeCores + "_" + seed;
+			path += sep + Consts.ROOTFOLDER +"_"+ dataname + "_e" + executors + "_c" + exeCores + "_" + seed;
 		}
 		else{
-			path = hdfs +  "/result_" + dataname + "_e" + executors + "_c" + exeCores + "_" + seed;
+			path = hdfs + sep + Consts.ROOTFOLDER +"_"+ dataname + "_e" + executors + "_c" + exeCores + "_" + seed;
 		}
 
 		return path;
@@ -138,15 +135,16 @@ public class Output {
 	public static String makeDir(String dataname, String hdfs, int executors, int exeCores, int seed, int os){
 
 		String path = "";
+		String sep = File.separator;
 		//HDFS
 		if(os == Consts.WINDOWS){
 			path = System.getProperty("user.dir");
-			path += "\\result_" + dataname + "_e" + executors + "_c" + exeCores + "_" + seed;
+			path += sep + Consts.ROOTFOLDER +"_"+ dataname + "_e" + executors + "_c" + exeCores + "_" + seed;
 			File newdir = new File(path);
 			newdir.mkdir();
 		}
 		else{
-			path = hdfs +  "/result_" + dataname + "_e" + executors + "_c" + exeCores + "_" + seed;
+			path = hdfs + sep + Consts.ROOTFOLDER +"_"+ dataname + "_e" + executors + "_c" + exeCores + "_" + seed;
 			Path hdfsPath = new Path( path );
 
 			Configuration conf = new Configuration();
@@ -176,29 +174,30 @@ public class Output {
 
 	public static void makeDirRule(String dir, int os){
 
+		String sep = File.separator;
 		//HDFS
 		if(os == Consts.UNIX){
-			makeDirHDFS(dir + "/ruleset");
-			makeDirHDFS(dir + "/vecset");
-			makeDirHDFS(dir + "/solution");
-			makeDirHDFS(dir + "/write");
+			makeDirHDFS(dir + sep + Consts.RULESET);
+			makeDirHDFS(dir + sep + Consts.VECSET);
+			makeDirHDFS(dir + sep + Consts.SOLUTION);
+			makeDirHDFS(dir + sep + Consts.OTHERS);
 
 		}
 		else{
 			String path;
-			path = dir + "\\ruleset";
+			path = dir + sep + Consts.RULESET;
 			File newdir = new File(path);
 			newdir.mkdir();
 
-			path = dir + "\\vecset";
+			path = dir + sep + Consts.VECSET;
 			File newdir2 = new File(path);
 			newdir2.mkdir();
 
-			path = dir + "\\solution";
+			path = dir + sep + Consts.SOLUTION;
 			File newdir3 = new File(path);
 			newdir3.mkdir();
 
-			path = dir + "\\write";
+			path = dir + sep + Consts.OTHERS;
 			File newdir4 = new File(path);
 			newdir4.mkdir();
 		}
