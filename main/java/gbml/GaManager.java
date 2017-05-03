@@ -18,84 +18,80 @@ import nsga2.Nsga2;
 
 public class GaManager {
 
-	Classifier divideHyb;
+	PopulationManager populationManager;
 
-	Nsga2 nsg;
+	Nsga2 nsga2;
 
-	Moead moe;
+	Moead moead;
 
 	MersenneTwisterFast rnd;
 
-	Dataset<Row> df;
+	Dataset<Row> trainData;
 
-	int way = Consts.SECOND_OBJECTIVE_TYPE;
+	int secondObjType = Consts.SECOND_OBJECTIVE_TYPE;
 
-	ResultMaster result;
+	ResultMaster resultMaster;
 
-	int objectives;
-	long GenNum;
+	int objectiveNum;
+	long generationNum;
 
-	int func;
-	int popSize;
+	int emoType;
+	int populationSize;
 
-	public static final int Parent = 1;
-	public static final int Son = 0;
+	public static final int PARENT = 1;
+	public static final int OFF_SPRING = 0;
 
 
-	public GaManager( int popSize, Classifier divideHyb, Nsga2 nsga2, Moead sai ,MersenneTwisterFast rnd,
-				int objectives,int gen, Dataset<Row> df, int func, ResultMaster res) {
+	public GaManager( int popSize, PopulationManager populationManager, Nsga2 nsga2, Moead moead, MersenneTwisterFast rnd,
+				int objectiveNum, int generationNum, Dataset<Row> trainData, int emoType, ResultMaster resultMaster) {
 
-		this.divideHyb = divideHyb;
-		nsg = nsga2;
-		moe = sai;
+		this.populationManager = populationManager;
+		this.nsga2 = nsga2;
+		this.moead = moead;
 
-		this.df = df;
+		this.trainData = trainData;
 
-		this.result = res;
+		this.resultMaster = resultMaster;
 
-		this.objectives = objectives;
-		this.GenNum = gen;
-		this.func = func;
-		this.popSize = popSize;
+		this.objectiveNum = objectiveNum;
+		this.generationNum = generationNum;
+		this.emoType = emoType;
+		this.populationSize = popSize;
 
 	}
 
-	public void GAini(DataSetInfo data) {
-		Evoluation_Parent(data, divideHyb);
-		if (objectives != 1 && func == 0){
-			nsg.DisideRank(divideHyb.pitsRules);
-		}
-	}
+	public void gaFrame(DataSetInfo traData, int repeat, int cv){
 
-	public void GAFrame(DataSetInfo traData, int repeat, int cv){
-
-		//初期個体群
-		GAini(traData);
+		//初期個体群評価
+		parentEvaluation(traData, populationManager);
 
 		//MOEAD初期化 （２目的のみ）
-		if(func > 0){
-			moe.ini();
-			moe.inidvi(divideHyb.pitsRules);
+		if(emoType > 0){
+			moead.ini();
+			moead.inidvi(populationManager.currentRuleSets);
+		}
+		else if(objectiveNum != 1 && emoType == 0){
+			nsga2.calcRank(populationManager.currentRuleSets);
 		}
 
 		boolean isNewGen = Consts.DO_LOG_PER_LOG;
 
-		for (int gen = 0; gen < GenNum; gen++) {
+		for (int gen_i = 0; gen_i < generationNum; gen_i++) {
 
-			if(gen % Consts.PER_SHOW_GENERATION_NUM == 0){
+			if(gen_i % Consts.PER_SHOW_GENERATION_NUM == 0){
 				System.out.print(".");
 			}
 
 			if(isNewGen){		//途中結果保持（テストデータは無理）
-				genCheck(gen, repeat, cv);
+				genCheck(gen_i, repeat, cv);
 			}
 
 			//GA操作
-			if(func == 0||objectives == 1){
-				GAStartNS(traData, gen);
+			if(emoType == 0||objectiveNum == 1){
+				GAStartNS(traData, gen_i);
 
 			}else{
-				GAStartMO(traData, gen);
+				GAStartMO(traData, gen_i);
 			}
 		}
 	}
@@ -111,128 +107,130 @@ public class GaManager {
 		){
 
 		RuleSet bestb;
-		bestb = bestGenCalc();
+		bestb = calcBestRuleSet();
 		double trat = bestb.getMissRate();
 		double tstt = bestb.GetTestMissRate();
 		double numr = bestb.getRuleNum();
 		double lengtht = bestb.getRuleLength();
-		result.writeBestLog(trat, tstt, numr, lengtht, gen+1, repeat, cv);
+		resultMaster.writeBestLog(trat, tstt, numr, lengtht, gen+1, repeat, cv);
 
 		}
 	}
 
 	public void GAStartNS(DataSetInfo data, int gen) {
 
-		GeneticOperation();
-		Delete();
+		geneticOperation();
+		deleteUnnecessaryRules();
 
-		Evoluation_Child(data, divideHyb);
+		offspringEvaluation(data, populationManager);
 
-		if(objectives == 1){
-			oneObjUpdate();
+		if(objectiveNum == 1){
+			populationUpdateOfSingleObj();
 		}
 		else{
-			nsg.GenChange(divideHyb);
+			nsga2.populationUpdate(populationManager);
 		}
 
 	}
 
 	public void GAStartMO(DataSetInfo data, int gen) {
 
-		for(int i = 0;i < divideHyb.pitsRules.size(); i++){
-			divideHyb.pitsRules.get(i).setSize(data.DataSize);
+		for(int i = 0;i < populationManager.currentRuleSets.size(); i++){
+			populationManager.currentRuleSets.get(i).setSize(data.DataSize);
 		}
 		List<Integer> UseVecNums = new ArrayList<Integer>();
-		for (int i = 0; i < popSize; i++) {
+		for (int i = 0; i < populationSize; i++) {
 			UseVecNums.add(i);
 		}
 		//Gmethod.shuffle(UseVecNums, rnd);
 
-		divideHyb.newPitsRules.clear();
-		divideHyb.addNewPits(popSize);
+		populationManager.newRuleSets.clear();
+		populationManager.addNewPits(populationSize);
 
-		for (int i = 0; i < popSize; i++) {
+		for (int i = 0; i < populationSize; i++) {
 
 			int nowVec = UseVecNums.get(i);
 
-			divideHyb.pitsCrossRam(nowVec, popSize, moe);
-			divideHyb.pitsMutation(nowVec);
-			divideHyb.micGA(nowVec, df);
+			populationManager.crossOverRandom(nowVec, populationSize, moead);
+			populationManager.newRuleSetMutation(nowVec);
+			populationManager.michiganOperation(nowVec, trainData);
 
-			divideHyb.newPitsRules.get(nowVec).removeRule();
-			divideHyb.newPitsRules.get(nowVec).EvoluationOne(data, df, objectives, way);
+			populationManager.newRuleSets.get(nowVec).removeRule();
+			populationManager.newRuleSets.get(nowVec).EvoluationOne(data, trainData, objectiveNum, secondObjType);
 			//EvoluationOne(data, divideHyb.newPitsRules.get(nowVec));
 
-			moe.updateReference(divideHyb.newPitsRules.get(nowVec));
-			moe.updateNeighbors(divideHyb.newPitsRules.get(nowVec), divideHyb.pitsRules,nowVec, func);
+			moead.updateReference(populationManager.newRuleSets.get(nowVec));
+			moead.updateNeighbors(populationManager.newRuleSets.get(nowVec), populationManager.currentRuleSets,nowVec, emoType);
 		}
 
 	}
 
-	public void Evoluation_Parent(DataSetInfo data, Classifier r){
+	void parentEvaluation(DataSetInfo dataSetInfo, PopulationManager popManager){
 
-		r.pitsRules	.parallelStream()
-					.forEach( rule -> rule.EvoluationOne(data, df, objectives, way) );
+		popManager.currentRuleSets	.parallelStream()
+					.forEach( rule -> rule.EvoluationOne(dataSetInfo, trainData, objectiveNum, secondObjType) );
+
 	}
 
-	public void Evoluation_Child(DataSetInfo data, Classifier r){
+	void offspringEvaluation(DataSetInfo dataSetInfo, PopulationManager popManager){
 
-		r.newPitsRules	.parallelStream()
-						.forEach( rule -> rule.EvoluationOne(data, df, objectives, way) );
+		popManager.newRuleSets	.parallelStream()
+						.forEach( rule -> rule.EvoluationOne(dataSetInfo, trainData, objectiveNum, secondObjType) );
+
 	}
 
-	public void Michigan() {
-		int size =  divideHyb.newPitsRules.size();
+	void michiganOpeAll() {
+		int size =  populationManager.newRuleSets.size();
 		for (int i = 0; i < size; i++) {
-			divideHyb.micGA(i, df);
+			populationManager.michiganOperation(i, trainData);
 		}
 	}
 
-	public void Delete() {
-		for (int i = 0; i < divideHyb.newPitsRules.size(); i++) {
-			divideHyb.newPitsRules.get(i).removeRule();
+	void deleteUnnecessaryRules() {
+		for (int i = 0; i < populationManager.newRuleSets.size(); i++) {
+			populationManager.newRuleSets.get(i).removeRule();
 		}
 	}
 
-	public void UniformCross() {
+	void crossOverAll() {
 
-		int length = divideHyb.pitsRules.size();
+		int length = populationManager.currentRuleSets.size();
 
 		//子個体初期化
-		divideHyb.newPitsRules.clear();
+		populationManager.newRuleSets.clear();
 
 		for (int s = 0; s < length; s++) {
-			divideHyb.newPitsCreat();
-			divideHyb.pitsCross(s, popSize);
-			divideHyb.pitsMutation(s);
+			populationManager.newRuleSetsInit();
+			populationManager.crossOver(s, populationSize);
+			populationManager.newRuleSetMutation(s);
 		}
 
 	}
 
-	public void GeneticOperation(){
+	void geneticOperation(){
 
-		int length = divideHyb.pitsRules.size();
-		divideHyb.newPitsRules.clear();
+		int length = populationManager.currentRuleSets.size();
+		populationManager.newRuleSets.clear();
 
 		for (int s = 0; s < length; s++) {
-			divideHyb.newPitsCreat();
-			divideHyb.pitsAndMic(s, popSize, df);
-			divideHyb.pitsMutation(s);
+			populationManager.newRuleSetsInit();
+			populationManager.crossOverAndMichiganOpe(s, populationSize, trainData);
+			populationManager.newRuleSetMutation(s);
 		}
 
 	}
 
-	public void oneObjUpdate() {
+	void populationUpdateOfSingleObj() {
 
-		Collections.sort(divideHyb.pitsRules, new PittsComparator());
-		Collections.sort(divideHyb.newPitsRules, new PittsComparator());
+		Collections.sort(populationManager.currentRuleSets, new PittsComparator());
+		Collections.sort(populationManager.newRuleSets, new PittsComparator());
 
 		ArrayList<RuleSet> temp = new ArrayList<RuleSet>();
 
-		StaticGeneralFunc.mergeSort(temp, divideHyb.pitsRules, divideHyb.newPitsRules);
+		StaticGeneralFunc.mergeSort(temp, populationManager.currentRuleSets, populationManager.newRuleSets);
 
-		divideHyb.pitsRules = new ArrayList<RuleSet>(temp);
-		divideHyb.newPitsRules.clear();
+		populationManager.currentRuleSets = new ArrayList<RuleSet>(temp);
+		populationManager.newRuleSets.clear();
 
 	}
 
@@ -245,18 +243,18 @@ public class GaManager {
 	}
 
 	//ベスト系
-	public RuleSet bestGenCalc() {
+	RuleSet calcBestRuleSet() {
 
 		RuleSet best;
-		best = new RuleSet(divideHyb.pitsRules.get(0));
-		if (objectives == 1) {
-			for (int i = 0; i < divideHyb.pitsRules.size(); i++) {
-				if (divideHyb.pitsRules.get(i).GetFitness(0) < best.GetFitness(0)) {
-					best = new RuleSet(divideHyb.pitsRules.get(i));
+		best = new RuleSet(populationManager.currentRuleSets.get(0));
+		if (objectiveNum == 1) {
+			for (int i = 0; i < populationManager.currentRuleSets.size(); i++) {
+				if (populationManager.currentRuleSets.get(i).GetFitness(0) < best.GetFitness(0)) {
+					best = new RuleSet(populationManager.currentRuleSets.get(i));
 				}
-				else if (divideHyb.pitsRules.get(i).GetFitness(0) == best.GetFitness(0)) {
-					if (divideHyb.pitsRules.get(i).getMissRate() < best.getMissRate()) {
-						best = new RuleSet(divideHyb.pitsRules.get(i));
+				else if (populationManager.currentRuleSets.get(i).GetFitness(0) == best.GetFitness(0)) {
+					if (populationManager.currentRuleSets.get(i).getMissRate() < best.getMissRate()) {
+						best = new RuleSet(populationManager.currentRuleSets.get(i));
 					}
 				}
 			}
@@ -264,15 +262,15 @@ public class GaManager {
 
 		else {
 
-			for (int i = 0; i < divideHyb.pitsRules.size(); i++) {
-				if (divideHyb.pitsRules.get(i).GetRank() == 0) {
-					if (divideHyb.pitsRules.get(i).getMissRate() < best.getMissRate()) {
-						best = new RuleSet(divideHyb.pitsRules.get(i));
+			for (int i = 0; i < populationManager.currentRuleSets.size(); i++) {
+				if (populationManager.currentRuleSets.get(i).GetRank() == 0) {
+					if (populationManager.currentRuleSets.get(i).getMissRate() < best.getMissRate()) {
+						best = new RuleSet(populationManager.currentRuleSets.get(i));
 					}
-					else if (divideHyb.pitsRules.get(i).getMissRate() == best.getMissRate()) {
-						if (divideHyb.pitsRules.get(i).getRuleNum() <= best.getRuleNum()) {
-							if (divideHyb.pitsRules.get(i).getRuleLength() <= best.getRuleLength()) {
-								best = new RuleSet(divideHyb.pitsRules.get(i));
+					else if (populationManager.currentRuleSets.get(i).getMissRate() == best.getMissRate()) {
+						if (populationManager.currentRuleSets.get(i).getRuleNum() <= best.getRuleNum()) {
+							if (populationManager.currentRuleSets.get(i).getRuleLength() <= best.getRuleLength()) {
+								best = new RuleSet(populationManager.currentRuleSets.get(i));
 							}
 						}
 					}
@@ -288,60 +286,63 @@ public class GaManager {
 
 	}
 
-	public RuleSet GetBestRuleSet(int objectives, Classifier all, ResultMaster res, DataSetInfo data, Dataset<Row> df, boolean isTest) {
+	public RuleSet calcBestRuleSet(int objectiveNum, PopulationManager popManager, ResultMaster resultMaster,
+									DataSetInfo testDataInfo, Dataset<Row> testData, boolean isTest) {
 
-		RuleSet best;
+		RuleSet bestRuleset;
 
-		for (int i = 0; i < all.pitsRules.size(); i++) {
+		for (int i = 0; i < popManager.currentRuleSets.size(); i++) {
 
 			double fitness = 0;
 
-			if(all.pitsRules.get(i).getRuleNum() != 0){
+			if(popManager.currentRuleSets.get(i).getRuleNum() != 0){
 
-				all.pitsRules.get(i).setNumAndLength();
+				popManager.currentRuleSets.get(i).setNumAndLength();
 
 				if(isTest){
-					double acc = (double) all.pitsRules.get(i).CalcAccuracyPalKai(df);
-					all.pitsRules.get(i).SetTestMissRate( ( acc / (double)data.DataSize ) * 100.0 );
+					double acc = (double) popManager.currentRuleSets.get(i).CalcAccuracyPalKai(testData);
+					popManager.currentRuleSets.get(i).SetTestMissRate( ( acc / (double)testDataInfo.DataSize ) * 100.0 );
 				}
 
-				all.pitsRules.get(i).setNumAndLength();
+				popManager.currentRuleSets.get(i).setNumAndLength();
 
-				if (objectives == 1) {
-					fitness = Consts.W1 * all.pitsRules.get(i).getMissRate() + Consts.W2 * all.pitsRules.get(i).getRuleNum() + Consts.W3 * all.pitsRules.get(i).getRuleLength();
-					all.pitsRules.get(i).SetFitness(fitness, 0);
-				} else if (objectives == 2) {
-					all.pitsRules.get(i).SetFitness(all.pitsRules.get(i).getMissRate(), 0);
-					all.pitsRules.get(i).SetFitness(all.pitsRules.get(i).out2obje(way), 1);
-				} else if (objectives == 3) {
-					all.pitsRules.get(i).SetFitness(all.pitsRules.get(i).getMissRate(), 0);
-					all.pitsRules.get(i).SetFitness(all.pitsRules.get(i).getRuleNum(), 1);
-					all.pitsRules.get(i).SetFitness(all.pitsRules.get(i).getRuleLength(), 2);
+				if (objectiveNum == 1) {
+					fitness = Consts.W1 * popManager.currentRuleSets.get(i).getMissRate()
+							+ Consts.W2 * popManager.currentRuleSets.get(i).getRuleNum()
+							+ Consts.W3 * popManager.currentRuleSets.get(i).getRuleLength();
+					popManager.currentRuleSets.get(i).SetFitness(fitness, 0);
+				} else if (objectiveNum == 2) {
+					popManager.currentRuleSets.get(i).SetFitness(popManager.currentRuleSets.get(i).getMissRate(), 0);
+					popManager.currentRuleSets.get(i).SetFitness(popManager.currentRuleSets.get(i).out2obje(secondObjType), 1);
+				} else if (objectiveNum == 3) {
+					popManager.currentRuleSets.get(i).SetFitness(popManager.currentRuleSets.get(i).getMissRate(), 0);
+					popManager.currentRuleSets.get(i).SetFitness(popManager.currentRuleSets.get(i).getRuleNum(), 1);
+					popManager.currentRuleSets.get(i).SetFitness(popManager.currentRuleSets.get(i).getRuleLength(), 2);
 				} else {
 					System.out.println("not be difined");
 				}
 			}
 
 			else {
-				for (int o = 0; o < objectives; o++) {
+				for (int o = 0; o < objectiveNum; o++) {
 					fitness = 100000;
-					all.pitsRules.get(i).SetFitness(fitness, o);
+					popManager.currentRuleSets.get(i).SetFitness(fitness, o);
 				}
 			}
 		}
 
 
-		best = new RuleSet(all.pitsRules.get(0));
-		if (objectives == 1) {
-			for (int i = 0; i < all.pitsRules.size(); i++) {
+		bestRuleset = new RuleSet(popManager.currentRuleSets.get(0));
+		if (objectiveNum == 1) {
+			for (int i = 0; i < popManager.currentRuleSets.size(); i++) {
 
-				if (all.pitsRules.get(i).GetFitness(0) < best.GetFitness(0)) {
-					best = new RuleSet(all.pitsRules.get(i));
+				if (popManager.currentRuleSets.get(i).GetFitness(0) < bestRuleset.GetFitness(0)) {
+					bestRuleset = new RuleSet(popManager.currentRuleSets.get(i));
 				}
 
-				else if (all.pitsRules.get(i).GetFitness(0) == best.GetFitness(0)) {
-					if (all.pitsRules.get(i).getMissRate() < best.getMissRate()) {
-						best = new RuleSet(all.pitsRules.get(i));
+				else if (popManager.currentRuleSets.get(i).GetFitness(0) == bestRuleset.GetFitness(0)) {
+					if (popManager.currentRuleSets.get(i).getMissRate() < bestRuleset.getMissRate()) {
+						bestRuleset = new RuleSet(popManager.currentRuleSets.get(i));
 					}
 				}
 
@@ -351,25 +352,25 @@ public class GaManager {
 		else {
 
 			//DisideRank(all.pitsRules);
-			for (int i = 0; i < all.pitsRules.size(); i++) {
-				int claNum = all.pitsRules.get(i).mulCla();		//そのルール集合の識別するクラス数
+			for (int i = 0; i < popManager.currentRuleSets.size(); i++) {
+				int claNum = popManager.currentRuleSets.get(i).mulCla();		//そのルール集合の識別するクラス数
 
-				if (all.pitsRules.get(i).GetRank() == 0) {
+				if (popManager.currentRuleSets.get(i).GetRank() == 0) {
 
-					res.setSolution(all.pitsRules.get(i).out2obje(way),
-									all.pitsRules.get(i).GetFitness(0),
-									all.pitsRules.get(i).GetTestMissRate(),
-									out2objeAnother(all.pitsRules.get(i), way),
+					resultMaster.setSolution(popManager.currentRuleSets.get(i).out2obje(secondObjType),
+									popManager.currentRuleSets.get(i).GetFitness(0),
+									popManager.currentRuleSets.get(i).GetTestMissRate(),
+									out2objeAnother(popManager.currentRuleSets.get(i), secondObjType),
 									claNum);
 
 
-					if (all.pitsRules.get(i).GetFitness(0) < best.GetFitness(0)) {
-						best = new RuleSet(all.pitsRules.get(i));
+					if (popManager.currentRuleSets.get(i).GetFitness(0) < bestRuleset.GetFitness(0)) {
+						bestRuleset = new RuleSet(popManager.currentRuleSets.get(i));
 					}
-					else if (all.pitsRules.get(i).GetFitness(0) == best.GetFitness(0)) {
-						if (all.pitsRules.get(i).GetFitness(1) <= best.GetFitness(1)) {
-							if (all.pitsRules.get(i).getRuleLength() <= best.getRuleLength()) {
-								best = new RuleSet(all.pitsRules.get(i));
+					else if (popManager.currentRuleSets.get(i).GetFitness(0) == bestRuleset.GetFitness(0)) {
+						if (popManager.currentRuleSets.get(i).GetFitness(1) <= bestRuleset.GetFitness(1)) {
+							if (popManager.currentRuleSets.get(i).getRuleLength() <= bestRuleset.getRuleLength()) {
+								bestRuleset = new RuleSet(popManager.currentRuleSets.get(i));
 							}
 						}
 					}
@@ -379,13 +380,13 @@ public class GaManager {
 
 		}
 		if(isTest){
-			double accTest = (double) best.CalcAccuracyPalKai(df)	/ data.DataSize;
-			best.SetTestMissRate((1 - accTest) * 100);
+			double accTest = (double) bestRuleset.CalcAccuracyPalKai(testData)	/ testDataInfo.DataSize;
+			bestRuleset.SetTestMissRate((1 - accTest) * 100);
 		}
 
-		best.setNumAndLength();
+		bestRuleset.setNumAndLength();
 
-		return best;
+		return bestRuleset;
 
 	}
 

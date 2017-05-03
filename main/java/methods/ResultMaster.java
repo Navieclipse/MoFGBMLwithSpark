@@ -3,7 +3,7 @@ package methods;
 import java.io.File;
 import java.util.ArrayList;
 
-import gbml.Classifier;
+import gbml.PopulationManager;
 import gbml.Consts;
 import gbml.RuleSet;
 
@@ -102,21 +102,21 @@ public class ResultMaster {
 	}
 
 	/******************************************************************************/
-	public void outputRules(Classifier ruleset, int cc, int rr){
+	public void outputRules(PopulationManager ruleset, int cc, int rr){
 
 		String sep = File.separator;
 		String fileName = nameDir + sep + Consts.RULESET + sep + "rules"  +"_"+rr+"_"+cc+ ".txt";
 
 		ArrayList<String> strs = new ArrayList<String>();
-		for(int i=0;i<ruleset.pitsRules.size();i++){
-			strs.add( "rule " + i + " " + ruleset.pitsRules.get(i).getVecNum() );
-        	for(int f=0;f<ruleset.pitsRules.get(i).getMics().size();f++){
+		for(int i=0;i<ruleset.currentRuleSets.size();i++){
+			strs.add( "rule " + i + " " + ruleset.currentRuleSets.get(i).getVecNum() );
+        	for(int f=0;f<ruleset.currentRuleSets.get(i).getMics().size();f++){
     			String str = "";
-        		for(int g=0;g<ruleset.pitsRules.get(i).getMics().get(f).getNdim();g++){
-		        	str += ruleset.pitsRules.get(i).getMics().get(f).getRule(g) + " " ;
+        		for(int g=0;g<ruleset.currentRuleSets.get(i).getMics().get(f).getNdim();g++){
+		        	str += ruleset.currentRuleSets.get(i).getMics().get(f).getRule(g) + " " ;
 		        }
-        		str += ruleset.pitsRules.get(i).getMics().get(f).getConc() + " ";
-        		str += ruleset.pitsRules.get(i).getMics().get(f).getCf();
+        		str += ruleset.currentRuleSets.get(i).getMics().get(f).getConc() + " ";
+        		str += ruleset.currentRuleSets.get(i).getMics().get(f).getCf();
         		strs.add( str );
 	        }
         }
@@ -125,18 +125,18 @@ public class ResultMaster {
 		Output.writeln(fileName, array, os);
 	}
 
-	public void outputVec(Classifier ruleset, int cc, int rr){
+	public void outputVec(PopulationManager ruleset, int cc, int rr){
 
 		String sep = File.separator;
 		String fileName = nameDir + sep + Consts.VECSET + sep + "vecs_"+rr+"_"+cc+ ".txt";
 
 		ArrayList<String> strs = new ArrayList<String>();
-		for(int i=0;i<ruleset.pitsRules.size();i++){
-			strs.add( i + " " + ruleset.pitsRules.get(i).getVecNum()
-					+" "+ ruleset.pitsRules.get(i).getMissRate()
-					+" "+ ruleset.pitsRules.get(i).GetTestMissRate()
-					+" "+ ruleset.pitsRules.get(i).getRuleNum()
-					+" "+ ruleset.pitsRules.get(i).getRuleLength() );
+		for(int i=0;i<ruleset.currentRuleSets.size();i++){
+			strs.add( i + " " + ruleset.currentRuleSets.get(i).getVecNum()
+					+" "+ ruleset.currentRuleSets.get(i).getMissRate()
+					+" "+ ruleset.currentRuleSets.get(i).GetTestMissRate()
+					+" "+ ruleset.currentRuleSets.get(i).getRuleNum()
+					+" "+ ruleset.currentRuleSets.get(i).getRuleLength() );
 	    }
 
 		String[] array = (String[]) strs.toArray(new String[0]);

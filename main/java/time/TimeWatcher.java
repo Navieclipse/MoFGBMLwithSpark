@@ -1,8 +1,8 @@
 package time;
 
-public class TimeWatch {
+public class TimeWatcher {
 
-	public TimeWatch(){}
+	public TimeWatcher(){}
 
 	double start;
 	double end;

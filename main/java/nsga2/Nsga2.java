@@ -5,19 +5,19 @@ import static java.util.Comparator.*;
 import java.util.ArrayList;
 
 import gbml.Consts;
+import gbml.PopulationManager;
 import gbml.RuleSet;
-import gbml.Classifier;
 import methods.MersenneTwisterFast;
 
 public class Nsga2 {
 
 	public Nsga2(int objectives, MersenneTwisterFast rand){
-		this.objectives = objectives;
+		this.objectiveNum = objectives;
 		this.rnd = rand;
 	}
 
 	//メンバ
-	int objectives;
+	int objectiveNum;
 
 	MersenneTwisterFast rnd;
 
@@ -25,58 +25,59 @@ public class Nsga2 {
 
 	//メソッド
 
-	public void GenChange(Classifier ruleset) {
+	public void populationUpdate(PopulationManager popManaer) {
 
-		ruleset.allPitsRules.clear();
-		int lengthSize =ruleset.pitsRules.size();
-		ruleset.allPitsRules.addAll(ruleset.pitsRules);
-		ruleset.allPitsRules.addAll(ruleset.newPitsRules);
-		ruleset.pitsRules.clear();
-		ruleset.newPitsRules.clear();
+		popManaer.margeRuleSets.clear();
+		int popSize =popManaer.currentRuleSets.size();
+
+		popManaer.margeRuleSets.addAll(popManaer.currentRuleSets);
+		popManaer.margeRuleSets.addAll(popManaer.newRuleSets);
+		popManaer.currentRuleSets.clear();
+		popManaer.newRuleSets.clear();
 
 		//ランクとCD計算
-		DisideRank(ruleset.allPitsRules);
+		calcRank(popManaer.margeRuleSets);
 
 		//ランクとCDでソート
-		ruleset.allPitsRules.sort(comparing(RuleSet::GetRank).reversed() //打ち消しのリバース
+		popManaer.margeRuleSets.sort(comparing(RuleSet::GetRank).reversed() //打ち消しのリバース
 									.thenComparing(RuleSet::GetCrowding).reversed());
 
 		//次世代に個体を格納
-		for (int i = 0; i < lengthSize; i++) {
-			ruleset.pitsRules.add(ruleset.allPitsRules.get(i));
+		for (int i = 0; i < popSize; i++) {
+			popManaer.currentRuleSets.add(popManaer.margeRuleSets.get(i));
 		}
 
 	}
 
-	public void DisideRank(ArrayList<RuleSet> rules) {
+	public void calcRank(ArrayList<RuleSet> ruleSets) {
 
 		rankedList.clear();
-		int[] n_i = new int[rules.size()];
+		int[] n_i = new int[ruleSets.size()];
 		@SuppressWarnings("unchecked")
-		ArrayList<Integer>[] S_i = new ArrayList[rules.size()];
+		ArrayList<Integer>[] S_i = new ArrayList[ruleSets.size()];
 		ArrayList<Integer> F_i = new ArrayList<Integer>();
 
-		for (int p = 0; p < rules.size(); p++) {
+		for (int p = 0; p < ruleSets.size(); p++) {
 			n_i[p] = 0;
 			S_i[p] = new ArrayList<Integer>();
 
-			for (int q = 0; q < rules.size(); q++) {
+			for (int q = 0; q < ruleSets.size(); q++) {
 				if (p != q) {
-					if (dominate(p, q, rules)) {
+					if (isDominate(p, q, ruleSets)) {
 						S_i[p].add(q);
-					} else if (dominate(q, p, rules)) {
+					} else if (isDominate(q, p, ruleSets)) {
 						n_i[p]++;
 					}
 				}
 			}
 			if (n_i[p] == 0) {
-				rules.get(p).SetRank(0);
-				rankedList.add(rules.get(p));
+				ruleSets.get(p).SetRank(0);
+				rankedList.add(ruleSets.get(p));
 				F_i.add(p);
 			}
 		}
 
-		int size = rules.size();
+		int size = ruleSets.size();
 		double FirstMax = 0;
 		double FirstMin = 100;
 		boolean isNormalize = Consts.DO_CD_NORMALIZE;
@@ -84,7 +85,7 @@ public class Nsga2 {
 		ArrayList<Double> nowFirst = new ArrayList<Double>();
 		if(isNormalize){
 			for(int i=0; i<size; i++){
-				nowFirst.add(rules.get(i).GetFitness(0));
+				nowFirst.add(ruleSets.get(i).GetFitness(0));
 				if(FirstMax < nowFirst.get(i)){
 					FirstMax = nowFirst.get(i);
 				}
@@ -100,16 +101,16 @@ public class Nsga2 {
 
 		}else{
 			for(int i=0; i<size; i++){
-				firstObj.add(rules.get(i).GetFitness(0));
+				firstObj.add(ruleSets.get(i).GetFitness(0));
 			}
 		}
 
 		for(int i=0; i<size; i++){
-			rules.get(i).setFirstObj(firstObj.get(i));
+			ruleSets.get(i).setFirstObj(firstObj.get(i));
 		}
 
 		int i = 0;
-		CalcDistance(rankedList);
+		calcDistance(rankedList);
 		rankedList.clear();
 		ArrayList<Integer> Q = new ArrayList<Integer>();
 		while (F_i.size() != 0) {
@@ -118,15 +119,15 @@ public class Nsga2 {
 					n_i[S_i[F_i.get(p)].get(q)] -= 1;
 					if (n_i[S_i[F_i.get(p)].get(q)] == 0) {
 
-						rules.get( S_i[F_i.get(p)].get(q) ).SetRank(i + 1);
+						ruleSets.get( S_i[F_i.get(p)].get(q) ).SetRank(i + 1);
 						Q.add(S_i[F_i.get(p)].get(q));
-						rankedList.add(rules.get( S_i[F_i.get(p)].get(q) ));
+						rankedList.add(ruleSets.get( S_i[F_i.get(p)].get(q) ));
 
 					}
 				}
 			}
 			if (rankedList.size() != 0)
-				CalcDistance(rankedList);
+				calcDistance(rankedList);
 			rankedList.clear();
 			i++;
 			F_i.clear();
@@ -137,60 +138,60 @@ public class Nsga2 {
 		}
 	}
 
-	boolean dominate(int p, int q, ArrayList<RuleSet> rules) {
+	boolean isDominate(int p, int q, ArrayList<RuleSet> ruleSets) {
 		// minimize, fitness[0] is maximize
 		// if p dominate q then true else false
 		boolean ans = false;
 		int i = 1;
-		for (int o = 0; o < objectives; o++) {
-			if (i * rules.get(p).GetFitness(o) > i * rules.get(q).GetFitness(o)) {
+		for (int o = 0; o < objectiveNum; o++) {
+			if (i * ruleSets.get(p).GetFitness(o) > i * ruleSets.get(q).GetFitness(o)) {
 				ans = false;
 				break;
 			}
-			else if (i * rules.get(p).GetFitness(o) < i * rules.get(q).GetFitness(o)) {
+			else if (i * ruleSets.get(p).GetFitness(o) < i * ruleSets.get(q).GetFitness(o)) {
 				ans = true;
 			}
 		}
 		return ans;
 	}
 
-	void CalcDistance(ArrayList<RuleSet> list) {
-		int size = list.size();
+	void calcDistance(ArrayList<RuleSet> ruleSets) {
+		int size = ruleSets.size();
 		for (int i = 0; i < size; i++) {
-			list.get(i).SetCrowding(0);
+			ruleSets.get(i).SetCrowding(0);
 		}
 
-		for (int o = 0; o < objectives; o++) {
+		for (int o = 0; o < objectiveNum; o++) {
 
 			for (int i = 1; i < size; i++) {
 				for (int j = i; j >= 1
-						&& list.get(j - 1).getFirstObj(o) > list.get(j)
+						&& ruleSets.get(j - 1).getFirstObj(o) > ruleSets.get(j)
 								.getFirstObj(o); j--) {
-					RuleSet tmp = list.get(j);
-					list.set(j, list.get(j - 1));
-					list.set(j - 1, tmp);
+					RuleSet tmp = ruleSets.get(j);
+					ruleSets.set(j, ruleSets.get(j - 1));
+					ruleSets.set(j - 1, tmp);
 				}
 			}
 
-			list.get(0).SetCrowding(Double.POSITIVE_INFINITY);
+			ruleSets.get(0).SetCrowding(Double.POSITIVE_INFINITY);
 			//２目的のときにあると，Infinity増える
 			//list.get(size - 1).SetCrowding(Double.POSITIVE_INFINITY);
 
-			double min = list.get(0).getFirstObj(o);
-			double max = list.get(size - 1).getFirstObj(o);
+			double min = ruleSets.get(0).getFirstObj(o);
+			double max = ruleSets.get(size - 1).getFirstObj(o);
 			double maxmin = max - min;
 			if (maxmin == 0) {
 				for (int i = 1; i < size - 1; i++) {
 					double distance = 0;
-					list.get(i).SetCrowding(
-							list.get(i).GetCrowding() + distance);
+					ruleSets.get(i).SetCrowding(
+							ruleSets.get(i).GetCrowding() + distance);
 				}
 			} else {
 				for (int i = 1; i < size - 1; i++) {
-					double distance = (Math.abs(list.get(i + 1).getFirstObj(o)
-							- list.get(i - 1).getFirstObj(o)) / maxmin);
-					list.get(i).SetCrowding(
-							list.get(i).GetCrowding() + distance);
+					double distance = (Math.abs(ruleSets.get(i + 1).getFirstObj(o)
+							- ruleSets.get(i - 1).getFirstObj(o)) / maxmin);
+					ruleSets.get(i).SetCrowding(
+							ruleSets.get(i).GetCrowding() + distance);
 				}
 			}
 		}

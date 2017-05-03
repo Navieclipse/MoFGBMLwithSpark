@@ -76,15 +76,17 @@ public class Consts {
 
 
     public String getStaticValues(){
+
     	StringBuilder sb = new StringBuilder();
-        sb.append("Class: " + this.getClass().getCanonicalName() + "\n");
-        sb.append("Settings:\n");
+    	String sep = System.lineSeparator();
+        sb.append("Class: " + this.getClass().getCanonicalName() + sep);
+        sb.append("Settings:" + sep);
         for (Field field : this.getClass().getDeclaredFields()) {
             try {
                 field.setAccessible(true);
-                sb.append(field.getName() + " = " + field.get(this) + "\n");
+                sb.append(field.getName() + " = " + field.get(this) + sep);
             } catch (IllegalAccessException e) {
-                sb.append(field.getName() + " = " + "access denied\n");
+                sb.append(field.getName() + " = " + "access denied" + sep);
             }
         }
 

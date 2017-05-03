@@ -108,7 +108,7 @@ public class Output {
 	}
 
 	//パラメータ出力用
-	public static void writeExp(String name ,String dir ,String st, int os){
+	public static void writeSetting(String name ,String dir ,String st, int os){
 
 		String sep = File.separator;
 		String fileName = dir + sep + name + ".txt";
@@ -176,12 +176,11 @@ public class Output {
 
 		String sep = File.separator;
 		//HDFS
-		if(os == Consts.UNIX){
+		if(os == Consts.HDFS){
 			makeDirHDFS(dir + sep + Consts.RULESET);
 			makeDirHDFS(dir + sep + Consts.VECSET);
 			makeDirHDFS(dir + sep + Consts.SOLUTION);
 			makeDirHDFS(dir + sep + Consts.OTHERS);
-
 		}
 		else{
 			String path;

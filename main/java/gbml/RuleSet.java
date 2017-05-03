@@ -219,7 +219,13 @@ public class RuleSet implements java.io.Serializable{
 			missRate = 1000000;
 		}
 		else{
-			double ans = CalcAccuracyPalKai(df);
+			double ans = 0;
+			boolean doHeuris = Consts.DO_HEURISTIC_GENERATION_IN_GA;
+			if(doHeuris){
+				CalcAccuracyPal(df);
+			}else{
+				CalcAccuracyPalKai(df);
+			}
 			double acc = ans / data.getDataSize();
 			missRate = ( acc * 100.0 );
 			fitness = StaticFuzzyFunc.fitness(missRate, (double)ruleNum, (double)ruleLength);
@@ -596,7 +602,14 @@ public class RuleSet implements java.io.Serializable{
 	public void EvoluationOne(DataSetInfo data, Dataset<Row> df, int objectives, int way) {
 
 		if (getRuleNum() != 0) {
-			double ans = CalcAccuracyPalKai(df);
+			double ans = 0;
+			boolean doHeuris = Consts.DO_HEURISTIC_GENERATION_IN_GA;
+			if(doHeuris){
+				CalcAccuracyPal(df);
+			}else{
+				CalcAccuracyPalKai(df);
+			}
+
 			double acc = ans / data.getDataSize();
 			SetMissRate( acc * 100.0 );
 			setNumAndLength();
@@ -631,7 +644,7 @@ public class RuleSet implements java.io.Serializable{
 
 	}
 
-	public int CalcAccuracyPalKai(Dataset<Row> df) {
+	public int CalcAccuracyPal(Dataset<Row> df) {
 
 		dfmisspat = df.filter( line -> CalcWinClassPalSpark(line) != line.getInt(Ndim) );
 		MissPatNum = (int)dfmisspat.count();
@@ -639,35 +652,43 @@ public class RuleSet implements java.io.Serializable{
 		return MissPatNum;
 	}
 
-	public int CalcWinClassPalSpark(Row lines){
+	public int CalcAccuracyPalKai(Dataset<Row> df) {
 
-		int ans = 0;
-		int kati = 0;
+		MissPatNum = (int)df.filter( line -> CalcWinClassPalSpark(line) != line.getInt(Ndim) ).count();
 
-		int noGameSign = 0;
-		double maax = 0;
+		return MissPatNum;
+	}
 
-		for(int r=0;r<micRules.size();r++){
-			double seki = micRules.get(r).getCf() * micRules.get(r).calcAdaptationPureSpark(lines);
+	public int CalcWinClassPalSpark(Row line){
 
-			if (maax < seki){
-				maax = seki;
-				kati = r;
-				noGameSign = 0;
+		int answerClass = 0;
+		int winClassIdx = 0;
+
+		int ruleSize = micRules.size();
+		boolean canClassify = true;
+		double maxMul = 0.0;
+		for(int r=0; r<ruleSize; r++){
+
+			double multiValue = micRules.get(r).getCf() * micRules.get(r).calcAdaptationPureSpark(line);
+
+			if (maxMul < multiValue){
+				maxMul = multiValue;
+				winClassIdx = r;
+				canClassify = true;
 			}
-			else if(maax == seki && micRules.get(r).getConc() != micRules.get(kati).getConc()){
-				noGameSign = 1;
+			else if( maxMul == multiValue && micRules.get(r).getConc() != micRules.get(winClassIdx).getConc() ){
+				canClassify = false;
 			}
 
 		}
-		if(noGameSign==0 && maax != 0 ){
-			ans = micRules.get(kati).getConc();
+		if( canClassify && maxMul != 0.0 ){
+			answerClass = micRules.get(winClassIdx).getConc();
 		}
 		else{
-			ans = -1;
+			answerClass = -1;
 		}
 
-		return ans;
+		return answerClass;
 	}
 
 	public void SetTestMissRate(double m){
