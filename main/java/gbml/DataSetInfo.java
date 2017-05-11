@@ -61,6 +61,10 @@ public class DataSetInfo implements java.io.Serializable{
 		return patterns;
 	}
 
+	public Pattern getPattern(int index){
+		return patterns.get(index);
+	}
+
 	public int getNdim(){
 		return Ndim;
 	}

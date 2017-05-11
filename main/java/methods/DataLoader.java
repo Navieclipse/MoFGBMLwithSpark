@@ -17,7 +17,7 @@ public class DataLoader {
 	public static void inputFile(DataSetInfo data, String fileName){
 
 		List<Double[]> lines = new ArrayList<Double[]>();
-		try (Stream<String> line = Files.lines(Paths.get(fileName))) {
+		try ( Stream<String> line = Files.lines(Paths.get(fileName)) ) {
 		    lines =
 		    	line.map(s ->{
 		    	String[] numbers = s.split(",");
@@ -28,7 +28,7 @@ public class DataLoader {
 		    		if (numbers[i].matches("^([1-9][0-9]*|0)(.[0-9]+)?$") ){
 		    			nums[i] = Double.parseDouble(numbers[i]);
 		    		}else{
-		    			nums[i] = 0.0;	
+		    			nums[i] = 0.0;
 		    		}
 				}
 		    	return nums;

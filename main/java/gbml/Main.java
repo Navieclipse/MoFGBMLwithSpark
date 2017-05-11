@@ -1,6 +1,7 @@
 package gbml;
 
 import java.util.Date;
+import java.util.concurrent.ForkJoinPool;
 
 import javax.management.JMException;
 
@@ -11,6 +12,7 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.storage.StorageLevel;
 
 import methods.CommandLineFunc;
+import methods.DataLoader;
 import methods.MersenneTwisterFast;
 import methods.OsSpecified;
 import methods.Output;
@@ -36,7 +38,7 @@ public class Main {
 		}
 		/******************************************************************************/
 		//コマンドライン引数が足りてるかどうか
-		CommandLineFunc.lessArgs(args, 13);
+		CommandLineFunc.lessArgs(args, 14);
 
 	    String dataName = args[0];
 	    int generationNum = Integer.parseInt(args[1]);
@@ -63,7 +65,13 @@ public class Main {
 	    /******************************************************************************/
 	    //分散環境かどうか
 	    boolean isDistributed = Boolean.parseBoolean(args[12]);
-	    if (isDistributed) osType = Consts.HDFS;
+	    boolean isSpark = true;
+	    if (isDistributed){
+	    	osType = Consts.HDFS;
+	    }
+	    else {
+	    	isSpark = Boolean.parseBoolean(args[13]);
+	    }
 
 	    /******************************************************************************/
 	    //HDFSにおけるフォルダ
@@ -79,7 +87,7 @@ public class Main {
 	    if(osType==Consts.HDFS) executorCoreNum = Integer.parseInt(args[15]);
 
 	    //1回ずつ分ける（メモリのうまい使い方が不明）
-	    boolean isOnceExe = true;
+	    boolean isOnceExe = false;
 	    if(osType==Consts.HDFS) isOnceExe = Boolean.parseBoolean(args[16]);
 
 		/******************************************************************************/
@@ -88,14 +96,20 @@ public class Main {
 	    //kk.KKkk(Consts.MAX_FUZZY_DIVIDE_NUM);
 	    /******************************************************************************/
 	    //基本データ出力と実行
-
 	    Date date = new Date();
 		System.out.print("START: ");
 		System.out.println(date);
 		System.out.println("Processors:" + Runtime.getRuntime().availableProcessors() + " ");
 
-		SparkSession sparkSession = SparkSession.builder().master(masterNodeName).appName(appName).getOrCreate();
-		System.out.println( "Spark version: " + sparkSession.version() );
+	    //Sparkを使う場合
+		SparkSession sparkSession = null;
+		ForkJoinPool forkJoinPool = null;
+		if (isSpark){
+			sparkSession = SparkSession.builder().master(masterNodeName).appName(appName).getOrCreate();
+			System.out.println( "Spark version: " + sparkSession.version() );
+		}else{
+			forkJoinPool = new ForkJoinPool(divideNum);
+		}
 
 		for(int i=0; i<args.length; i++){
 			System.out.print(args[i] + " ");
@@ -104,22 +118,24 @@ public class Main {
 
 		if(isOnceExe){
 			onceExection(seed, executorNum, executorCoreNum, partitionNum, dataName, dirNameInHdfs, objectiveNum, generationNum,
-					divideNum, sparkSession, emoType, populationSize, crossValidationNum, repeatTimes, osType, args);
+					divideNum, sparkSession, forkJoinPool, emoType, populationSize, crossValidationNum, repeatTimes, osType, args);
 		}else{
 			repeatExection(seed, executorNum, executorCoreNum, partitionNum, dataName, dirNameInHdfs, objectiveNum, generationNum,
-					divideNum, sparkSession, emoType, populationSize, crossValidationNum, repeatTimes, osType, args);
+					divideNum, sparkSession, forkJoinPool, emoType, populationSize, crossValidationNum, repeatTimes, osType, args);
 		}
+
 		/******************************************************************************/
 	}
 
 	static public void onceExection(int seed, int executorNum, int executorCoreNum, int partitionNum, String dataName,
 			String dirNameInHdfs, int objectiveNum, int generationNum, int divideNum, SparkSession sparkSession,
+			ForkJoinPool forkJoinPool,
 			int emoType, int populationSize, int crossValidationNum, int repeatTimes, int osType, String[] args){
 
 		/************************************************************/
 		//読み込みファイル名とディレクトリ名
-		String traFile = Output.makeFileNameOne(dataName, dirNameInHdfs, crossValidationNum, repeatTimes, true);
-		String tstFile = Output.makeFileNameOne(dataName, dirNameInHdfs, crossValidationNum, repeatTimes, false);
+		String traFile = Output.makeFileNameOne(dataName, dirNameInHdfs, crossValidationNum, repeatTimes, true, sparkSession);
+		String tstFile = Output.makeFileNameOne(dataName, dirNameInHdfs, crossValidationNum, repeatTimes, false, sparkSession);
 		String resultDir = Output.makeDirName(dataName, dirNameInHdfs, executorNum, executorCoreNum, seed, osType);
 
 		//実験パラメータ出力 + ディレクトリ作成
@@ -140,8 +156,8 @@ public class Main {
 		MersenneTwisterFast rnd = new MersenneTwisterFast(seed);
 
 		System.out.print(repeat_i + " " + cv_i);
-		startExeperiment(traFile, tstFile, sparkSession, partitionNum, rnd, objectiveNum, generationNum,
-				emoType, populationSize, resultMaster, cv_i, repeat_i, osType);
+		startExeperiment(traFile, tstFile, sparkSession, forkJoinPool, partitionNum, rnd, objectiveNum, generationNum,
+				emoType, populationSize, resultMaster, cv_i, repeat_i, osType, traFile, tstFile);
 		System.out.println();
 
 		/************************************************************/
@@ -156,13 +172,13 @@ public class Main {
 
 	static public void repeatExection(int seed, int executorNum, int executorCoreNum, int partitionNum, String dataName,
 			String dirNameInHdfs, int objectiveNum, int generationNum, int divideNum, SparkSession sparkSession,
-			int emoType, int populationSize, int crossValidationNum, int repeatTimes, int osType, String[] args){
+			ForkJoinPool forkJoinPool, int emoType, int populationSize, int crossValidationNum, int repeatTimes, int osType, String[] args){
 
 		/************************************************************/
 		//読み込みファイル名
 		String traFiles[][] = new String[repeatTimes][crossValidationNum];
 	    String tstFiles[][] = new String[repeatTimes][crossValidationNum];
-	    Output.makeFileName(dataName, traFiles, tstFiles, dirNameInHdfs);
+	    Output.makeFileName(dataName, traFiles, tstFiles, dirNameInHdfs, sparkSession);
 
 	    //データディレクトリ作成
 	    String resultDir = Output.makeDir(dataName, dirNameInHdfs, executorNum, executorCoreNum, seed, osType);
@@ -181,8 +197,9 @@ public class Main {
 		for(int repeat_i=0; repeat_i<repeatTimes; repeat_i++){
 			for(int cv_i=0; cv_i<crossValidationNum; cv_i++){
 				System.out.print(repeat_i + " " + cv_i);
-				startExeperiment(traFiles[repeat_i][cv_i], tstFiles[repeat_i][cv_i], sparkSession, partitionNum,
-						rnd, objectiveNum, generationNum, emoType, populationSize, resultMaster, cv_i, repeat_i, osType);
+				startExeperiment(traFiles[repeat_i][cv_i], tstFiles[repeat_i][cv_i], sparkSession, forkJoinPool,
+						partitionNum, rnd, objectiveNum, generationNum, emoType, populationSize, resultMaster,
+						cv_i, repeat_i, osType, traFiles[repeat_i][cv_i], tstFiles[repeat_i][cv_i]);
 				System.out.println();
 			}
 		}
@@ -197,9 +214,9 @@ public class Main {
 
 	}
 
-	static public void startExeperiment(String traFile, String testFile, SparkSession sparkSession, int partitionSize,
-			MersenneTwisterFast rnd, int objectiveNum, int generationNum, int emoType, int populationSize,
-			ResultMaster resultMaster, int crossValidationNum, int repeatNum, int osType){
+	static public void startExeperiment(String traFile, String testFile, SparkSession sparkSession, ForkJoinPool forkJoinPool,
+			int partitionSize, MersenneTwisterFast rnd, int objectiveNum, int generationNum, int emoType, int populationSize,
+			ResultMaster resultMaster, int crossValidationNum, int repeatNum, int osType, String nowTrainFile, String nowTestFile){
 
 		/************************************************************/
 		//時間計測開始
@@ -208,29 +225,41 @@ public class Main {
 
 		/************************************************************/
 		//データを読み込む
-		SQLContext sqlc = new SQLContext(sparkSession);
+		Dataset<Row> trainData = null;
+		DataSetInfo trainDataInfo = null;
+		SQLContext sqlc = null;
+		int attributeNum = 0;
+		int trainDataSize = 0;
+		int classNum = 0;
 
-		Dataset<Row> trainData = sqlc.read()
-				.format("com.databricks.spark.csv")
-				.option("inferSchema", "true")
-				.load(traFile);
+		//Sparkを使わない場合（HDFSも使わない）
+		if(sparkSession == null){
+			trainDataInfo = new DataSetInfo();
+			DataLoader.inputFile(trainDataInfo, nowTrainFile);
+		}
+		else{ //Sparkを使う場合（HDFSも使う）
+			sqlc = new SQLContext(sparkSession);
+			trainData = sqlc.read()
+					.format("com.databricks.spark.csv")
+					.option("inferSchema", "true")
+					.load(traFile);
 
-		//データを論理的に分割して永続化（高速化のため）
-		trainData.repartition(partitionSize);
-		trainData.persist( StorageLevel.MEMORY_ONLY() );
+			//データを論理的に分割して永続化（高速化のため）
+			trainData.repartition(partitionSize);
+			trainData.persist( StorageLevel.MEMORY_ONLY() );
 
-		//データの属性数を把握
-		int attributeNum = trainData.first().length() - 1;
-		int trainDataSize = (int) trainData.count();
-		String rowName = "_c" + attributeNum;
-		int classNum= (int) trainData.dropDuplicates(rowName).count();
-
-		DataSetInfo trainDataInfo = new DataSetInfo(trainDataSize, attributeNum, classNum);
+			//データの属性数を把握
+			attributeNum = trainData.first().length() - 1;
+			trainDataSize = (int) trainData.count();
+			String rowName = "_c" + attributeNum;
+			classNum= (int) trainData.dropDuplicates(rowName).count();
+			trainDataInfo = new DataSetInfo(trainDataSize, attributeNum, classNum);
+		}
 
 		/************************************************************/
 		//初期個体群の生成
 		PopulationManager populationManager = new PopulationManager(rnd, objectiveNum);
-		populationManager.generateInitialPopulation(trainDataInfo, trainData, populationSize);
+		populationManager.generateInitialPopulation(trainDataInfo, trainData, populationSize, forkJoinPool);
 
 		//EMOアルゴリズム初期化
 		Moead moead = new Moead(populationSize, Consts.VECTOR_DIVIDE_NUM, Consts.MOEAD_ALPHA, emoType, objectiveNum,
@@ -238,8 +267,8 @@ public class Main {
 		Nsga2 nsga2 = new Nsga2(objectiveNum, rnd);
 
 		//GA操作
-		GaManager gaManager = new GaManager(populationSize, populationManager, nsga2, moead, rnd, objectiveNum,
-											generationNum, trainData, emoType, resultMaster);
+		GaManager gaManager = new GaManager(populationSize, populationManager, nsga2, moead, rnd, forkJoinPool,
+											objectiveNum, generationNum, trainData, emoType, resultMaster);
 		gaManager.gaFrame(trainDataInfo, repeatNum, crossValidationNum);
 
 		//時間計測終了
@@ -248,17 +277,27 @@ public class Main {
 		resultMaster.writeTime(timeWatcher.getSec(), timeWatcher.getNano(), crossValidationNum, repeatNum);
 
 		//永続化終了（メモリにはまだ残っているのでOutOfMemoryする）
-		trainData.unpersist();
+		if(trainData != null){
+			trainData.unpersist();
+		}
 
 		/***********************これ以降出力操作************************/
 		//評価用DataFrame作成
-		Dataset<Row> testData = sqlc.read()
-				.format("com.databricks.spark.csv")
-				.option("inferSchema", "true")
-				.load(testFile);
+		Dataset<Row> testData = null;
+		DataSetInfo testDataInfo = null;
 
-		int testDataSize = (int) testData.count();
-		DataSetInfo testDataInfo = new DataSetInfo(testDataSize, attributeNum, classNum);
+		if(sparkSession == null){
+			testDataInfo = new DataSetInfo();
+			DataLoader.inputFile(testDataInfo, nowTestFile);
+		}else{
+			testData = sqlc.read()
+					.format("com.databricks.spark.csv")
+					.option("inferSchema", "true")
+					.load(testFile);
+
+			int testDataSize = (int) testData.count();
+			testDataInfo = new DataSetInfo(testDataSize, attributeNum, classNum);
+		}
 
 		RuleSet bestRuleSet = gaManager.calcBestRuleSet(objectiveNum, populationManager,
 														resultMaster, testDataInfo, testData, true);

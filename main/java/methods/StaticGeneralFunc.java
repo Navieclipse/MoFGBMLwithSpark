@@ -33,7 +33,6 @@ public class StaticGeneralFunc {
 		int ans[] = new int[num];
 		int i, j, same;
 
-
 		int[] patternNumber2 = new int[DataSize];
 		int generateNumber = num;
 

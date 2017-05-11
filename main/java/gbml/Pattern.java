@@ -1,9 +1,16 @@
 package gbml;
 
+import java.util.Arrays;
+
 public class Pattern implements java.io.Serializable {
 
 	//コンストラクタ
 	Pattern(){}
+
+	Pattern(Pattern pat){
+		this.conClass = pat.conClass;
+		this.x = Arrays.copyOf(pat.x, pat.x.length);
+	}
 
 	public Pattern(Double[] pattern){
 

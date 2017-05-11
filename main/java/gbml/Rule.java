@@ -1,6 +1,7 @@
 package gbml;
 
 import java.util.Arrays;
+import java.util.concurrent.ForkJoinPool;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -67,13 +68,30 @@ public class Rule implements java.io.Serializable{
 			this.TstDataSize = size;
 		}
 
+		//HDFS使う場合
 		public void makeRuleSingle(Row line, MersenneTwisterFast rnd2){
 			rule = StaticFuzzyFunc.selectSingle(line, Ndim, rnd2);
 		}
 
-		public void calcRuleConc(Dataset<Row> df){
+		//HDFS使わない場合
+		public void makeRuleSingle(Pattern line, MersenneTwisterFast rnd2){
+			rule = StaticFuzzyFunc.selectSingle(line, Ndim, rnd2);
+		}
 
-			double[] trust = StaticFuzzyFunc.calcTrust(df, rule, Cnum);
+		//HDFSを使う場合
+		public void calcRuleConc(Dataset<Row> trainData){
+
+			double[] trust = StaticFuzzyFunc.calcTrust(trainData, rule, Cnum);
+			conclution = StaticFuzzyFunc.calcConclusion(trust, Cnum);
+			cf = StaticFuzzyFunc.calcCf(conclution, trust, Cnum);
+
+	        ruleLength = ruleLengthCalc();
+		}
+
+		//HDFS使わない場合
+		public void calcRuleConc(DataSetInfo trainData, ForkJoinPool forkJoinPool){
+
+			double[] trust = StaticFuzzyFunc.calcTrust(trainData, rule, Cnum, forkJoinPool);
 			conclution = StaticFuzzyFunc.calcConclusion(trust, Cnum);
 			cf = StaticFuzzyFunc.calcCf(conclution, trust, Cnum);
 
@@ -106,8 +124,14 @@ public class Rule implements java.io.Serializable{
 			return ruleLength;
 		}
 
+		//HDFS使う場合
 		public double calcAdaptationPureSpark(Row lines){
 	    	return  StaticFuzzyFunc.menberMulPureSpark(lines, rule);
+		}
+
+		//HDFS使わない場合
+		public double calcAdaptationPureSpark(Pattern line){
+	    	return  StaticFuzzyFunc.menberMulPure(line, rule);
 		}
 
 		public double getCf(){

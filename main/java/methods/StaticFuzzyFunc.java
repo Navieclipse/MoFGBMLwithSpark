@@ -1,11 +1,16 @@
 package methods;
 
 import java.util.ArrayList;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
 import gbml.Consts;
+import gbml.DataSetInfo;
+import gbml.Pattern;
 
 public class StaticFuzzyFunc {
 
@@ -55,6 +60,43 @@ public class StaticFuzzyFunc {
 					.map( s -> menberMulPureSpark(s, rule) )
 					.reduce( (l,r) -> l+r )
 					);
+		}
+
+		double all = 0.0;
+		for (int c = 0; c < part.size(); c++) {
+			all += part.get(c);
+		}
+
+		double[] trust = new double[Cnum];
+		if( all != 0.0 ){
+			for (int c=0; c<Cnum; c++){
+				trust[c] = part.get(c) / all;
+			}
+		}
+
+		return trust;
+	}
+
+	//Spark を使わない場合
+	public static double[] calcTrust(DataSetInfo dataSetInfo, int[] rule, int Cnum, ForkJoinPool forkJoinPool){
+
+		ArrayList<Double> part = new ArrayList<Double>();
+		for(int c=0; c<Cnum; c++){
+			final int CLASSNUM = c;
+			Optional<Double> partSum = null;
+			try {
+				partSum = forkJoinPool.submit( () ->
+					dataSetInfo
+					.getPattern().parallelStream()
+					.filter(s -> s.getConClass() == CLASSNUM )
+					.map( s -> menberMulPure(s, rule) )
+					.reduce( (l,r) -> l+r )
+					).get();
+			} catch (InterruptedException | ExecutionException e) {
+				e.printStackTrace();
+			}
+
+			part.add( partSum.orElse(0.0) );
 		}
 
 		double all = 0.0;
@@ -123,6 +165,21 @@ public class StaticFuzzyFunc {
 		return ans;
 	}
 
+	public static Double menberMulPure(Pattern line, int rule[]){
+
+		Double ans = 1.0;
+		int Ndim = rule.length;
+		for(int i=0; i<Ndim; i++){
+			try{
+				ans *= calcMenbership(rule[i], line.getX(i));
+			}catch (Exception e) {
+				calcMenbership(rule[i], 0.0);
+			}
+		}
+
+		return ans;
+	}
+
 	//メンバシップ値
 	public static double calcMenbership(int num, double x){
 
@@ -147,6 +204,7 @@ public class StaticFuzzyFunc {
 
 	/************************************************************************************************************/
 	//１つのパターンからルール生成
+	//HDFS使う場合
 	public static int[] selectSingle(Row line, int Ndim, MersenneTwisterFast rnd){
 
 		int rule[] = new int[Ndim];
@@ -184,6 +242,43 @@ public class StaticFuzzyFunc {
 		return rule;
 	}
 
+	//HDFS使わない場合
+	public static int[] selectSingle(Pattern line, int Ndim, MersenneTwisterFast rnd){
+
+		int rule[] = new int[Ndim];
+		boolean isProb = Consts.IS_PROBABILITY_DONT_CARE;
+		double dcRate;
+		if(isProb){
+			dcRate = Consts.DONT_CAlE_RT;
+		}
+		else{
+			dcRate = (double)(((double)Ndim - (double)Consts.ANTECEDENT_LEN)/(double)Ndim);
+		}
+
+		double[] membershipValueRulet = new double[Consts.FUZZY_SET_NUM];
+
+		for (int n = 0; n < Ndim; n++) {
+			if (rnd.nextDouble() < dcRate) {
+				rule[n] = 0;
+			} else {
+				double sumMembershipValue = 0.0;
+				membershipValueRulet[0] = 0.0;
+				for (int f = 0; f < Consts.FUZZY_SET_NUM; f++) {
+					sumMembershipValue += calcMenbership( f+1, line.getX(n) );
+					membershipValueRulet[f] = sumMembershipValue;
+				}
+				double rr = rnd.nextDouble() * sumMembershipValue;
+				for (int f = 0; f < Consts.FUZZY_SET_NUM; f++) {
+					if (rr < membershipValueRulet[f]) {
+						rule[n] = f + 1;
+						break;
+					}
+				}	//for f
+			}	//else
+		}	//for n
+
+		return rule;
+	}
 	//ランダムにルール生成
 	public static int[] selectRnd(int Ndim, MersenneTwisterFast rnd){
 

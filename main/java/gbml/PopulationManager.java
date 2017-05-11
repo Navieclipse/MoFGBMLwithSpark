@@ -1,6 +1,7 @@
 package gbml;
 
 import java.util.ArrayList;
+import java.util.concurrent.ForkJoinPool;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -51,7 +52,7 @@ public class PopulationManager{
 	/******************************************************************************/
 	//メソッド
 
-	public void generateInitialPopulation(DataSetInfo dataSetInfo, Dataset<Row> trainData, int populationSize){
+	public void generateInitialPopulation(DataSetInfo dataSetInfo, Dataset<Row> trainData, int populationSize, ForkJoinPool forkJoinPool){
 
 		attributeNum = dataSetInfo.getNdim();
 		classNum = dataSetInfo.getCnum();
@@ -59,7 +60,7 @@ public class PopulationManager{
 
 		for(int i=0; i<populationSize; i++){
 			currentRuleSets.add( new RuleSet( rnd, attributeNum, classNum, trainDataSize, testDataSize, objectiveNum) );
-			currentRuleSets.get(i).initialMic(dataSetInfo, trainData);
+			currentRuleSets.get(i).initialMic(dataSetInfo, trainData, forkJoinPool);
 		}
 
 		for(int i=0; i<populationSize; i++){
@@ -80,9 +81,9 @@ public class PopulationManager{
 		}
 	}
 
-	void michiganOperation(int num, Dataset<Row> df){
+	void michiganOperation(int num, Dataset<Row> trainData, DataSetInfo trainDataInfo, ForkJoinPool forkJoinPool){
 		if(rnd.nextDouble() < Consts.RULE_OPE_RT && newRuleSets.get(num).getRuleNum() != 0){
-			newRuleSets.get(num).micGenHeuris(df);
+			newRuleSets.get(num).micGenHeuris(trainData, trainDataInfo, forkJoinPool);
 		}
 	}
 
@@ -90,7 +91,7 @@ public class PopulationManager{
 		newRuleSets.add( new RuleSet(rnd, attributeNum, classNum, trainDataSize, testDataSize, objectiveNum) );
 	}
 
-	void crossOver(int num, int popSize){
+	void crossOver(int newRuleSetsIdx, int popSize){
 
 		int mom, pop;
 		int Nmom, Npop;
@@ -129,31 +130,31 @@ public class PopulationManager{
 	        pmom = StaticGeneralFunc.sampringWithout2(Nmom, currentRuleSets.get(mom).getRuleNum(), rnd);
 	        ppop = StaticGeneralFunc.sampringWithout2(Npop, currentRuleSets.get(pop).getRuleNum(), rnd);
 
-	        newRuleSets.get(num).micRules.clear();
+	        newRuleSets.get(newRuleSetsIdx).micRules.clear();
 
 	        for(int j=0;j<Nmom;j++){
-	        	newRuleSets.get(num).setMicRule( currentRuleSets.get(mom).getMicRule(pmom[j]) );
+	        	newRuleSets.get(newRuleSetsIdx).setMicRule( currentRuleSets.get(mom).getMicRule(pmom[j]) );
 	        }
 	        for(int j=0;j<Npop;j++){
-	        	newRuleSets.get(num).setMicRule( currentRuleSets.get(pop).getMicRule(ppop[j]) );
+	        	newRuleSets.get(newRuleSetsIdx).setMicRule( currentRuleSets.get(pop).getMicRule(ppop[j]) );
 	        }
 
 		}
 		else{//親をそのまま子個体に
 			if(rnd.nextBoolean()){
 				RuleSet deep = new RuleSet(currentRuleSets.get(mom));
-				newRuleSets.get(num).pitsCopy(deep);
+				newRuleSets.get(newRuleSetsIdx).pitsCopy(deep);
 			}
 			else{
 				RuleSet deep = new RuleSet(currentRuleSets.get(pop));
-				newRuleSets.get(num).pitsCopy(deep);
+				newRuleSets.get(newRuleSetsIdx).pitsCopy(deep);
 			}
 		}
-		newRuleSets.get(num).setRuleNum();
+		newRuleSets.get(newRuleSetsIdx).setRuleNum();
 
 	}
 
-	void crossOverAndMichiganOpe(int newRuleSetsIndex, int popSize, Dataset<Row> df){
+	void crossOverAndMichiganOpe(int newRuleSetsIdx, int popSize, Dataset<Row> trainData, ForkJoinPool forkJoinPool, DataSetInfo trainDataInfo){
 
 		int mom, pop;
 		int Nmom, Npop;
@@ -164,15 +165,15 @@ public class PopulationManager{
 
 		if(rnd.nextDouble() < (double)Consts.RULE_OPE_RT){									//半分ミシガン
 			RuleSet deep = new RuleSet( currentRuleSets.get(mom) );
-			newRuleSets.get(newRuleSetsIndex).pitsCopy(deep);
-			newRuleSets.get(newRuleSetsIndex).setRuleNum();
+			newRuleSets.get(newRuleSetsIdx).pitsCopy(deep);
+			newRuleSets.get(newRuleSetsIdx).setRuleNum();
 
-			if(newRuleSets.get(newRuleSetsIndex).getRuleNum() != 0){
+			if(newRuleSets.get(newRuleSetsIdx).getRuleNum() != 0){
 				boolean doHeuris = Consts.DO_HEURISTIC_GENERATION_IN_GA;
 				if(doHeuris){
-					newRuleSets.get(newRuleSetsIndex).micGenHeuris(df);
+					newRuleSets.get(newRuleSetsIdx).micGenHeuris(trainData, trainDataInfo, forkJoinPool);
 				}
-				newRuleSets.get(newRuleSetsIndex).micGenRandom();
+				newRuleSets.get(newRuleSetsIdx).micGenRandom();
 			}
 		}else{
 			if(rnd.nextDouble() < (double)(Consts.RULESET_CROSS_RT)){							//半分ピッツ
@@ -197,27 +198,27 @@ public class PopulationManager{
 		        pmom = StaticGeneralFunc.sampringWithout2(Nmom, currentRuleSets.get(mom).getRuleNum(), rnd);
 		        ppop = StaticGeneralFunc.sampringWithout2(Npop, currentRuleSets.get(pop).getRuleNum(), rnd);
 
-		        newRuleSets.get(newRuleSetsIndex).micRules.clear();
+		        newRuleSets.get(newRuleSetsIdx).micRules.clear();
 
 		        for(int j=0;j<Nmom;j++){
-		        	newRuleSets.get(newRuleSetsIndex).setMicRule(currentRuleSets.get(mom).getMicRule(pmom[j]));
+		        	newRuleSets.get(newRuleSetsIdx).setMicRule(currentRuleSets.get(mom).getMicRule(pmom[j]));
 		        }
 		        for(int j=0;j<Npop;j++){
-		        	newRuleSets.get(newRuleSetsIndex).setMicRule(currentRuleSets.get(pop).getMicRule(ppop[j]));
+		        	newRuleSets.get(newRuleSetsIdx).setMicRule(currentRuleSets.get(pop).getMicRule(ppop[j]));
 		        }
 
 			}
 			else{//親をそのまま子個体に
 				if(rnd.nextBoolean()){
 					RuleSet deep = new RuleSet(currentRuleSets.get(mom));
-					newRuleSets.get(newRuleSetsIndex).pitsCopy(deep);
+					newRuleSets.get(newRuleSetsIdx).pitsCopy(deep);
 				}
 				else{
 					RuleSet deep = new RuleSet(currentRuleSets.get(pop));
-					newRuleSets.get(newRuleSetsIndex).pitsCopy(deep);
+					newRuleSets.get(newRuleSetsIdx).pitsCopy(deep);
 				}
 			}
-			newRuleSets.get(newRuleSetsIndex).setRuleNum();
+			newRuleSets.get(newRuleSetsIdx).setRuleNum();
 		}
 
 	}

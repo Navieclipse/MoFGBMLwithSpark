@@ -8,7 +8,7 @@ public class Consts {
     public static final int ANTECEDENT_LEN  = 5;	//ドントケアにしない条件部の数
     public static final double DONT_CAlE_RT = 0.8;	//どんとケア適応確率（合わせ用）
     public static final boolean IS_PROBABILITY_DONT_CARE = false;	//ドントケアを確率で行う
-    public static final boolean DO_HEURISTIC_GENERATION_INIT = false;	//ヒューリスティック生成法を行う(初期生成）
+    public static final boolean DO_HEURISTIC_GENERATION_INIT = false;//ヒューリスティック生成法を行う(初期生成）
     public static final boolean DO_HEURISTIC_GENERATION_IN_GA = false;	//ヒューリスティック生成法（途中での世代）
 
     public static final int FUZZY_SET_NUM  = 14;	//ファジィ集合数

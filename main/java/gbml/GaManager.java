@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ForkJoinPool;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -26,6 +27,8 @@ public class GaManager {
 
 	MersenneTwisterFast rnd;
 
+	ForkJoinPool forkJoinPool;
+
 	Dataset<Row> trainData;
 
 	int secondObjType = Consts.SECOND_OBJECTIVE_TYPE;
@@ -42,12 +45,14 @@ public class GaManager {
 	public static final int OFF_SPRING = 0;
 
 
-	public GaManager( int popSize, PopulationManager populationManager, Nsga2 nsga2, Moead moead, MersenneTwisterFast rnd,
+	public GaManager( int popSize, PopulationManager populationManager, Nsga2 nsga2, Moead moead, MersenneTwisterFast rnd, ForkJoinPool forkJoinPool,
 				int objectiveNum, int generationNum, Dataset<Row> trainData, int emoType, ResultMaster resultMaster) {
 
 		this.populationManager = populationManager;
 		this.nsga2 = nsga2;
 		this.moead = moead;
+
+		this.forkJoinPool = forkJoinPool;
 
 		this.trainData = trainData;
 
@@ -117,12 +122,12 @@ public class GaManager {
 		}
 	}
 
-	public void GAStartNS(DataSetInfo data, int gen) {
+	public void GAStartNS(DataSetInfo trainDataInfo, int gen) {
 
-		geneticOperation();
+		geneticOperation(trainDataInfo);
 		deleteUnnecessaryRules();
 
-		offspringEvaluation(data, populationManager);
+		offspringEvaluation(trainDataInfo, populationManager);
 
 		if(objectiveNum == 1){
 			populationUpdateOfSingleObj();
@@ -153,10 +158,10 @@ public class GaManager {
 
 			populationManager.crossOverRandom(nowVec, populationSize, moead);
 			populationManager.newRuleSetMutation(nowVec);
-			populationManager.michiganOperation(nowVec, trainData);
+			populationManager.michiganOperation(nowVec, trainData, data, forkJoinPool);
 
 			populationManager.newRuleSets.get(nowVec).removeRule();
-			populationManager.newRuleSets.get(nowVec).EvoluationOne(data, trainData, objectiveNum, secondObjType);
+			populationManager.newRuleSets.get(nowVec).EvoluationOne(data, trainData, objectiveNum, secondObjType, forkJoinPool);
 			//EvoluationOne(data, divideHyb.newPitsRules.get(nowVec));
 
 			moead.updateReference(populationManager.newRuleSets.get(nowVec));
@@ -167,23 +172,26 @@ public class GaManager {
 
 	void parentEvaluation(DataSetInfo dataSetInfo, PopulationManager popManager){
 
-		popManager.currentRuleSets	.parallelStream()
-					.forEach( rule -> rule.EvoluationOne(dataSetInfo, trainData, objectiveNum, secondObjType) );
+		if(trainData == null){
+			popManager.currentRuleSets.stream()
+					.forEach( rule -> rule.EvoluationOne(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
+		}else{
+			popManager.currentRuleSets	.parallelStream()
+					.forEach( rule -> rule.EvoluationOne(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
+		}
 
 	}
 
 	void offspringEvaluation(DataSetInfo dataSetInfo, PopulationManager popManager){
 
-		popManager.newRuleSets	.parallelStream()
-						.forEach( rule -> rule.EvoluationOne(dataSetInfo, trainData, objectiveNum, secondObjType) );
-
-	}
-
-	void michiganOpeAll() {
-		int size =  populationManager.newRuleSets.size();
-		for (int i = 0; i < size; i++) {
-			populationManager.michiganOperation(i, trainData);
+		if(trainData == null){
+			popManager.newRuleSets.stream()
+					.forEach( rule -> rule.EvoluationOne(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
+		}else{
+			popManager.newRuleSets	.parallelStream()
+						.forEach( rule -> rule.EvoluationOne(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
 		}
+
 	}
 
 	void deleteUnnecessaryRules() {
@@ -207,14 +215,14 @@ public class GaManager {
 
 	}
 
-	void geneticOperation(){
+	void geneticOperation(DataSetInfo trainDataInfo){
 
 		int length = populationManager.currentRuleSets.size();
 		populationManager.newRuleSets.clear();
 
 		for (int s = 0; s < length; s++) {
 			populationManager.newRuleSetsInit();
-			populationManager.crossOverAndMichiganOpe(s, populationSize, trainData);
+			populationManager.crossOverAndMichiganOpe(s, populationSize, trainData, forkJoinPool, trainDataInfo);
 			populationManager.newRuleSetMutation(s);
 		}
 
@@ -300,7 +308,12 @@ public class GaManager {
 				popManager.currentRuleSets.get(i).setNumAndLength();
 
 				if(isTest){
-					double acc = (double) popManager.currentRuleSets.get(i).CalcAccuracyPalKai(testData);
+					double acc = 0.0;
+					if(testData == null){
+						acc = (double) popManager.currentRuleSets.get(i).CalcAccuracyPal(testDataInfo, forkJoinPool);
+					}else{
+						acc = (double) popManager.currentRuleSets.get(i).CalcAccuracyPalKai(testData);
+					}
 					popManager.currentRuleSets.get(i).SetTestMissRate( ( acc / (double)testDataInfo.DataSize ) * 100.0 );
 				}
 
@@ -380,7 +393,12 @@ public class GaManager {
 
 		}
 		if(isTest){
-			double accTest = (double) bestRuleset.CalcAccuracyPalKai(testData)	/ testDataInfo.DataSize;
+			double accTest = 0.0;
+			if(testData == null){
+				accTest = (double) bestRuleset.CalcAccuracyPalKai(testDataInfo, forkJoinPool) / testDataInfo.DataSize;
+			}else{
+				accTest = (double) bestRuleset.CalcAccuracyPalKai(testData)	/ testDataInfo.DataSize;
+			}
 			bestRuleset.SetTestMissRate((1 - accTest) * 100);
 		}
 

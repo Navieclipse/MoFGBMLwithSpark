@@ -11,6 +11,7 @@ import java.io.PrintWriter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.spark.sql.SparkSession;
 
 import gbml.Consts;
 
@@ -21,24 +22,32 @@ public class Output {
 	//******************************************************************************//
 
 	//データファイル名作成
-	public static void makeFileName(String dataName, String traFiles[][], String tstFiles[][], String hdfs){
+	public static void makeFileName(String dataName, String traFiles[][], String tstFiles[][], String hdfs, SparkSession sparkSession){
 
 		for(int rep_i=0; rep_i<traFiles.length; rep_i++){
 			for(int cv_i=0; cv_i<traFiles[0].length; cv_i++){
-				 traFiles[rep_i][cv_i] = makeFileNameOne(dataName, hdfs, cv_i, rep_i, true);
-				 tstFiles[rep_i][cv_i] = makeFileNameOne(dataName, hdfs, cv_i, rep_i, false);
+				 traFiles[rep_i][cv_i] = makeFileNameOne(dataName, hdfs, cv_i, rep_i, true, sparkSession);
+				 tstFiles[rep_i][cv_i] = makeFileNameOne(dataName, hdfs, cv_i, rep_i, false, sparkSession);
 			}
 		}
 
 	}
 
-	public static String makeFileNameOne(String dataName, String hdfs, int cv_i, int rep_i, boolean isTra){
+	public static String makeFileNameOne(String dataName, String hdfs, int cv_i, int rep_i, boolean isTra, SparkSession sparkSession){
 
 		String fileName = "";
 		if(isTra){
-			fileName = hdfs + dataName + "/a" + Integer.toString(rep_i) + "_" + Integer.toString(cv_i) + "_" +dataName + "-10tra.csv";
+			if(sparkSession == null){
+				fileName = hdfs + dataName + "/a" + Integer.toString(rep_i) + "_" + Integer.toString(cv_i) + "_" +dataName + "-10tra.dat";
+			}else{
+				fileName = hdfs + dataName + "/a" + Integer.toString(rep_i) + "_" + Integer.toString(cv_i) + "_" +dataName + "-10tra.csv";
+			}
 		}else{
-			fileName = hdfs + dataName + "/a" + Integer.toString(rep_i) + "_" + Integer.toString(cv_i) + "_" +dataName + "-10tst.csv";
+			if(sparkSession == null){
+				fileName = hdfs + dataName + "/a" + Integer.toString(rep_i) + "_" + Integer.toString(cv_i) + "_" +dataName + "-10tst.dat";
+			}else{
+				fileName = hdfs + dataName + "/a" + Integer.toString(rep_i) + "_" + Integer.toString(cv_i) + "_" +dataName + "-10tst.csv";
+			}
 		}
 		return fileName;
 
@@ -121,7 +130,7 @@ public class Output {
 		String path = "";
 		String sep = File.separator;
 		//HDFS
-		if(os == Consts.WINDOWS){
+		if(os != Consts.WINDOWS){
 			path = System.getProperty("user.dir");
 			path += sep + Consts.ROOTFOLDER +"_"+ dataname + "_e" + executors + "_c" + exeCores + "_" + seed;
 		}
@@ -137,7 +146,7 @@ public class Output {
 		String path = "";
 		String sep = File.separator;
 		//HDFS
-		if(os == Consts.WINDOWS){
+		if(os != Consts.HDFS){
 			path = System.getProperty("user.dir");
 			path += sep + Consts.ROOTFOLDER +"_"+ dataname + "_e" + executors + "_c" + exeCores + "_" + seed;
 			File newdir = new File(path);

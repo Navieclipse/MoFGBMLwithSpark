@@ -3,6 +3,9 @@ package gbml;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.stream.Collectors;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -64,7 +67,15 @@ public class RuleSet implements java.io.Serializable{
 		firstobj = Arrays.copyOf(pits.firstobj, pits.fitnesses.length);
 
 		this.dfmisspat = pits.dfmisspat;
-		this.MissPatNum = pits.MissPatNum;  //もしかしたらシャロー
+		if(pits.missPatterns != null){
+			this.missPatterns = new ArrayList<Pattern>();
+			Pattern p;
+			for(int i=0; i<pits.missPatterns.size(); i++){
+				 p = new Pattern( pits.missPatterns.get(i) );
+				this.missPatterns.add(p);
+			}
+		}
+		this.MissPatNum = pits.MissPatNum;
 
 	}
 
@@ -99,6 +110,14 @@ public class RuleSet implements java.io.Serializable{
 		firstobj = Arrays.copyOf(pits.firstobj, pits.fitnesses.length);
 
 		this.dfmisspat = pits.dfmisspat;
+		if(pits.missPatterns != null){
+			this.missPatterns = new ArrayList<Pattern>();
+			Pattern p;
+			for(int i=0; i<pits.missPatterns.size(); i++){
+				 p = new Pattern( pits.missPatterns.get(i) );
+				this.missPatterns.add(p);
+			}
+		}
 		this.MissPatNum = pits.MissPatNum;
 	}
 
@@ -132,6 +151,14 @@ public class RuleSet implements java.io.Serializable{
 		}
 
 		this.dfmisspat = pits.dfmisspat;
+		if(pits.missPatterns != null){
+			this.missPatterns = new ArrayList<Pattern>();
+			Pattern p;
+			for(int i=0; i<pits.missPatterns.size(); i++){
+				 p = new Pattern( pits.missPatterns.get(i) );
+				this.missPatterns.add(p);
+			}
+		}
 		this.MissPatNum = pits.MissPatNum;
 	}
 
@@ -158,6 +185,7 @@ public class RuleSet implements java.io.Serializable{
 
 	//ミスパターン保存用リスト
 	Dataset<Row> dfmisspat;
+	List<Pattern> missPatterns;
 	int MissPatNum;
 
 	//並べ替えの基準(1obj)
@@ -177,24 +205,39 @@ public class RuleSet implements java.io.Serializable{
 
 	/******************************************************************************/
 	//メソッド
-	public void initialMic(DataSetInfo data, Dataset<Row> df){
+	public void initialMic(DataSetInfo trainDataInfo, Dataset<Row> trainData, ForkJoinPool forkJoinPool){
 		//ヒューリスティック生成を行う場合
 		boolean isHeuris = Consts.DO_HEURISTIC_GENERATION_INIT;
         Dataset<Row> dfsample;
         List<Row> samples = null;
+        int sampleNums[] = null;
+
         if(isHeuris){ //サンプリング
-			double sampleSize = (double)(Consts.INITIATION_RULE_NUM+10) / (double)DataSize;
-			dfsample = df.sample( false, sampleSize, uniqueRnd.nextInt() );
-			samples = dfsample.collectAsList();
+        	if(trainData == null){
+				sampleNums = new int[Consts.INITIATION_RULE_NUM];
+				sampleNums = StaticGeneralFunc.sampringWithout(Consts.INITIATION_RULE_NUM, DataSize, uniqueRnd);
+        	}
+        	else{
+				double sampleSize = (double)(Consts.INITIATION_RULE_NUM+10) / (double)DataSize;
+				dfsample = trainData.sample( false, sampleSize, uniqueRnd.nextInt() );
+				samples = dfsample.collectAsList();
+        	}
         }
+
         do{ //while( micRules.size() == 0)
+
         	for(int i=0; i<Consts.INITIATION_RULE_NUM; i++){
         		micRules.add( new Rule(uniqueRnd, Ndim, Cnum, DataSize, DataSizeTst) );
         		micRules.get(i).setMic();
 
         		if(isHeuris){		//ヒューリスティック生成
-					micRules.get(i).makeRuleSingle(samples.get(i), uniqueRnd);
-					micRules.get(i).calcRuleConc(df);
+        			if(trainData == null){
+        				micRules.get(i).makeRuleSingle( trainDataInfo.getPattern(sampleNums[i]), uniqueRnd );
+        				micRules.get(i).calcRuleConc(trainDataInfo, forkJoinPool);
+        			}else{
+						micRules.get(i).makeRuleSingle(samples.get(i), uniqueRnd);
+						micRules.get(i).calcRuleConc(trainData);
+        			}
         		}else{				//完全ランダム生成
 					micRules.get(i).makeRuleRnd1(uniqueRnd);
 					micRules.get(i).makeRuleRnd2();
@@ -204,10 +247,10 @@ public class RuleSet implements java.io.Serializable{
 
         }while( micRules.size()==0 );
 
-		setFitness(data, df);
+		setFitness(trainDataInfo, trainData, forkJoinPool);
 	}
 
-	public void setFitness(DataSetInfo data, Dataset<Row> df){
+	public void setFitness(DataSetInfo trainDataInfo, Dataset<Row> trainData, ForkJoinPool forkJoinPool){
 
 		removeRule();
 
@@ -219,14 +262,23 @@ public class RuleSet implements java.io.Serializable{
 			missRate = 1000000;
 		}
 		else{
-			double ans = 0;
+			double ans = 0.0;
 			boolean doHeuris = Consts.DO_HEURISTIC_GENERATION_IN_GA;
 			if(doHeuris){
-				CalcAccuracyPal(df);
-			}else{
-				CalcAccuracyPalKai(df);
+				if(trainData == null){
+					ans = CalcAccuracyPal(trainDataInfo, forkJoinPool);
+				}else{
+					ans = CalcAccuracyPal(trainData);
+				}
 			}
-			double acc = ans / data.getDataSize();
+			else{
+				if(trainData == null){
+					ans = CalcAccuracyPalKai(trainDataInfo, forkJoinPool);
+				}else{
+					ans = CalcAccuracyPalKai(trainData);
+				}
+			}
+			double acc = ans / trainDataInfo.getDataSize();
 			missRate = ( acc * 100.0 );
 			fitness = StaticFuzzyFunc.fitness(missRate, (double)ruleNum, (double)ruleLength);
 		}
@@ -334,7 +386,7 @@ public class RuleSet implements java.io.Serializable{
 
 	}
 
-	public void micGenHeuris(Dataset<Row> df){
+	public void micGenHeuris(Dataset<Row> trainData, DataSetInfo trainDataInfo, ForkJoinPool forkJoinPool){
 
 		//交叉個体数（ルールの20％）あるいは１個
 		int snum;
@@ -360,25 +412,39 @@ public class RuleSet implements java.io.Serializable{
 		double sampleSize = (double)(heuNum) / (double)MissPatNum;
 		int usingDataSize = MissPatNum;
 		if(MissPatNum < heuNum){
-			dfmisspat = df;  //ミスパターンがない場合はパターン全体から
+			if(trainData == null){
+				missPatterns = trainDataInfo.getPattern();	//ミスパターンがない場合はパターン全体から
+			}else{
+				dfmisspat = trainData;  //ミスパターンがない場合はパターン全体から
+			}
 			sampleSize = (double)(heuNum) / (double)usingDataSize;
 		}
 
 		int increment = 0;
-		Dataset<Row> dfmisspatSample;
-		do{
-			dfmisspatSample = dfmisspat.sample( false, sampleSize, uniqueRnd.nextInt() );
-			sampleSize = (double)( heuNum+increment++ ) / (double)usingDataSize;
-		}while(dfmisspatSample.count() < heuNum);
+		Dataset<Row> dfmisspatSample = null;
+		int missPatternsSampleIdx[] = new int[heuNum];
+		List<Row> misspat = null;
 
-		List<Row> misspat = dfmisspatSample.collectAsList();
+		if(trainData == null){
+			missPatternsSampleIdx = StaticGeneralFunc.sampringWithout(heuNum, missPatterns.size(), uniqueRnd);
+		}else{
+			do{
+				dfmisspatSample = dfmisspat.sample( false, sampleSize, uniqueRnd.nextInt() );
+				sampleSize = (double)( heuNum+increment++ ) / (double)usingDataSize;
+			}while(dfmisspatSample.count() < heuNum);
+			misspat = dfmisspatSample.collectAsList();
+		}
 
 		for(int i=0;i<genNum;i++){
 			ruleCross(i);
 		}
 		int missPatIndex = 0;
 		for(int i=genNum; i<snum; i++){
-			heuristicGeneration( i, misspat.get(missPatIndex++), df);
+			if(trainData == null){
+				heuristicGeneration( i, missPatterns.get(missPatternsSampleIdx[missPatIndex++]), trainDataInfo, forkJoinPool);
+			}else{
+				heuristicGeneration( i, misspat.get(missPatIndex++), trainData);
+			}
 		}
 
 		//旧個体の削除，新個体の追加
@@ -491,11 +557,20 @@ public class RuleSet implements java.io.Serializable{
 
 	}
 
+	//HDFSを使う
 	public void heuristicGeneration(int num, Row line, Dataset<Row> df){
 		newMicRules.add( new Rule(uniqueRnd, Ndim, Cnum, DataSize, DataSizeTst) );
 		newMicRules.get(num).setMic();
 		newMicRules.get(num).makeRuleSingle(line, uniqueRnd);
 		newMicRules.get(num).calcRuleConc(df);
+	}
+
+	//HDFSを使うわない場合
+	public void heuristicGeneration(int num, Pattern line, DataSetInfo trainDataInfo, ForkJoinPool forkJoinPool){
+		newMicRules.add( new Rule(uniqueRnd, Ndim, Cnum, DataSize, DataSizeTst) );
+		newMicRules.get(num).setMic();
+		newMicRules.get(num).makeRuleSingle(line, uniqueRnd);
+		newMicRules.get(num).calcRuleConc(trainDataInfo, forkJoinPool);
 	}
 
 	public void micUpdate(int snum){
@@ -599,18 +674,28 @@ public class RuleSet implements java.io.Serializable{
 		}
 	}
 
-	public void EvoluationOne(DataSetInfo data, Dataset<Row> df, int objectives, int way) {
+	public void EvoluationOne(DataSetInfo trainDataInfo, Dataset<Row> trainData, int objectives, int way, ForkJoinPool forkJoinPool) {
 
 		if (getRuleNum() != 0) {
 			double ans = 0;
+
 			boolean doHeuris = Consts.DO_HEURISTIC_GENERATION_IN_GA;
 			if(doHeuris){
-				CalcAccuracyPal(df);
-			}else{
-				CalcAccuracyPalKai(df);
+				if(trainData == null){
+					ans = CalcAccuracyPal(trainDataInfo, forkJoinPool);
+				}else{
+					ans = CalcAccuracyPal(trainData);
+				}
+			}
+			else{
+				if(trainData == null){
+					ans = CalcAccuracyPalKai(trainDataInfo, forkJoinPool);
+				}else{
+					ans = CalcAccuracyPalKai(trainData);
+				}
 			}
 
-			double acc = ans / data.getDataSize();
+			double acc = ans / trainDataInfo.getDataSize();
 			SetMissRate( acc * 100.0 );
 			setNumAndLength();
 
@@ -644,6 +729,7 @@ public class RuleSet implements java.io.Serializable{
 
 	}
 
+	//HDFS使う場合
 	public int CalcAccuracyPal(Dataset<Row> df) {
 
 		dfmisspat = df.filter( line -> CalcWinClassPalSpark(line) != line.getInt(Ndim) );
@@ -659,7 +745,78 @@ public class RuleSet implements java.io.Serializable{
 		return MissPatNum;
 	}
 
+	//HDFS使わない場合
+	public int CalcAccuracyPal(DataSetInfo dataSetInfo, ForkJoinPool forkJoinPool) {
+		try{
+			missPatterns = forkJoinPool.submit( () ->
+				dataSetInfo.getPattern().stream()
+				.filter( line -> CalcWinClassPal(line) != line.getConClass() )
+				.collect( Collectors.toList() )
+				).get();
+
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			e.printStackTrace();
+		}
+
+		MissPatNum = missPatterns.size();
+		return MissPatNum;
+	}
+
+	public int CalcAccuracyPalKai(DataSetInfo dataSetInfo, ForkJoinPool forkJoinPool) {
+
+		try{
+			MissPatNum = forkJoinPool.submit( () ->
+				(int)dataSetInfo.getPattern().stream()
+				.filter( line -> CalcWinClassPal(line) != line.getConClass() )
+				.count()
+				).get();
+
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			e.printStackTrace();
+		}
+
+		return MissPatNum;
+	}
+
+	//HDFS使う場合
 	public int CalcWinClassPalSpark(Row line){
+
+		int answerClass = 0;
+		int winClassIdx = 0;
+
+		int ruleSize = micRules.size();
+		boolean canClassify = true;
+		double maxMul = 0.0;
+		for(int r=0; r<ruleSize; r++){
+
+			double multiValue = micRules.get(r).getCf() * micRules.get(r).calcAdaptationPureSpark(line);
+
+			if (maxMul < multiValue){
+				maxMul = multiValue;
+				winClassIdx = r;
+				canClassify = true;
+			}
+			else if( maxMul == multiValue && micRules.get(r).getConc() != micRules.get(winClassIdx).getConc() ){
+				canClassify = false;
+			}
+
+		}
+		if( canClassify && maxMul != 0.0 ){
+			answerClass = micRules.get(winClassIdx).getConc();
+		}
+		else{
+			answerClass = -1;
+		}
+
+		return answerClass;
+	}
+
+	//HDFS使わない場合
+	public int CalcWinClassPal(Pattern line){
 
 		int answerClass = 0;
 		int winClassIdx = 0;
