@@ -160,8 +160,8 @@ public class PopulationManager{
 		int Nmom, Npop;
 
 		//親選択
-		mom = StaticGeneralFunc.binaryT4(currentRuleSets,rnd, popSize, objectiveNum);
-		pop = StaticGeneralFunc.binaryT4(currentRuleSets,rnd, popSize, objectiveNum);
+		mom = StaticGeneralFunc.binaryT4(currentRuleSets, rnd, popSize, objectiveNum);
+		pop = StaticGeneralFunc.binaryT4(currentRuleSets, rnd, popSize, objectiveNum);
 
 		if(rnd.nextDouble() < (double)Consts.RULE_OPE_RT){									//半分ミシガン
 			RuleSet deep = new RuleSet( currentRuleSets.get(mom) );

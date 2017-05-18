@@ -3,8 +3,8 @@ package methods;
 import java.io.File;
 import java.util.ArrayList;
 
-import gbml.PopulationManager;
 import gbml.Consts;
+import gbml.PopulationManager;
 import gbml.RuleSet;
 
 public class ResultMaster {
@@ -147,7 +147,7 @@ public class ResultMaster {
 	public void writeBestLog(double tra, double tst, double num, double len, int Gen, int repeat, int cv){
 
 		String sep = File.separator;
-		String fileName = nameDir + sep + Consts.VECSET + sep + "0" + repeat + cv + "GEN" + ".txt";
+		String fileName = nameDir + sep + Consts.OTHERS + sep + "0" + repeat + cv + "GEN" + ".txt";
 
 		String str = Gen + " " + tra + " " + tst +" "+ num +" "+ len;
 		Output.writeln(fileName, str, os);

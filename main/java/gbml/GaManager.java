@@ -399,7 +399,7 @@ public class GaManager {
 			}else{
 				accTest = (double) bestRuleset.CalcAccuracyPalKai(testData)	/ testDataInfo.DataSize;
 			}
-			bestRuleset.SetTestMissRate((1 - accTest) * 100);
+			bestRuleset.SetTestMissRate(accTest * 100);
 		}
 
 		bestRuleset.setNumAndLength();

@@ -95,7 +95,7 @@ public class StaticGeneralFunc {
 	}
 
 	//バイナリトーナメント
-	public static int binaryT4(ArrayList<RuleSet> pitsRules, MersenneTwisterFast rnd, int popSize, int objectives){
+	public static int binaryT4(ArrayList<RuleSet> ruleSets, MersenneTwisterFast rnd, int popSize, int objectives){
 		int ans = 0;
 		int sele1, sele2;
 
@@ -104,21 +104,21 @@ public class StaticGeneralFunc {
 			sele2 = rnd.nextInt(popSize);
 
 			if (objectives == 1) {
-				if (pitsRules.get(sele1).getFitness() < pitsRules.get(sele2).getFitness()) {
+				if (ruleSets.get(sele1).getFitness() < ruleSets.get(sele2).getFitness()) {
 					ans = sele1;
 				} else {
 					ans = sele2;
 				}
 			} else {
 
-				if (pitsRules.get(sele1).GetRank() > pitsRules.get(sele2).GetRank()) {
+				if (ruleSets.get(sele1).GetRank() > ruleSets.get(sele2).GetRank()) {
 					ans = sele2;
 				}
-				else if (pitsRules.get(sele1).GetRank() < pitsRules.get(sele2).GetRank()) {
+				else if (ruleSets.get(sele1).GetRank() < ruleSets.get(sele2).GetRank()) {
 					ans = sele1;
 				}
-				else if (pitsRules.get(sele1).GetRank() == pitsRules.get(sele2).GetRank()) {
-					if (pitsRules.get(sele1).GetCrowding() < pitsRules.get(sele2).GetCrowding()) {
+				else if (ruleSets.get(sele1).GetRank() == ruleSets.get(sele2).GetRank()) {
+					if (ruleSets.get(sele1).GetCrowding() < ruleSets.get(sele2).GetCrowding()) {
 						ans = sele2;
 					} else {
 						ans = sele1;
@@ -126,7 +126,7 @@ public class StaticGeneralFunc {
 				}
 			}
 
-		}while(pitsRules.get(ans).getRuleNum() == 0);
+		}while(ruleSets.get(ans).getRuleNum() == 0);
 
 		return ans;
 	}

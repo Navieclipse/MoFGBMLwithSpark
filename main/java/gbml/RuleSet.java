@@ -575,13 +575,23 @@ public class RuleSet implements java.io.Serializable{
 
 	public void micUpdate(int snum){
 
-		int repNum[] = StaticGeneralFunc.sampringWithout2(snum, micRules.size(), uniqueRnd);
-		for(int i=0; i<snum; i++){
-			micRules.get(repNum[i]).micCopy(newMicRules.get(i));
+		boolean doAddRules = Consts.DO_ADD_RULES;
+		if(!doAddRules){
+			int repNum[] = StaticGeneralFunc.sampringWithout2(snum, micRules.size(), uniqueRnd);
+			for(int i=0; i<snum; i++){
+				micRules.get(repNum[i]).micCopy(newMicRules.get(i));
+			}
+		}
+		else{
+			for(int i=0; i<snum; i++){
+				micRules.add(  new Rule( newMicRules.get(i) )  );
+			}
+			while( micRules.size() > Consts.MAX_RULE_NUM ){
+				micRules.remove( rnd.nextInt( micRules.size() ) );
+			}
 		}
 
 	}
-
 
 	//MOEAD
 	public void replace(RuleSet rules) {
