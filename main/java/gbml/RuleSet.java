@@ -266,16 +266,16 @@ public class RuleSet implements java.io.Serializable{
 			boolean doHeuris = Consts.DO_HEURISTIC_GENERATION_IN_GA;
 			if(doHeuris){
 				if(trainData == null){
-					ans = CalcAccuracyPal(trainDataInfo, forkJoinPool);
+					ans = calcAndSetMissPatterns(trainDataInfo, forkJoinPool);
 				}else{
-					ans = CalcAccuracyPal(trainData);
+					ans = calcAndSetMissPatterns(trainData);
 				}
 			}
 			else{
 				if(trainData == null){
-					ans = CalcAccuracyPalKai(trainDataInfo, forkJoinPool);
+					ans = calcMissPatterns(trainDataInfo, forkJoinPool);
 				}else{
-					ans = CalcAccuracyPalKai(trainData);
+					ans = calcMissPatterns(trainData);
 				}
 			}
 			double acc = ans / trainDataInfo.getDataSize();
@@ -684,7 +684,7 @@ public class RuleSet implements java.io.Serializable{
 		}
 	}
 
-	public void EvoluationOne(DataSetInfo trainDataInfo, Dataset<Row> trainData, int objectives, int way, ForkJoinPool forkJoinPool) {
+	public void evaluationRule(DataSetInfo trainDataInfo, Dataset<Row> trainData, int objectives, int way, ForkJoinPool forkJoinPool) {
 
 		if (getRuleNum() != 0) {
 			double ans = 0;
@@ -692,21 +692,21 @@ public class RuleSet implements java.io.Serializable{
 			boolean doHeuris = Consts.DO_HEURISTIC_GENERATION_IN_GA;
 			if(doHeuris){
 				if(trainData == null){
-					ans = CalcAccuracyPal(trainDataInfo, forkJoinPool);
+					ans = calcAndSetMissPatterns(trainDataInfo, forkJoinPool);
 				}else{
-					ans = CalcAccuracyPal(trainData);
+					ans = calcAndSetMissPatterns(trainData);
 				}
 			}
 			else{
 				if(trainData == null){
-					ans = CalcAccuracyPalKai(trainDataInfo, forkJoinPool);
+					ans = calcMissPatterns(trainDataInfo, forkJoinPool);
 				}else{
-					ans = CalcAccuracyPalKai(trainData);
+					ans = calcMissPatterns(trainData);
 				}
 			}
 
 			double acc = ans / trainDataInfo.getDataSize();
-			SetMissRate( acc * 100.0 );
+			setMissRate( acc * 100.0 );
 			setNumAndLength();
 
 			if (objectives == 1) {
@@ -732,6 +732,7 @@ public class RuleSet implements java.io.Serializable{
 			}
 		}
 		else {
+			setMissRate(100);
 			for (int o = 0; o < objectives; o++) {
 				SetFitness(100000, o);
 			}
@@ -740,27 +741,27 @@ public class RuleSet implements java.io.Serializable{
 	}
 
 	//HDFS使う場合
-	public int CalcAccuracyPal(Dataset<Row> df) {
+	public int calcAndSetMissPatterns(Dataset<Row> df) {
 
-		dfmisspat = df.filter( line -> CalcWinClassPalSpark(line) != line.getInt(Ndim) );
+		dfmisspat = df.filter( line -> calcWinClassPalSpark(line) != line.getInt(Ndim) );
 		MissPatNum = (int)dfmisspat.count();
 
 		return MissPatNum;
 	}
 
-	public int CalcAccuracyPalKai(Dataset<Row> df) {
+	public int calcMissPatterns(Dataset<Row> df) {
 
-		MissPatNum = (int)df.filter( line -> CalcWinClassPalSpark(line) != line.getInt(Ndim) ).count();
+		MissPatNum = (int)df.filter( line -> calcWinClassPalSpark(line) != line.getInt(Ndim) ).count();
 
 		return MissPatNum;
 	}
 
 	//HDFS使わない場合
-	public int CalcAccuracyPal(DataSetInfo dataSetInfo, ForkJoinPool forkJoinPool) {
+	public int calcAndSetMissPatterns(DataSetInfo dataSetInfo, ForkJoinPool forkJoinPool) {
 		try{
 			missPatterns = forkJoinPool.submit( () ->
 				dataSetInfo.getPattern().stream()
-				.filter( line -> CalcWinClassPal(line) != line.getConClass() )
+				.filter( line -> calcWinClassPal(line) != line.getConClass() )
 				.collect( Collectors.toList() )
 				).get();
 
@@ -774,12 +775,12 @@ public class RuleSet implements java.io.Serializable{
 		return MissPatNum;
 	}
 
-	public int CalcAccuracyPalKai(DataSetInfo dataSetInfo, ForkJoinPool forkJoinPool) {
+	public int calcMissPatterns(DataSetInfo dataSetInfo, ForkJoinPool forkJoinPool) {
 
 		try{
 			MissPatNum = forkJoinPool.submit( () ->
 				(int)dataSetInfo.getPattern().stream()
-				.filter( line -> CalcWinClassPal(line) != line.getConClass() )
+				.filter( line -> calcWinClassPal(line) != line.getConClass() )
 				.count()
 				).get();
 
@@ -793,7 +794,7 @@ public class RuleSet implements java.io.Serializable{
 	}
 
 	//HDFS使う場合
-	public int CalcWinClassPalSpark(Row line){
+	public int calcWinClassPalSpark(Row line){
 
 		int answerClass = 0;
 		int winClassIdx = 0;
@@ -826,7 +827,7 @@ public class RuleSet implements java.io.Serializable{
 	}
 
 	//HDFS使わない場合
-	public int CalcWinClassPal(Pattern line){
+	public int calcWinClassPal(Pattern line){
 
 		int answerClass = 0;
 		int winClassIdx = 0;
@@ -858,15 +859,15 @@ public class RuleSet implements java.io.Serializable{
 		return answerClass;
 	}
 
-	public void SetTestMissRate(double m){
+	public void setTestMissRate(double m){
 		testMissRate = m;
 	}
 
-	public double GetTestMissRate(){
+	public double getTestMissRate(){
 		return testMissRate;
 	}
 
-	public void SetMissRate(double m) {
+	public void setMissRate(double m) {
 		missRate = m;
 	}
 

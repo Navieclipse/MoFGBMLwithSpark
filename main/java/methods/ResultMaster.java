@@ -134,7 +134,7 @@ public class ResultMaster {
 		for(int i=0;i<ruleset.currentRuleSets.size();i++){
 			strs.add( i + " " + ruleset.currentRuleSets.get(i).getVecNum()
 					+" "+ ruleset.currentRuleSets.get(i).getMissRate()
-					+" "+ ruleset.currentRuleSets.get(i).GetTestMissRate()
+					+" "+ ruleset.currentRuleSets.get(i).getTestMissRate()
 					+" "+ ruleset.currentRuleSets.get(i).getRuleNum()
 					+" "+ ruleset.currentRuleSets.get(i).getRuleLength() );
 	    }
@@ -156,7 +156,7 @@ public class ResultMaster {
 
 	public void setBest(RuleSet best){
 		Trains.add( best.getMissRate() );
-		Tests.add( best.GetTestMissRate() );
+		Tests.add( best.getTestMissRate() );
 		Rules.add( (double)best.getRuleNum() );
 		Lengths.add( (double)best.getRuleLength() );
 	}
@@ -167,7 +167,7 @@ public class ResultMaster {
 		String fileName = nameDir + sep + Consts.OTHERS + sep + "Allbest_" + rep + cv + ".txt";
 
 		String str = best.getMissRate() + " " +
-					 best.GetTestMissRate() + " " +
+					 best.getTestMissRate() + " " +
 					 best.getRuleNum() + " " +
 					 best.getRuleLength();
 

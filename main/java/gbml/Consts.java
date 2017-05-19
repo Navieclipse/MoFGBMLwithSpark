@@ -10,7 +10,8 @@ public class Consts {
     public static final boolean IS_PROBABILITY_DONT_CARE = false;	//ドントケアを確率で行う
     public static final boolean DO_HEURISTIC_GENERATION_INIT = false;//ヒューリスティック生成法を行う(初期生成）
     public static final boolean DO_HEURISTIC_GENERATION_IN_GA = false;	//ヒューリスティック生成法（途中での世代）
-    public static final boolean DO_ADD_RULES = true;	//ミシガン操作時にルールを追加する（置き換えでなく）
+    public static final boolean DO_ADD_RULES = false;	//ミシガン操作時にルールを追加する（置き換えでなく）
+    public static final boolean IS_ES_UPDATE = true;	//ES型
 
     public static final int FUZZY_SET_NUM  = 14;	//ファジィ集合数
     public static final int MAX_FUZZY_DIVIDE_NUM = 5;	//条件部の分割数の最大値
@@ -20,10 +21,10 @@ public class Consts {
 
     public static final double RULESET_CROSS_RT = 0.9;	//ピッツバーグ交叉確率
     public static final double RULE_CROSS_RT = 0.9;	//ミシガン交叉確率
-    public static final double RULE_OPE_RT = 0.5;	//ミシガン適用確率
+    public static final double RULE_OPE_RT = 1.0;	//ミシガン適用確率
     public static final double RULE_CHANGE_RT = 0.2;	//ルール入れ替え割合
 
-	public static final boolean DO_LOG_PER_LOG = true;	//ログでログを出力．
+	public static final boolean DO_LOG_PER_LOG = false;	//ログでログを出力．
 
     //MOEAD's parameter
     public static final int VECTOR_DIVIDE_NUM  = 59;	//分割数 //2:209,3:19

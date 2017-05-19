@@ -37,6 +37,9 @@ public class PopulationManager{
 
 	public ArrayList<RuleSet> margeRuleSets = new ArrayList<RuleSet>();
 
+	//ミシガン型GBML用
+	public RuleSet bestOfAllGen;
+
 	//読み取った値
 	int generationNum;
 	int osType;
@@ -47,7 +50,6 @@ public class PopulationManager{
 	int testDataSize;
 
 	int objectiveNum;
-	//ForkJoinPool Dpop;
 
 	/******************************************************************************/
 	//メソッド
@@ -83,7 +85,13 @@ public class PopulationManager{
 
 	void michiganOperation(int num, Dataset<Row> trainData, DataSetInfo trainDataInfo, ForkJoinPool forkJoinPool){
 		if(rnd.nextDouble() < Consts.RULE_OPE_RT && newRuleSets.get(num).getRuleNum() != 0){
-			newRuleSets.get(num).micGenHeuris(trainData, trainDataInfo, forkJoinPool);
+			boolean isHeuris = Consts.DO_HEURISTIC_GENERATION_IN_GA;
+			if(isHeuris){
+				newRuleSets.get(num).micGenHeuris(trainData, trainDataInfo, forkJoinPool);
+			}
+			else{
+				newRuleSets.get(num).micGenRandom();
+			}
 		}
 	}
 

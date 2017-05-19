@@ -65,10 +65,10 @@ public class GaManager {
 
 	}
 
-	public void gaFrame(DataSetInfo traData, int repeat, int cv){
+	public void gaFrame(DataSetInfo trainDataInfo, int repeat, int cv){
 
 		//初期個体群評価
-		parentEvaluation(traData, populationManager);
+		parentEvaluation(trainDataInfo, populationManager);
 
 		//MOEAD初期化 （２目的のみ）
 		if(emoType > 0){
@@ -77,6 +77,10 @@ public class GaManager {
 		}
 		else if(objectiveNum != 1 && emoType == 0){
 			nsga2.calcRank(populationManager.currentRuleSets);
+		}
+
+		if(populationSize == 1){
+			populationManager.bestOfAllGen = new RuleSet( populationManager.currentRuleSets.get(0) );
 		}
 
 		boolean isNewGen = Consts.DO_LOG_PER_LOG;
@@ -92,11 +96,16 @@ public class GaManager {
 			}
 
 			//GA操作
-			if(emoType == 0||objectiveNum == 1){
-				GAStartNS(traData, gen_i);
+			if(populationSize == 1){
+				michiganTypeGa(trainDataInfo, gen_i);
+			}
+			else{
+				if(emoType == 0||objectiveNum == 1){
+					nsga2TypeGa(trainDataInfo, gen_i);
 
-			}else{
-				GAStartMO(traData, gen_i);
+				}else{
+					moeadTypeGa(trainDataInfo, gen_i);
+				}
 			}
 		}
 	}
@@ -114,7 +123,7 @@ public class GaManager {
 		RuleSet bestb;
 		bestb = calcBestRuleSet();
 		double trat = bestb.getMissRate();
-		double tstt = bestb.GetTestMissRate();
+		double tstt = bestb.getTestMissRate();
 		double numr = bestb.getRuleNum();
 		double lengtht = bestb.getRuleLength();
 		resultMaster.writeBestLog(trat, tstt, numr, lengtht, gen+1, repeat, cv);
@@ -122,7 +131,45 @@ public class GaManager {
 		}
 	}
 
-	public void GAStartNS(DataSetInfo trainDataInfo, int gen) {
+	void michiganTypeGa(DataSetInfo trainDataInfo, int gen){
+
+		populationManager.newRuleSets.add(  new RuleSet( populationManager.currentRuleSets.get(0) )  );
+
+		populationManager.michiganOperation(0, trainData, trainDataInfo, forkJoinPool);
+
+		populationManager.newRuleSets.get(0).evaluationRule(trainDataInfo, trainData, objectiveNum, secondObjType, forkJoinPool);
+
+		poplationUpdateOfMichigan();
+
+	}
+
+	void poplationUpdateOfMichigan(){
+
+		boolean isES = Consts.IS_ES_UPDATE;
+		if(isES){																	//ESか否か
+			double currentRate = populationManager.currentRuleSets.get(0).getMissRate();
+			double newRate = populationManager.newRuleSets.get(0).getMissRate();
+
+			if(currentRate >= newRate){
+				populationManager.currentRuleSets.get(0).pitsCopy( populationManager.newRuleSets.get(0) );
+				populationManager.bestOfAllGen = new RuleSet( populationManager.newRuleSets.get(0) );
+			}
+		}
+		else{
+			double bestRate = populationManager.bestOfAllGen.getMissRate();
+			double newRate = populationManager.newRuleSets.get(0).getMissRate();
+
+			if(bestRate >= newRate){
+				populationManager.bestOfAllGen = new RuleSet( populationManager.newRuleSets.get(0) );
+			}
+			populationManager.currentRuleSets.get(0).pitsCopy( populationManager.newRuleSets.get(0) );
+		}
+
+		populationManager.newRuleSets.clear();
+	}
+
+
+	void nsga2TypeGa(DataSetInfo trainDataInfo, int gen) {
 
 		geneticOperation(trainDataInfo);
 		deleteUnnecessaryRules();
@@ -138,7 +185,7 @@ public class GaManager {
 
 	}
 
-	public void GAStartMO(DataSetInfo data, int gen) {
+	void moeadTypeGa(DataSetInfo data, int gen) {
 
 		for(int i = 0;i < populationManager.currentRuleSets.size(); i++){
 			populationManager.currentRuleSets.get(i).setSize(data.DataSize);
@@ -161,7 +208,7 @@ public class GaManager {
 			populationManager.michiganOperation(nowVec, trainData, data, forkJoinPool);
 
 			populationManager.newRuleSets.get(nowVec).removeRule();
-			populationManager.newRuleSets.get(nowVec).EvoluationOne(data, trainData, objectiveNum, secondObjType, forkJoinPool);
+			populationManager.newRuleSets.get(nowVec).evaluationRule(data, trainData, objectiveNum, secondObjType, forkJoinPool);
 			//EvoluationOne(data, divideHyb.newPitsRules.get(nowVec));
 
 			moead.updateReference(populationManager.newRuleSets.get(nowVec));
@@ -174,10 +221,10 @@ public class GaManager {
 
 		if(trainData == null){
 			popManager.currentRuleSets.stream()
-					.forEach( rule -> rule.EvoluationOne(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
+					.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
 		}else{
 			popManager.currentRuleSets	.parallelStream()
-					.forEach( rule -> rule.EvoluationOne(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
+					.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
 		}
 
 	}
@@ -186,10 +233,10 @@ public class GaManager {
 
 		if(trainData == null){
 			popManager.newRuleSets.stream()
-					.forEach( rule -> rule.EvoluationOne(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
+					.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
 		}else{
 			popManager.newRuleSets	.parallelStream()
-						.forEach( rule -> rule.EvoluationOne(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
+						.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
 		}
 
 	}
@@ -310,11 +357,11 @@ public class GaManager {
 				if(isTest){
 					double acc = 0.0;
 					if(testData == null){
-						acc = (double) popManager.currentRuleSets.get(i).CalcAccuracyPal(testDataInfo, forkJoinPool);
+						acc = (double) popManager.currentRuleSets.get(i).calcAndSetMissPatterns(testDataInfo, forkJoinPool);
 					}else{
-						acc = (double) popManager.currentRuleSets.get(i).CalcAccuracyPalKai(testData);
+						acc = (double) popManager.currentRuleSets.get(i).calcMissPatterns(testData);
 					}
-					popManager.currentRuleSets.get(i).SetTestMissRate( ( acc / (double)testDataInfo.DataSize ) * 100.0 );
+					popManager.currentRuleSets.get(i).setTestMissRate( ( acc / (double)testDataInfo.DataSize ) * 100.0 );
 				}
 
 				popManager.currentRuleSets.get(i).setNumAndLength();
@@ -372,7 +419,7 @@ public class GaManager {
 
 					resultMaster.setSolution(popManager.currentRuleSets.get(i).out2obje(secondObjType),
 									popManager.currentRuleSets.get(i).GetFitness(0),
-									popManager.currentRuleSets.get(i).GetTestMissRate(),
+									popManager.currentRuleSets.get(i).getTestMissRate(),
 									out2objeAnother(popManager.currentRuleSets.get(i), secondObjType),
 									claNum);
 
@@ -395,11 +442,11 @@ public class GaManager {
 		if(isTest){
 			double accTest = 0.0;
 			if(testData == null){
-				accTest = (double) bestRuleset.CalcAccuracyPalKai(testDataInfo, forkJoinPool) / testDataInfo.DataSize;
+				accTest = (double) bestRuleset.calcMissPatterns(testDataInfo, forkJoinPool) / testDataInfo.DataSize;
 			}else{
-				accTest = (double) bestRuleset.CalcAccuracyPalKai(testData)	/ testDataInfo.DataSize;
+				accTest = (double) bestRuleset.calcMissPatterns(testData)	/ testDataInfo.DataSize;
 			}
-			bestRuleset.SetTestMissRate(accTest * 100);
+			bestRuleset.setTestMissRate(accTest * 100);
 		}
 
 		bestRuleset.setNumAndLength();
