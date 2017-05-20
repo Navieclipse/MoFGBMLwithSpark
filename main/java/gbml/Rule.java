@@ -17,19 +17,19 @@ public class Rule implements java.io.Serializable{
 		Rule(){}
 
 		//Copy construct
-		public Rule(Rule mic){
-			this.rnd = mic.rnd;
+		public Rule(Rule rule){
+			this.rnd = rule.rnd;
 
-			this.Ndim = mic.Ndim;
-			this.Cnum = mic.Cnum;
-			this.DataSize = mic.DataSize;
-			this.TstDataSize = mic.TstDataSize;
+			this.Ndim = rule.Ndim;
+			this.Cnum = rule.Cnum;
+			this.DataSize = rule.DataSize;
+			this.TstDataSize = rule.TstDataSize;
 
-			this.rule = Arrays.copyOf(mic.rule, mic.Ndim);
+			this.rule = Arrays.copyOf(rule.rule, rule.Ndim);
 
-			this.conclution = mic.conclution;
-			this.cf = mic.cf;
-			this.ruleLength = mic.ruleLength;
+			this.conclution = rule.conclution;
+			this.cf = rule.cf;
+			this.ruleLength = rule.ruleLength;
 		}
 
 		Rule(MersenneTwisterFast rnd, int Ndim, int Cnum, int DataSize, int TstDataSize){
@@ -40,7 +40,7 @@ public class Rule implements java.io.Serializable{
 			this.TstDataSize = TstDataSize;
 		}
 
-		public void changeRule(Rule rule){
+		public void copyRule(Rule rule){
 			this.rnd = rule.rnd;
 
 			this.Ndim = rule.Ndim;
@@ -194,41 +194,8 @@ public class Rule implements java.io.Serializable{
 
 		}
 
-		//NSGA2用
-		public void CalcMuData2(double pattern[][], int newDataSize){
-			StaticFuzzyFunc kk = new StaticFuzzyFunc();
-			kk.KKkk(Consts.MAX_FUZZY_DIVIDE_NUM);
-			this.DataSize = newDataSize;
-		}
-
-		public void setSize(int m){
-			this.DataSize = m;
-		}
-
-		public void setConc(int conc){
-			this.conclution = conc;
-		}
-
 		public int getNdim(){
 			return Ndim;
 		}
-
-		public void micCopy(Rule mic){
-			this.rnd = new MersenneTwisterFast(rnd.nextInt());
-
-			this.Ndim = mic.Ndim;
-			this.Cnum = mic.Cnum;
-			this.DataSize = mic.DataSize;
-			this.TstDataSize = mic.TstDataSize;
-
-			this.rule = Arrays.copyOf(mic.rule, mic.Ndim);
-
-			this.conclution = mic.conclution;;
-			this.cf = mic.cf;
-			this.ruleLength = mic.ruleLength;
-
-		}
-
-
 
 }

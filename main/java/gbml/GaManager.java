@@ -151,7 +151,7 @@ public class GaManager {
 			double newRate = populationManager.newRuleSets.get(0).getMissRate();
 
 			if(currentRate >= newRate){
-				populationManager.currentRuleSets.get(0).pitsCopy( populationManager.newRuleSets.get(0) );
+				populationManager.currentRuleSets.get(0).copyRuleSet( populationManager.newRuleSets.get(0) );
 				populationManager.bestOfAllGen = new RuleSet( populationManager.newRuleSets.get(0) );
 			}
 		}
@@ -162,12 +162,11 @@ public class GaManager {
 			if(bestRate >= newRate){
 				populationManager.bestOfAllGen = new RuleSet( populationManager.newRuleSets.get(0) );
 			}
-			populationManager.currentRuleSets.get(0).pitsCopy( populationManager.newRuleSets.get(0) );
+			populationManager.currentRuleSets.get(0).copyRuleSet( populationManager.newRuleSets.get(0) );
 		}
 
 		populationManager.newRuleSets.clear();
 	}
-
 
 	void nsga2TypeGa(DataSetInfo trainDataInfo, int gen) {
 
@@ -185,34 +184,32 @@ public class GaManager {
 
 	}
 
-	void moeadTypeGa(DataSetInfo data, int gen) {
+	void moeadTypeGa(DataSetInfo trainDataInfo, int gen) {
 
 		for(int i = 0;i < populationManager.currentRuleSets.size(); i++){
-			populationManager.currentRuleSets.get(i).setSize(data.DataSize);
+			populationManager.currentRuleSets.get(i).setSize(trainDataInfo.DataSize);
 		}
-		List<Integer> UseVecNums = new ArrayList<Integer>();
+		List<Integer> vectors = new ArrayList<Integer>();
 		for (int i = 0; i < populationSize; i++) {
-			UseVecNums.add(i);
+			vectors.add(i);
 		}
-		//Gmethod.shuffle(UseVecNums, rnd);
+		//StaticGeneralFunc.shuffle(UseVecNums, rnd);
 
 		populationManager.newRuleSets.clear();
 		populationManager.addNewPits(populationSize);
 
 		for (int i = 0; i < populationSize; i++) {
 
-			int nowVec = UseVecNums.get(i);
+			int nowVecIdx = vectors.get(i);
 
-			populationManager.crossOverRandom(nowVec, populationSize, moead);
-			populationManager.newRuleSetMutation(nowVec);
-			populationManager.michiganOperation(nowVec, trainData, data, forkJoinPool);
+			populationManager.crossOverAndMichiganOpe(nowVecIdx, populationSize, trainData, forkJoinPool, trainDataInfo);
+			populationManager.newRuleSetMutation(nowVecIdx);
 
-			populationManager.newRuleSets.get(nowVec).removeRule();
-			populationManager.newRuleSets.get(nowVec).evaluationRule(data, trainData, objectiveNum, secondObjType, forkJoinPool);
-			//EvoluationOne(data, divideHyb.newPitsRules.get(nowVec));
+			populationManager.newRuleSets.get(nowVecIdx).removeRule();
+			populationManager.newRuleSets.get(nowVecIdx).evaluationRule(trainDataInfo, trainData, objectiveNum, secondObjType, forkJoinPool);
 
-			moead.updateReference(populationManager.newRuleSets.get(nowVec));
-			moead.updateNeighbors(populationManager.newRuleSets.get(nowVec), populationManager.currentRuleSets,nowVec, emoType);
+			moead.updateReference( populationManager.newRuleSets.get(nowVecIdx) );
+			moead.updateNeighbors(populationManager.newRuleSets.get(nowVecIdx), populationManager.currentRuleSets, nowVecIdx, emoType);
 		}
 
 	}
@@ -277,8 +274,8 @@ public class GaManager {
 
 	void populationUpdateOfSingleObj() {
 
-		Collections.sort(populationManager.currentRuleSets, new PittsComparator());
-		Collections.sort(populationManager.newRuleSets, new PittsComparator());
+		Collections.sort(populationManager.currentRuleSets, new RuleSetComparator());
+		Collections.sort(populationManager.newRuleSets, new RuleSetComparator());
 
 		ArrayList<RuleSet> temp = new ArrayList<RuleSet>();
 
@@ -304,10 +301,10 @@ public class GaManager {
 		best = new RuleSet(populationManager.currentRuleSets.get(0));
 		if (objectiveNum == 1) {
 			for (int i = 0; i < populationManager.currentRuleSets.size(); i++) {
-				if (populationManager.currentRuleSets.get(i).GetFitness(0) < best.GetFitness(0)) {
+				if (populationManager.currentRuleSets.get(i).getFitness(0) < best.getFitness(0)) {
 					best = new RuleSet(populationManager.currentRuleSets.get(i));
 				}
-				else if (populationManager.currentRuleSets.get(i).GetFitness(0) == best.GetFitness(0)) {
+				else if (populationManager.currentRuleSets.get(i).getFitness(0) == best.getFitness(0)) {
 					if (populationManager.currentRuleSets.get(i).getMissRate() < best.getMissRate()) {
 						best = new RuleSet(populationManager.currentRuleSets.get(i));
 					}
@@ -318,7 +315,7 @@ public class GaManager {
 		else {
 
 			for (int i = 0; i < populationManager.currentRuleSets.size(); i++) {
-				if (populationManager.currentRuleSets.get(i).GetRank() == 0) {
+				if (populationManager.currentRuleSets.get(i).getRank() == 0) {
 					if (populationManager.currentRuleSets.get(i).getMissRate() < best.getMissRate()) {
 						best = new RuleSet(populationManager.currentRuleSets.get(i));
 					}
@@ -370,14 +367,14 @@ public class GaManager {
 					fitness = Consts.W1 * popManager.currentRuleSets.get(i).getMissRate()
 							+ Consts.W2 * popManager.currentRuleSets.get(i).getRuleNum()
 							+ Consts.W3 * popManager.currentRuleSets.get(i).getRuleLength();
-					popManager.currentRuleSets.get(i).SetFitness(fitness, 0);
+					popManager.currentRuleSets.get(i).setFitness(fitness, 0);
 				} else if (objectiveNum == 2) {
-					popManager.currentRuleSets.get(i).SetFitness(popManager.currentRuleSets.get(i).getMissRate(), 0);
-					popManager.currentRuleSets.get(i).SetFitness(popManager.currentRuleSets.get(i).out2obje(secondObjType), 1);
+					popManager.currentRuleSets.get(i).setFitness(popManager.currentRuleSets.get(i).getMissRate(), 0);
+					popManager.currentRuleSets.get(i).setFitness(popManager.currentRuleSets.get(i).out2obje(secondObjType), 1);
 				} else if (objectiveNum == 3) {
-					popManager.currentRuleSets.get(i).SetFitness(popManager.currentRuleSets.get(i).getMissRate(), 0);
-					popManager.currentRuleSets.get(i).SetFitness(popManager.currentRuleSets.get(i).getRuleNum(), 1);
-					popManager.currentRuleSets.get(i).SetFitness(popManager.currentRuleSets.get(i).getRuleLength(), 2);
+					popManager.currentRuleSets.get(i).setFitness(popManager.currentRuleSets.get(i).getMissRate(), 0);
+					popManager.currentRuleSets.get(i).setFitness(popManager.currentRuleSets.get(i).getRuleNum(), 1);
+					popManager.currentRuleSets.get(i).setFitness(popManager.currentRuleSets.get(i).getRuleLength(), 2);
 				} else {
 					System.out.println("not be difined");
 				}
@@ -386,7 +383,7 @@ public class GaManager {
 			else {
 				for (int o = 0; o < objectiveNum; o++) {
 					fitness = 100000;
-					popManager.currentRuleSets.get(i).SetFitness(fitness, o);
+					popManager.currentRuleSets.get(i).setFitness(fitness, o);
 				}
 			}
 		}
@@ -396,11 +393,11 @@ public class GaManager {
 		if (objectiveNum == 1) {
 			for (int i = 0; i < popManager.currentRuleSets.size(); i++) {
 
-				if (popManager.currentRuleSets.get(i).GetFitness(0) < bestRuleset.GetFitness(0)) {
+				if (popManager.currentRuleSets.get(i).getFitness(0) < bestRuleset.getFitness(0)) {
 					bestRuleset = new RuleSet(popManager.currentRuleSets.get(i));
 				}
 
-				else if (popManager.currentRuleSets.get(i).GetFitness(0) == bestRuleset.GetFitness(0)) {
+				else if (popManager.currentRuleSets.get(i).getFitness(0) == bestRuleset.getFitness(0)) {
 					if (popManager.currentRuleSets.get(i).getMissRate() < bestRuleset.getMissRate()) {
 						bestRuleset = new RuleSet(popManager.currentRuleSets.get(i));
 					}
@@ -415,20 +412,20 @@ public class GaManager {
 			for (int i = 0; i < popManager.currentRuleSets.size(); i++) {
 				int claNum = popManager.currentRuleSets.get(i).mulCla();		//そのルール集合の識別するクラス数
 
-				if (popManager.currentRuleSets.get(i).GetRank() == 0) {
+				if (popManager.currentRuleSets.get(i).getRank() == 0) {
 
 					resultMaster.setSolution(popManager.currentRuleSets.get(i).out2obje(secondObjType),
-									popManager.currentRuleSets.get(i).GetFitness(0),
+									popManager.currentRuleSets.get(i).getFitness(0),
 									popManager.currentRuleSets.get(i).getTestMissRate(),
 									out2objeAnother(popManager.currentRuleSets.get(i), secondObjType),
 									claNum);
 
 
-					if (popManager.currentRuleSets.get(i).GetFitness(0) < bestRuleset.GetFitness(0)) {
+					if (popManager.currentRuleSets.get(i).getFitness(0) < bestRuleset.getFitness(0)) {
 						bestRuleset = new RuleSet(popManager.currentRuleSets.get(i));
 					}
-					else if (popManager.currentRuleSets.get(i).GetFitness(0) == bestRuleset.GetFitness(0)) {
-						if (popManager.currentRuleSets.get(i).GetFitness(1) <= bestRuleset.GetFitness(1)) {
+					else if (popManager.currentRuleSets.get(i).getFitness(0) == bestRuleset.getFitness(0)) {
+						if (popManager.currentRuleSets.get(i).getFitness(1) <= bestRuleset.getFitness(1)) {
 							if (popManager.currentRuleSets.get(i).getRuleLength() <= bestRuleset.getRuleLength()) {
 								bestRuleset = new RuleSet(popManager.currentRuleSets.get(i));
 							}
@@ -460,17 +457,17 @@ public class GaManager {
 			int t = rnd.nextInt(i + 1);
 
 			RuleSet tmp = rules.get(i);
-			rules.get(i).pitsCopy(rules.get(t));
-			rules.get(t).pitsCopy(tmp);
+			rules.get(i).copyRuleSet(rules.get(t));
+			rules.get(t).copyRuleSet(tmp);
 
 		}
 	}
 
-	public class PittsComparator implements Comparator<RuleSet> {
+	public class RuleSetComparator implements Comparator<RuleSet> {
 	    //比較メソッド（データクラスを比較して-1, 0, 1を返すように記述する）
 	    public int compare(RuleSet a, RuleSet b) {
-	        double no1 = a.GetFitness(0);
-	        double no2 = b.GetFitness(0);
+	        double no1 = a.getFitness(0);
+	        double no2 = b.getFitness(0);
 
 	        //昇順でソート
 	        if (no1 > no2) {
@@ -481,7 +478,6 @@ public class GaManager {
 
 	        } else {
 	            return -1;
-
 	        }
 	    }
 

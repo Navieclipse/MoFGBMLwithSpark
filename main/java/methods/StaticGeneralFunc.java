@@ -111,14 +111,14 @@ public class StaticGeneralFunc {
 				}
 			} else {
 
-				if (ruleSets.get(sele1).GetRank() > ruleSets.get(sele2).GetRank()) {
+				if (ruleSets.get(sele1).getRank() > ruleSets.get(sele2).getRank()) {
 					ans = sele2;
 				}
-				else if (ruleSets.get(sele1).GetRank() < ruleSets.get(sele2).GetRank()) {
+				else if (ruleSets.get(sele1).getRank() < ruleSets.get(sele2).getRank()) {
 					ans = sele1;
 				}
-				else if (ruleSets.get(sele1).GetRank() == ruleSets.get(sele2).GetRank()) {
-					if (ruleSets.get(sele1).GetCrowding() < ruleSets.get(sele2).GetCrowding()) {
+				else if (ruleSets.get(sele1).getRank() == ruleSets.get(sele2).getRank()) {
+					if (ruleSets.get(sele1).getCrowding() < ruleSets.get(sele2).getCrowding()) {
 						ans = sele2;
 					} else {
 						ans = sele1;
@@ -132,8 +132,8 @@ public class StaticGeneralFunc {
 	}
 
 	public static double distance(RuleSet a, RuleSet b){
-		double dis = Math.abs(a.GetFitness(1) - b.GetFitness(1));
-		dis += Math.abs(a.GetFitness(0) - b.GetFitness(0));
+		double dis = Math.abs(a.getFitness(1) - b.getFitness(1));
+		dis += Math.abs(a.getFitness(0) - b.getFitness(0));
 		return dis;
 	}
 
@@ -154,21 +154,21 @@ public class StaticGeneralFunc {
 				}
 			} else {
 
-				if (pitsRules.get(sele1).GetRank() > pitsRules.get(sele2).GetRank()) {
+				if (pitsRules.get(sele1).getRank() > pitsRules.get(sele2).getRank()) {
 					ans[0] = sele2;
 				}
-				else if (pitsRules.get(sele1).GetRank() < pitsRules.get(sele2).GetRank()) {
+				else if (pitsRules.get(sele1).getRank() < pitsRules.get(sele2).getRank()) {
 					ans[0] = sele1;
 				}
-				else if (pitsRules.get(sele1).GetRank() == pitsRules.get(sele2).GetRank()) {
+				else if (pitsRules.get(sele1).getRank() == pitsRules.get(sele2).getRank()) {
 
-					if (pitsRules.get(sele1).GetCrowding() == 100000000){
+					if (pitsRules.get(sele1).getCrowding() == 100000000){
 						ans[0] = sele1;
-					}else if (pitsRules.get(sele2).GetCrowding() == 100000000){
+					}else if (pitsRules.get(sele2).getCrowding() == 100000000){
 						ans[0] = sele2;
-					}else if (pitsRules.get(sele1).GetCrowding() == 0){
+					}else if (pitsRules.get(sele1).getCrowding() == 0){
 						ans[0] = sele2;
-					}else if (pitsRules.get(sele2).GetCrowding() == 0){
+					}else if (pitsRules.get(sele2).getCrowding() == 0){
 						ans[0] = sele1;
 					}else if (rnd.nextBoolean()) {
 						ans[0] = sele2;
@@ -194,13 +194,13 @@ public class StaticGeneralFunc {
 				}
 			} else {
 
-				if (pitsRules.get(sele1).GetRank() > pitsRules.get(sele2).GetRank()) {
+				if (pitsRules.get(sele1).getRank() > pitsRules.get(sele2).getRank()) {
 					ans[1] = sele2;
 				}
-				else if (pitsRules.get(sele1).GetRank() < pitsRules.get(sele2).GetRank()) {
+				else if (pitsRules.get(sele1).getRank() < pitsRules.get(sele2).getRank()) {
 					ans[1] = sele1;
 				}
-				else if (pitsRules.get(sele1).GetRank() == pitsRules.get(sele2).GetRank()) {
+				else if (pitsRules.get(sele1).getRank() == pitsRules.get(sele2).getRank()) {
 					if (distance(pitsRules.get(sele1), pitsRules.get(ans[0])) >
 						distance(pitsRules.get(sele2), pitsRules.get(ans[0])) )
 					{
@@ -225,7 +225,7 @@ public class StaticGeneralFunc {
 		int length = child.size() + parent.size();
 
 		for (int k = 0; k < child.size() + length; k++) {
-			if(parent.get(parentI).GetFitness(0) < child.get(childI).GetFitness(0)){
+			if(parent.get(parentI).getFitness(0) < child.get(childI).getFitness(0)){
 				temp.add(parent.get(parentI));
 				parentI++;
 			}

@@ -236,10 +236,10 @@ public class Moead{
 	public void updateReference(RuleSet individual) {
 		for (int n = 0; n < objective; n++) {
 
-			if (individual.GetFitness(n) < 1) continue;
+			if (individual.getFitness(n) < 1) continue;
 
-			if (individual.GetFitness(n) < base_z_[n]) {
-				base_z_[n] = individual.GetFitness(n);
+			if (individual.getFitness(n) < base_z_[n]) {
+				base_z_[n] = individual.getFitness(n);
 			}
 			z_[n] = base_z_[n] * alpha_;
 
@@ -250,10 +250,10 @@ public class Moead{
 
 		for (int n = 0; n < objective; n++) {
 
-			if (individual.GetFitness(n) > 1000) continue;
+			if (individual.getFitness(n) > 1000) continue;
 
-			if (individual.GetFitness(n) > base_n_[n]) {
-				base_n_[n] = individual.GetFitness(n);
+			if (individual.getFitness(n) > base_n_[n]) {
+				base_n_[n] = individual.getFitness(n);
 			}
 			n_[n] = base_n_[n] * alpha_;
 
@@ -314,9 +314,9 @@ public class Moead{
 			for (int n = 0; n < objective; n++) {
 				double diff = 0;
 				if(doNormalize){
-					diff = Math.abs( normalizationTch(individual.GetFitness(n), n) );
+					diff = Math.abs( normalizationTch(individual.getFitness(n), n) );
 				}else{
-					diff = Math.abs(individual.GetFitness(n) - z_[n]);
+					diff = Math.abs(individual.getFitness(n) - z_[n]);
 				}
 
 				double feval;
@@ -337,17 +337,17 @@ public class Moead{
 			double sum = 0;
 			if(doNormalize){
 				for (int n = 0; n < objective; n++) {
-					sum += normalizationWS(individual.GetFitness(n), n) * lambda[n];
+					sum += normalizationWS(individual.getFitness(n), n) * lambda[n];
 				}
 			}else if(isNadia){
 				for (int n = 0; n < objective; n++) {
-					sum += (n_[n] - individual.GetFitness(n)) * lambda[n];
+					sum += (n_[n] - individual.getFitness(n)) * lambda[n];
 				}
 				sum = -sum;
 			}
 			else{
 				for (int n = 0; n < objective; n++) {
-					sum += individual.GetFitness(n) * lambda[n];
+					sum += individual.getFitness(n) * lambda[n];
 				}
 			}
 			return sum;
@@ -367,9 +367,9 @@ public class Moead{
 
 			for (int n = 0; n < realA.length; n++) {
 				if(doNormalize){
-					realA[n] = normalizationTch(individual.GetFitness(n), n);
+					realA[n] = normalizationTch(individual.getFitness(n), n);
 				}else{
-					realA[n] = (individual.GetFitness(n) - z_[n]);
+					realA[n] = (individual.getFitness(n) - z_[n]);
 				}
 			}
 
@@ -377,9 +377,9 @@ public class Moead{
 
 			for (int n = 0; n < realB.length; n++) {
 				if(doNormalize){
-					realB[n] = normalizationTch(individual.GetFitness(n), n) - d1 * namda[n];
+					realB[n] = normalizationTch(individual.getFitness(n), n) - d1 * namda[n];
 				}else{
-					realB[n] = (individual.GetFitness(n) - z_[n]) - d1 * namda[n];
+					realB[n] = (individual.getFitness(n) - z_[n]) - d1 * namda[n];
 				}
 			}
 
@@ -402,13 +402,13 @@ public class Moead{
 			double[] realB = new double[objective];
 
 			for (int n = 0; n < realA.length; n++) {
-				realA[n] = (n_[n] - individual.GetFitness(n));
+				realA[n] = (n_[n] - individual.getFitness(n));
 			}
 
 			d1 = Math.abs(Utils.prod_vector(realA, namda));
 
 			for (int n = 0; n < realB.length; n++) {
-				realB[n] = (n_[n] - individual.GetFitness(n)) - d1 * namda[n];
+				realB[n] = (n_[n] - individual.getFitness(n)) - d1 * namda[n];
 			}
 
 			d2 = Utils.norm_vector(realB);
@@ -426,7 +426,7 @@ public class Moead{
 
 			if(P < 0.0)  P = 0.0;
 
-			SF  = individual.GetFitness(0) + 100 * P + 0.01 * S;    //fi(S) = error(S) + 100 max{ (|S| - Ni), 0} + 0.01 |S|
+			SF  = individual.getFitness(0) + 100 * P + 0.01 * S;    //fi(S) = error(S) + 100 max{ (|S| - Ni), 0} + 0.01 |S|
 
 			return SF;
 		}

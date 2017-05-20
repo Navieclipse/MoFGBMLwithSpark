@@ -52,7 +52,6 @@ public class PopulationManager{
 	int objectiveNum;
 
 	/******************************************************************************/
-	//メソッド
 
 	public void generateInitialPopulation(DataSetInfo dataSetInfo, Dataset<Row> trainData, int populationSize, ForkJoinPool forkJoinPool){
 
@@ -84,7 +83,7 @@ public class PopulationManager{
 	}
 
 	void michiganOperation(int num, Dataset<Row> trainData, DataSetInfo trainDataInfo, ForkJoinPool forkJoinPool){
-		if(rnd.nextDouble() < Consts.RULE_OPE_RT && newRuleSets.get(num).getRuleNum() != 0){
+		if(newRuleSets.get(num).getRuleNum() != 0){
 			boolean isHeuris = Consts.DO_HEURISTIC_GENERATION;
 			if(isHeuris){
 				newRuleSets.get(num).micGenHeuris(trainData, trainDataInfo, forkJoinPool);
@@ -151,11 +150,11 @@ public class PopulationManager{
 		else{//親をそのまま子個体に
 			if(rnd.nextBoolean()){
 				RuleSet deep = new RuleSet(currentRuleSets.get(mom));
-				newRuleSets.get(newRuleSetsIdx).pitsCopy(deep);
+				newRuleSets.get(newRuleSetsIdx).copyRuleSet(deep);
 			}
 			else{
 				RuleSet deep = new RuleSet(currentRuleSets.get(pop));
-				newRuleSets.get(newRuleSetsIdx).pitsCopy(deep);
+				newRuleSets.get(newRuleSetsIdx).copyRuleSet(deep);
 			}
 		}
 		newRuleSets.get(newRuleSetsIdx).setRuleNum();
@@ -173,7 +172,7 @@ public class PopulationManager{
 
 		if(rnd.nextDouble() < (double)Consts.RULE_OPE_RT){	//ルールの操作
 			RuleSet deep = new RuleSet( currentRuleSets.get(mom) );
-			newRuleSets.get(newRuleSetsIdx).pitsCopy(deep);
+			newRuleSets.get(newRuleSetsIdx).copyRuleSet(deep);
 			newRuleSets.get(newRuleSetsIdx).setRuleNum();
 
 			if(newRuleSets.get(newRuleSetsIdx).getRuleNum() != 0){
@@ -221,11 +220,11 @@ public class PopulationManager{
 			else{//親をそのまま子個体に
 				if(rnd.nextBoolean()){
 					RuleSet deep = new RuleSet(currentRuleSets.get(mom));
-					newRuleSets.get(newRuleSetsIdx).pitsCopy(deep);
+					newRuleSets.get(newRuleSetsIdx).copyRuleSet(deep);
 				}
 				else{
 					RuleSet deep = new RuleSet(currentRuleSets.get(pop));
-					newRuleSets.get(newRuleSetsIdx).pitsCopy(deep);
+					newRuleSets.get(newRuleSetsIdx).copyRuleSet(deep);
 				}
 			}
 			newRuleSets.get(newRuleSetsIdx).setRuleNum();

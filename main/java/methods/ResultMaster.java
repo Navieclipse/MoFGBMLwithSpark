@@ -110,13 +110,13 @@ public class ResultMaster {
 		ArrayList<String> strs = new ArrayList<String>();
 		for(int i=0;i<ruleset.currentRuleSets.size();i++){
 			strs.add( "rule " + i + " " + ruleset.currentRuleSets.get(i).getVecNum() );
-        	for(int f=0;f<ruleset.currentRuleSets.get(i).getMics().size();f++){
+        	for(int f=0;f<ruleset.currentRuleSets.get(i).getRules().size();f++){
     			String str = "";
-        		for(int g=0;g<ruleset.currentRuleSets.get(i).getMics().get(f).getNdim();g++){
-		        	str += ruleset.currentRuleSets.get(i).getMics().get(f).getRule(g) + " " ;
+        		for(int g=0;g<ruleset.currentRuleSets.get(i).getRules().get(f).getNdim();g++){
+		        	str += ruleset.currentRuleSets.get(i).getRules().get(f).getRule(g) + " " ;
 		        }
-        		str += ruleset.currentRuleSets.get(i).getMics().get(f).getConc() + " ";
-        		str += ruleset.currentRuleSets.get(i).getMics().get(f).getCf();
+        		str += ruleset.currentRuleSets.get(i).getRules().get(f).getConc() + " ";
+        		str += ruleset.currentRuleSets.get(i).getRules().get(f).getCf();
         		strs.add( str );
 	        }
         }

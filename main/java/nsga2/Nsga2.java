@@ -39,8 +39,8 @@ public class Nsga2 {
 		calcRank(popManaer.margeRuleSets);
 
 		//ランクとCDでソート
-		popManaer.margeRuleSets.sort(comparing(RuleSet::GetRank).reversed() //打ち消しのリバース
-									.thenComparing(RuleSet::GetCrowding).reversed());
+		popManaer.margeRuleSets.sort(comparing(RuleSet::getRank).reversed() //打ち消しのリバース
+									.thenComparing(RuleSet::getCrowding).reversed());
 
 		//次世代に個体を格納
 		for (int i = 0; i < popSize; i++) {
@@ -71,7 +71,7 @@ public class Nsga2 {
 				}
 			}
 			if (n_i[p] == 0) {
-				ruleSets.get(p).SetRank(0);
+				ruleSets.get(p).setRank(0);
 				rankedList.add(ruleSets.get(p));
 				F_i.add(p);
 			}
@@ -85,7 +85,7 @@ public class Nsga2 {
 		ArrayList<Double> nowFirst = new ArrayList<Double>();
 		if(isNormalize){
 			for(int i=0; i<size; i++){
-				nowFirst.add(ruleSets.get(i).GetFitness(0));
+				nowFirst.add(ruleSets.get(i).getFitness(0));
 				if(FirstMax < nowFirst.get(i)){
 					FirstMax = nowFirst.get(i);
 				}
@@ -101,7 +101,7 @@ public class Nsga2 {
 
 		}else{
 			for(int i=0; i<size; i++){
-				firstObj.add(ruleSets.get(i).GetFitness(0));
+				firstObj.add(ruleSets.get(i).getFitness(0));
 			}
 		}
 
@@ -119,7 +119,7 @@ public class Nsga2 {
 					n_i[S_i[F_i.get(p)].get(q)] -= 1;
 					if (n_i[S_i[F_i.get(p)].get(q)] == 0) {
 
-						ruleSets.get( S_i[F_i.get(p)].get(q) ).SetRank(i + 1);
+						ruleSets.get( S_i[F_i.get(p)].get(q) ).setRank(i + 1);
 						Q.add(S_i[F_i.get(p)].get(q));
 						rankedList.add(ruleSets.get( S_i[F_i.get(p)].get(q) ));
 
@@ -144,11 +144,11 @@ public class Nsga2 {
 		boolean ans = false;
 		int i = 1;
 		for (int o = 0; o < objectiveNum; o++) {
-			if (i * ruleSets.get(p).GetFitness(o) > i * ruleSets.get(q).GetFitness(o)) {
+			if (i * ruleSets.get(p).getFitness(o) > i * ruleSets.get(q).getFitness(o)) {
 				ans = false;
 				break;
 			}
-			else if (i * ruleSets.get(p).GetFitness(o) < i * ruleSets.get(q).GetFitness(o)) {
+			else if (i * ruleSets.get(p).getFitness(o) < i * ruleSets.get(q).getFitness(o)) {
 				ans = true;
 			}
 		}
@@ -158,7 +158,7 @@ public class Nsga2 {
 	void calcDistance(ArrayList<RuleSet> ruleSets) {
 		int size = ruleSets.size();
 		for (int i = 0; i < size; i++) {
-			ruleSets.get(i).SetCrowding(0);
+			ruleSets.get(i).setCrowding(0);
 		}
 
 		for (int o = 0; o < objectiveNum; o++) {
@@ -173,7 +173,7 @@ public class Nsga2 {
 				}
 			}
 
-			ruleSets.get(0).SetCrowding(Double.POSITIVE_INFINITY);
+			ruleSets.get(0).setCrowding(Double.POSITIVE_INFINITY);
 			//２目的のときにあると，Infinity増える
 			//list.get(size - 1).SetCrowding(Double.POSITIVE_INFINITY);
 
@@ -183,15 +183,15 @@ public class Nsga2 {
 			if (maxmin == 0) {
 				for (int i = 1; i < size - 1; i++) {
 					double distance = 0;
-					ruleSets.get(i).SetCrowding(
-							ruleSets.get(i).GetCrowding() + distance);
+					ruleSets.get(i).setCrowding(
+							ruleSets.get(i).getCrowding() + distance);
 				}
 			} else {
 				for (int i = 1; i < size - 1; i++) {
 					double distance = (Math.abs(ruleSets.get(i + 1).getFirstObj(o)
 							- ruleSets.get(i - 1).getFirstObj(o)) / maxmin);
-					ruleSets.get(i).SetCrowding(
-							ruleSets.get(i).GetCrowding() + distance);
+					ruleSets.get(i).setCrowding(
+							ruleSets.get(i).getCrowding() + distance);
 				}
 			}
 		}

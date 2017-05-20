@@ -22,7 +22,7 @@ public class RuleSet implements java.io.Serializable{
 
 	RuleSet(){}
 
-	RuleSet(MersenneTwisterFast rnd,int Ndim, int Cnum, int DataSize, int DataSizeTst, int objectibes){
+	RuleSet(MersenneTwisterFast rnd, int Ndim, int Cnum, int DataSize, int DataSizeTst, int objectibes){
 		this.rnd = rnd;
 		this.uniqueRnd = new MersenneTwisterFast( rnd.nextInt() );
 		this.Ndim = Ndim;
@@ -123,7 +123,7 @@ public class RuleSet implements java.io.Serializable{
 		this.MissPatNum = pits.MissPatNum;
 	}
 
-	public void pitsCopy(RuleSet pits){
+	public void copyRuleSet(RuleSet pits){
 		this.rnd = pits.rnd;
 		this.uniqueRnd = pits.uniqueRnd;
 		this.Ndim = pits.Ndim;
@@ -588,14 +588,14 @@ public class RuleSet implements java.io.Serializable{
 				Collections.sort( micRules, new ruleComparator() );	//CF順ソート（降順）
 				int num = 0;
 				for(int i=ruleNum-snum; i<ruleNum; i++){
-					micRules.get(i).changeRule( newMicRules.get(num) );
+					micRules.get(i).copyRule( newMicRules.get(num) );
 					num++;
 				}
 			}
 			else{ //ランダムに入れ替え
 				int repNum[] = StaticGeneralFunc.sampringWithout2(snum, micRules.size(), uniqueRnd);
 				for(int i=0; i<snum; i++){
-					micRules.get(repNum[i]).micCopy(newMicRules.get(i));
+					micRules.get(repNum[i]).copyRule( newMicRules.get(i) );
 				}
 			}
 		}
@@ -635,7 +635,7 @@ public class RuleSet implements java.io.Serializable{
 
 	//MOEAD
 	public void replace(RuleSet rules) {
-		this.pitsCopy(rules);
+		this.copyRuleSet(rules);
 	}
 
 	public int mulCla(){
@@ -660,19 +660,11 @@ public class RuleSet implements java.io.Serializable{
 		return vecNum;
 	}
 
-	public int GetEvaflag() {
-		return evaflag;
-	}
-
-	public void SetEvaflag(int a) {
-		this.evaflag = a;
-	}
-
-	public void SetFitness(double fitness, int o) {
+	public void setFitness(double fitness, int o) {
 		this.fitnesses[o] = fitness;
 	}
 
-	public double GetFitness(int o) {
+	public double getFitness(int o) {
 		return fitnesses[o];
 	}
 
@@ -683,19 +675,19 @@ public class RuleSet implements java.io.Serializable{
 	}
 
 	//NSGAII
-	public void SetRank(int r) {
+	public void setRank(int r) {
 		rank = r;
 	}
 
-	public int GetRank() {
+	public int getRank() {
 		return rank;
 	}
 
-	public void SetCrowding(double crow) {
+	public void setCrowding(double crow) {
 		crowding = crow;
 	}
 
-	public double GetCrowding() {
+	public double getCrowding() {
 		return crowding;
 	}
 
@@ -751,30 +743,30 @@ public class RuleSet implements java.io.Serializable{
 
 			if (objectives == 1) {
 				double fitness = Consts.W1 * getMissRate() + Consts.W2 * getRuleNum() + Consts.W3 * getRuleLength();
-				SetFitness(fitness, 0);
+				setFitness(fitness, 0);
 			}
 			else if (objectives == 2) {
-				SetFitness( (getMissRate() ), 0 );
-				SetFitness( (out2obje(way) ), 1 );
+				setFitness( (getMissRate() ), 0 );
+				setFitness( (out2obje(way) ), 1 );
 			}
 			else if (objectives == 3) {
-				SetFitness( getMissRate(), 0 );
-				SetFitness( getRuleNum(), 1 );
-				SetFitness( getRuleLength(), 2 );
+				setFitness( getMissRate(), 0 );
+				setFitness( getRuleNum(), 1 );
+				setFitness( getRuleLength(), 2 );
 			}
 			else {
 				System.out.println("not be difined");
 			}
 			if(getRuleLength() == 0){
 				for (int o = 0; o < objectives; o++) {
-					SetFitness(100000, o);
+					setFitness(100000, o);
 				}
 			}
 		}
 		else {
 			setMissRate(100);
 			for (int o = 0; o < objectives; o++) {
-				SetFitness(100000, o);
+				setFitness(100000, o);
 			}
 		}
 
@@ -917,7 +909,7 @@ public class RuleSet implements java.io.Serializable{
 		ruleLength = ruleLengthCalc();
 	}
 
-	public ArrayList<Rule> getMics(){
+	public ArrayList<Rule> getRules(){
 		return micRules;
 	}
 

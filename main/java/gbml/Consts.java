@@ -20,7 +20,7 @@ public class Consts {
 
     public static final double RULESET_CROSS_RT = 0.9;	//ピッツバーグ交叉確率
     public static final double RULE_CROSS_RT = 0.9;	//ミシガン交叉確率
-    public static final double RULE_OPE_RT = 1.0;	//ミシガン適用確率
+    public static final double RULE_OPE_RT = 0.5;	//ミシガン適用確率
     public static final double RULE_CHANGE_RT = 0.2;	//ルール入れ替え割合
 
 	public static final boolean DO_LOG_PER_LOG = false;	//ログでログを出力．
