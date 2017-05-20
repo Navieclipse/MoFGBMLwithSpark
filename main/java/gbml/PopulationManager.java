@@ -85,7 +85,7 @@ public class PopulationManager{
 
 	void michiganOperation(int num, Dataset<Row> trainData, DataSetInfo trainDataInfo, ForkJoinPool forkJoinPool){
 		if(rnd.nextDouble() < Consts.RULE_OPE_RT && newRuleSets.get(num).getRuleNum() != 0){
-			boolean isHeuris = Consts.DO_HEURISTIC_GENERATION_IN_GA;
+			boolean isHeuris = Consts.DO_HEURISTIC_GENERATION;
 			if(isHeuris){
 				newRuleSets.get(num).micGenHeuris(trainData, trainDataInfo, forkJoinPool);
 			}
@@ -171,20 +171,22 @@ public class PopulationManager{
 		mom = StaticGeneralFunc.binaryT4(currentRuleSets, rnd, popSize, objectiveNum);
 		pop = StaticGeneralFunc.binaryT4(currentRuleSets, rnd, popSize, objectiveNum);
 
-		if(rnd.nextDouble() < (double)Consts.RULE_OPE_RT){									//半分ミシガン
+		if(rnd.nextDouble() < (double)Consts.RULE_OPE_RT){	//ルールの操作
 			RuleSet deep = new RuleSet( currentRuleSets.get(mom) );
 			newRuleSets.get(newRuleSetsIdx).pitsCopy(deep);
 			newRuleSets.get(newRuleSetsIdx).setRuleNum();
 
 			if(newRuleSets.get(newRuleSetsIdx).getRuleNum() != 0){
-				boolean doHeuris = Consts.DO_HEURISTIC_GENERATION_IN_GA;
+				boolean doHeuris = Consts.DO_HEURISTIC_GENERATION;
 				if(doHeuris){
 					newRuleSets.get(newRuleSetsIdx).micGenHeuris(trainData, trainDataInfo, forkJoinPool);
+				}else{
+					newRuleSets.get(newRuleSetsIdx).micGenRandom();
 				}
-				newRuleSets.get(newRuleSetsIdx).micGenRandom();
 			}
-		}else{
-			if(rnd.nextDouble() < (double)(Consts.RULESET_CROSS_RT)){							//半分ピッツ
+		}
+		else{	//識別器自体の交叉
+			if(rnd.nextDouble() < (double)(Consts.RULESET_CROSS_RT)){
 				Nmom = rnd.nextInt(currentRuleSets.get(mom).getRuleNum()) + 1;
 				Npop = rnd.nextInt(currentRuleSets.get(pop).getRuleNum()) + 1;
 

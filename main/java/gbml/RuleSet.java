@@ -2,6 +2,8 @@ package gbml;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
@@ -207,7 +209,7 @@ public class RuleSet implements java.io.Serializable{
 	//メソッド
 	public void initialMic(DataSetInfo trainDataInfo, Dataset<Row> trainData, ForkJoinPool forkJoinPool){
 		//ヒューリスティック生成を行う場合
-		boolean isHeuris = Consts.DO_HEURISTIC_GENERATION_INIT;
+		boolean isHeuris = Consts.DO_HEURISTIC_GENERATION;
         Dataset<Row> dfsample;
         List<Row> samples = null;
         int sampleNums[] = null;
@@ -263,7 +265,7 @@ public class RuleSet implements java.io.Serializable{
 		}
 		else{
 			double ans = 0.0;
-			boolean doHeuris = Consts.DO_HEURISTIC_GENERATION_IN_GA;
+			boolean doHeuris = Consts.DO_HEURISTIC_GENERATION;
 			if(doHeuris){
 				if(trainData == null){
 					ans = calcAndSetMissPatterns(trainDataInfo, forkJoinPool);
@@ -437,6 +439,11 @@ public class RuleSet implements java.io.Serializable{
 
 		for(int i=0;i<genNum;i++){
 			ruleCross(i);
+			if(trainData == null){
+				newMicRules.get(i).calcRuleConc(trainDataInfo, forkJoinPool);
+			}else{
+				newMicRules.get(i).calcRuleConc(trainData);
+			}
 		}
 		int missPatIndex = 0;
 		for(int i=genNum; i<snum; i++){
@@ -458,7 +465,6 @@ public class RuleSet implements java.io.Serializable{
 		newMicRules.get(num).setMic();
 
 		//親個体選択（バイナリトーナメントは計算量が異常にかかるので，同じ結論部の個体同士で交叉，無ければ諦める(ルール数回で）
-		//ルール重みでバイナリトーナメントしても面白いかもしれない（TO　DO）
 		int mom = uniqueRnd.nextInt(ruleNum);
 		int pop = uniqueRnd.nextInt(ruleNum);
 		int count = 0;
@@ -513,7 +519,6 @@ public class RuleSet implements java.io.Serializable{
 
 		newMicRules.get(num).makeRuleCross( micRules.get(mom).getConc(), newCf );
 
-		//newMicRules.get(num).calcRuleConc(df);//これも時間かかるので
 	}
 
 	int[] calcHaveClass(){
@@ -576,21 +581,56 @@ public class RuleSet implements java.io.Serializable{
 	public void micUpdate(int snum){
 
 		boolean doAddRules = Consts.DO_ADD_RULES;
-		if(!doAddRules){
-			int repNum[] = StaticGeneralFunc.sampringWithout2(snum, micRules.size(), uniqueRnd);
-			for(int i=0; i<snum; i++){
-				micRules.get(repNum[i]).micCopy(newMicRules.get(i));
+		if(!doAddRules){ //ルールを入れ替える
+
+			boolean isHeuris = Consts.DO_HEURISTIC_GENERATION;
+			if(isHeuris){ //CF順に入れ替え
+				Collections.sort( micRules, new ruleComparator() );	//CF順ソート（降順）
+				int num = 0;
+				for(int i=ruleNum-snum; i<ruleNum; i++){
+					micRules.get(i).changeRule( newMicRules.get(num) );
+					num++;
+				}
+			}
+			else{ //ランダムに入れ替え
+				int repNum[] = StaticGeneralFunc.sampringWithout2(snum, micRules.size(), uniqueRnd);
+				for(int i=0; i<snum; i++){
+					micRules.get(repNum[i]).micCopy(newMicRules.get(i));
+				}
 			}
 		}
-		else{
-			for(int i=0; i<snum; i++){
-				micRules.add(  new Rule( newMicRules.get(i) )  );
+		else{ //ルールを追加する（MAXを超えた場合CF順に破棄する）
+			int overRuleNum = micRules.size() + newMicRules.size() - Consts.MAX_RULE_NUM;
+			if( overRuleNum > 0 ){
+				Collections.sort( newMicRules, new ruleComparator() );
+				for(int i=0; i<overRuleNum; i++){
+					newMicRules.remove( newMicRules.size()-1 );
+				}
 			}
-			while( micRules.size() > Consts.MAX_RULE_NUM ){
-				micRules.remove( rnd.nextInt( micRules.size() ) );
+			for(int i=0; i<newMicRules.size(); i++){
+				micRules.add(  new Rule( newMicRules.get(i) )  );
 			}
 		}
 
+	}
+
+	public class ruleComparator implements Comparator<Rule> {
+	    public int compare(Rule a, Rule b) {
+	        double no1 = a.getCf();
+	        double no2 = b.getCf();
+
+	        //降順でソート
+	        if (no1 < no2) {
+	            return 1;
+
+	        } else if (no1 == no2) {
+	            return 0;
+
+	        } else {
+	            return -1;
+
+	        }
+	    }
 	}
 
 	//MOEAD
@@ -689,7 +729,7 @@ public class RuleSet implements java.io.Serializable{
 		if (getRuleNum() != 0) {
 			double ans = 0;
 
-			boolean doHeuris = Consts.DO_HEURISTIC_GENERATION_IN_GA;
+			boolean doHeuris = Consts.DO_HEURISTIC_GENERATION;
 			if(doHeuris){
 				if(trainData == null){
 					ans = calcAndSetMissPatterns(trainDataInfo, forkJoinPool);

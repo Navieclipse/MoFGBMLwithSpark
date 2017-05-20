@@ -40,6 +40,21 @@ public class Rule implements java.io.Serializable{
 			this.TstDataSize = TstDataSize;
 		}
 
+		public void changeRule(Rule rule){
+			this.rnd = rule.rnd;
+
+			this.Ndim = rule.Ndim;
+			this.Cnum = rule.Cnum;
+			this.DataSize = rule.DataSize;
+			this.TstDataSize = rule.TstDataSize;
+
+			this.rule = Arrays.copyOf(rule.rule, rule.Ndim);
+
+			this.conclution = rule.conclution;
+			this.cf = rule.cf;
+			this.ruleLength = rule.ruleLength;
+		}
+
 		/******************************************************************************/
 		//ランダム
 		MersenneTwisterFast rnd;
