@@ -800,7 +800,7 @@ public class RuleSet implements java.io.Serializable{
 	public int calcAndSetMissPatterns(DataSetInfo dataSetInfo, ForkJoinPool forkJoinPool) {
 		try{
 			missPatterns = forkJoinPool.submit( () ->
-				dataSetInfo.getPattern().stream()
+				dataSetInfo.getPattern().parallelStream()
 				.filter( line -> calcWinClassPal(line) != line.getConClass() )
 				.collect( Collectors.toList() )
 				).get();
@@ -819,7 +819,7 @@ public class RuleSet implements java.io.Serializable{
 
 		try{
 			MissPatNum = forkJoinPool.submit( () ->
-				(int)dataSetInfo.getPattern().stream()
+				(int)dataSetInfo.getPattern().parallelStream()
 				.filter( line -> calcWinClassPal(line) != line.getConClass() )
 				.count()
 				).get();
