@@ -10,7 +10,7 @@ public class Consts {
     public static final boolean IS_PROBABILITY_DONT_CARE = false;	//ドントケアを確率で行う
     public static final boolean DO_HEURISTIC_GENERATION = false;	//ヒューリスティック生成法（途中での世代）
     public static final boolean DO_ADD_RULES = false;	//ミシガン操作時にルールを追加する（置き換えでなく）
-    public static final boolean IS_ES_UPDATE = true;	//ES型
+    public static final boolean IS_ES_UPDATE = false;	//ES型
 
     public static final int FUZZY_SET_NUM  = 14;	//ファジィ集合数
     public static final int MAX_FUZZY_DIVIDE_NUM = 5;	//条件部の分割数の最大値

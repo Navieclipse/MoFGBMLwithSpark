@@ -21,7 +21,6 @@ public class PopulationManager{
 		this.rnd = rnd;
 		this.uniqueRnd = new MersenneTwisterFast( rnd.nextInt() );
 		this.objectiveNum = objectives;
-		//this.Dpop = Dpop;
 
 	}
 
@@ -61,7 +60,7 @@ public class PopulationManager{
 
 		for(int i=0; i<populationSize; i++){
 			currentRuleSets.add( new RuleSet( rnd, attributeNum, classNum, trainDataSize, testDataSize, objectiveNum) );
-			currentRuleSets.get(i).initialMic(dataSetInfo, trainData, forkJoinPool);
+			currentRuleSets.get(i).generalInitialRules(dataSetInfo, trainData, forkJoinPool);
 		}
 
 		for(int i=0; i<populationSize; i++){

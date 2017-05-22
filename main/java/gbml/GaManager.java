@@ -217,7 +217,7 @@ public class GaManager {
 	void parentEvaluation(DataSetInfo dataSetInfo, PopulationManager popManager){
 
 		if(trainData == null){
-			popManager.currentRuleSets.stream()
+			popManager.currentRuleSets.parallelStream()
 					.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
 		}else{
 			popManager.currentRuleSets	.parallelStream()
@@ -229,7 +229,7 @@ public class GaManager {
 	void offspringEvaluation(DataSetInfo dataSetInfo, PopulationManager popManager){
 
 		if(trainData == null){
-			popManager.newRuleSets.stream()
+			popManager.newRuleSets.parallelStream()
 					.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
 		}else{
 			popManager.newRuleSets	.parallelStream()
@@ -329,7 +329,6 @@ public class GaManager {
 				}
 			}
 		}
-
 		//途中で評価用の結果出すのはちょっとしんどい
 		//double accTest = (double) best.CalcAccuracyPal(tstData, Dpop) / tstData.DataSize;
 		//best.SetTestMissRate((1 - accTest) * 100);
@@ -408,18 +407,16 @@ public class GaManager {
 
 		else {
 
-			//DisideRank(all.pitsRules);
 			for (int i = 0; i < popManager.currentRuleSets.size(); i++) {
-				int claNum = popManager.currentRuleSets.get(i).mulCla();		//そのルール集合の識別するクラス数
 
 				if (popManager.currentRuleSets.get(i).getRank() == 0) {
+					int claNum = popManager.currentRuleSets.get(i).mulCla();	//そのルール集合の識別するクラス数
 
 					resultMaster.setSolution(popManager.currentRuleSets.get(i).out2obje(secondObjType),
 									popManager.currentRuleSets.get(i).getFitness(0),
 									popManager.currentRuleSets.get(i).getTestMissRate(),
 									out2objeAnother(popManager.currentRuleSets.get(i), secondObjType),
 									claNum);
-
 
 					if (popManager.currentRuleSets.get(i).getFitness(0) < bestRuleset.getFitness(0)) {
 						bestRuleset = new RuleSet(popManager.currentRuleSets.get(i));

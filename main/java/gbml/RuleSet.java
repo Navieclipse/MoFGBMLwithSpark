@@ -38,130 +38,130 @@ public class RuleSet implements java.io.Serializable{
 		this.firstobj = new double[objectibes];
 	}
 
-	public RuleSet(RuleSet pits){
+	public RuleSet(RuleSet ruleSet){
 
-		this.rnd = pits.rnd;
-		this.uniqueRnd = pits.uniqueRnd;
-		this.Ndim = pits.Ndim;
-		this.Cnum = pits.Cnum;
-		this.DataSize = pits.DataSize;
-		this.DataSizeTst = pits.DataSizeTst;
+		this.rnd = ruleSet.rnd;
+		this.uniqueRnd = ruleSet.uniqueRnd;
+		this.Ndim = ruleSet.Ndim;
+		this.Cnum = ruleSet.Cnum;
+		this.DataSize = ruleSet.DataSize;
+		this.DataSizeTst = ruleSet.DataSizeTst;
 
-		this.missRate = pits.missRate;
-		this.ruleNum = pits.ruleNum;
-		this.ruleLength = pits.ruleLength;
-		this.fitness = pits.fitness;
+		this.missRate = ruleSet.missRate;
+		this.ruleNum = ruleSet.ruleNum;
+		this.ruleLength = ruleSet.ruleLength;
+		this.fitness = ruleSet.fitness;
 
-		this.vecNum = pits.vecNum;
+		this.vecNum = ruleSet.vecNum;
 
 		Rule a;
 		this.micRules.clear();
-		for(int i=0;i<pits.micRules.size();i++){
-			 a = new Rule(pits.micRules.get(i));
+		for(int i=0;i<ruleSet.micRules.size();i++){
+			 a = new Rule(ruleSet.micRules.get(i));
 			this.micRules.add(a);
 		}
 
-		this.evaflag = pits.evaflag;
-		this.testMissRate = pits.testMissRate;
-		this.rank = pits.rank;
-		this.crowding = pits.crowding;
-		fitnesses = Arrays.copyOf(pits.fitnesses, pits.fitnesses.length);
-		firstobj = Arrays.copyOf(pits.firstobj, pits.fitnesses.length);
+		this.evaflag = ruleSet.evaflag;
+		this.testMissRate = ruleSet.testMissRate;
+		this.rank = ruleSet.rank;
+		this.crowding = ruleSet.crowding;
+		fitnesses = Arrays.copyOf(ruleSet.fitnesses, ruleSet.fitnesses.length);
+		firstobj = Arrays.copyOf(ruleSet.firstobj, ruleSet.fitnesses.length);
 
-		this.dfmisspat = pits.dfmisspat;
-		if(pits.missPatterns != null){
+		this.dfmisspat = ruleSet.dfmisspat;
+		if(ruleSet.missPatterns != null){
 			this.missPatterns = new ArrayList<Pattern>();
 			Pattern p;
-			for(int i=0; i<pits.missPatterns.size(); i++){
-				 p = new Pattern( pits.missPatterns.get(i) );
+			for(int i=0; i<ruleSet.missPatterns.size(); i++){
+				 p = new Pattern( ruleSet.missPatterns.get(i) );
 				this.missPatterns.add(p);
 			}
 		}
-		this.MissPatNum = pits.MissPatNum;
+		this.MissPatNum = ruleSet.MissPatNum;
 
 	}
 
-	public RuleSet(RuleSet pits, int vec){
+	public RuleSet(RuleSet ruleSet, int vecNum){
 
-		this.rnd = pits.rnd;
-		this.uniqueRnd = pits.uniqueRnd;
-		this.Ndim = pits.Ndim;
-		this.Cnum = pits.Cnum;
-		this.DataSize = pits.DataSize;
-		this.DataSizeTst = pits.DataSizeTst;
+		this.rnd = ruleSet.rnd;
+		this.uniqueRnd = ruleSet.uniqueRnd;
+		this.Ndim = ruleSet.Ndim;
+		this.Cnum = ruleSet.Cnum;
+		this.DataSize = ruleSet.DataSize;
+		this.DataSizeTst = ruleSet.DataSizeTst;
 
-		this.missRate = pits.missRate;
-		this.ruleNum = pits.ruleNum;
-		this.ruleLength = pits.ruleLength;
-		this.fitness = pits.fitness;
+		this.missRate = ruleSet.missRate;
+		this.ruleNum = ruleSet.ruleNum;
+		this.ruleLength = ruleSet.ruleLength;
+		this.fitness = ruleSet.fitness;
 
-		this.vecNum = vec;
+		this.vecNum = vecNum;
 
 		Rule a;
 		this.micRules.clear();
-		for(int i=0;i<pits.micRules.size();i++){
-			 a = new Rule(pits.micRules.get(i));
+		for(int i=0;i<ruleSet.micRules.size();i++){
+			 a = new Rule(ruleSet.micRules.get(i));
 			this.micRules.add(a);
 		}
 
-		this.evaflag = pits.evaflag;
-		this.testMissRate = pits.testMissRate;
-		this.rank = pits.rank;
-		this.crowding = pits.crowding;
-		fitnesses = Arrays.copyOf(pits.fitnesses, pits.fitnesses.length);
-		firstobj = Arrays.copyOf(pits.firstobj, pits.fitnesses.length);
+		this.evaflag = ruleSet.evaflag;
+		this.testMissRate = ruleSet.testMissRate;
+		this.rank = ruleSet.rank;
+		this.crowding = ruleSet.crowding;
+		fitnesses = Arrays.copyOf(ruleSet.fitnesses, ruleSet.fitnesses.length);
+		firstobj = Arrays.copyOf(ruleSet.firstobj, ruleSet.fitnesses.length);
 
-		this.dfmisspat = pits.dfmisspat;
-		if(pits.missPatterns != null){
+		this.dfmisspat = ruleSet.dfmisspat;
+		if(ruleSet.missPatterns != null){
 			this.missPatterns = new ArrayList<Pattern>();
 			Pattern p;
-			for(int i=0; i<pits.missPatterns.size(); i++){
-				 p = new Pattern( pits.missPatterns.get(i) );
+			for(int i=0; i<ruleSet.missPatterns.size(); i++){
+				 p = new Pattern( ruleSet.missPatterns.get(i) );
 				this.missPatterns.add(p);
 			}
 		}
-		this.MissPatNum = pits.MissPatNum;
+		this.MissPatNum = ruleSet.MissPatNum;
 	}
 
-	public void copyRuleSet(RuleSet pits){
-		this.rnd = pits.rnd;
-		this.uniqueRnd = pits.uniqueRnd;
-		this.Ndim = pits.Ndim;
-		this.Cnum = pits.Cnum;
-		this.DataSize = pits.DataSize;
-		this.DataSizeTst = pits.DataSizeTst;
+	public void copyRuleSet(RuleSet ruleSet){
+		this.rnd = ruleSet.rnd;
+		this.uniqueRnd = ruleSet.uniqueRnd;
+		this.Ndim = ruleSet.Ndim;
+		this.Cnum = ruleSet.Cnum;
+		this.DataSize = ruleSet.DataSize;
+		this.DataSizeTst = ruleSet.DataSizeTst;
 
-		this.missRate = pits.missRate;
-		this.ruleNum = pits.ruleNum;
-		this.ruleLength = pits.ruleLength;
-		this.fitness = pits.fitness;
+		this.missRate = ruleSet.missRate;
+		this.ruleNum = ruleSet.ruleNum;
+		this.ruleLength = ruleSet.ruleLength;
+		this.fitness = ruleSet.fitness;
 
-		this.vecNum = pits.vecNum;
+		this.vecNum = ruleSet.vecNum;
 
-		this.evaflag = pits.evaflag;
-		this.testMissRate = pits.testMissRate;
-		this.rank = pits.rank;
-		this.crowding = pits.crowding;
-		this.fitnesses = Arrays.copyOf(pits.fitnesses, pits.fitnesses.length);
-		firstobj = Arrays.copyOf(pits.firstobj, pits.fitnesses.length);
+		this.evaflag = ruleSet.evaflag;
+		this.testMissRate = ruleSet.testMissRate;
+		this.rank = ruleSet.rank;
+		this.crowding = ruleSet.crowding;
+		this.fitnesses = Arrays.copyOf(ruleSet.fitnesses, ruleSet.fitnesses.length);
+		firstobj = Arrays.copyOf(ruleSet.firstobj, ruleSet.fitnesses.length);
 
 		Rule a;
 		this.micRules.clear();
-		for(int i=0;i<pits.micRules.size();i++){
-			 a = new Rule(pits.micRules.get(i));
+		for(int i=0; i<ruleSet.micRules.size(); i++){
+			a = new Rule( ruleSet.micRules.get(i) );
 			this.micRules.add(a);
 		}
 
-		this.dfmisspat = pits.dfmisspat;
-		if(pits.missPatterns != null){
+		this.dfmisspat = ruleSet.dfmisspat;
+		if(ruleSet.missPatterns != null){
 			this.missPatterns = new ArrayList<Pattern>();
 			Pattern p;
-			for(int i=0; i<pits.missPatterns.size(); i++){
-				 p = new Pattern( pits.missPatterns.get(i) );
+			for(int i=0; i<ruleSet.missPatterns.size(); i++){
+				 p = new Pattern( ruleSet.missPatterns.get(i) );
 				this.missPatterns.add(p);
 			}
 		}
-		this.MissPatNum = pits.MissPatNum;
+		this.MissPatNum = ruleSet.MissPatNum;
 	}
 
 	/******************************************************************************/
@@ -207,7 +207,7 @@ public class RuleSet implements java.io.Serializable{
 
 	/******************************************************************************/
 	//メソッド
-	public void initialMic(DataSetInfo trainDataInfo, Dataset<Row> trainData, ForkJoinPool forkJoinPool){
+	public void generalInitialRules(DataSetInfo trainDataInfo, Dataset<Row> trainData, ForkJoinPool forkJoinPool){
 		//ヒューリスティック生成を行う場合
 		boolean isHeuris = Consts.DO_HEURISTIC_GENERATION;
         Dataset<Row> dfsample;
@@ -642,7 +642,9 @@ public class RuleSet implements java.io.Serializable{
 		int CnumNum[] = new int[Cnum];
 		int claNum = 0;
 		for(int i =0; i<micRules.size(); i++){
-			CnumNum[micRules.get(i).getConc()]++;
+			if( micRules.get(i).getConc() != -1 ){
+				CnumNum[micRules.get(i).getConc()]++;
+			}
 		}
 		for(int i = 0; i<Cnum; i++){
 			if(CnumNum[i]>0){

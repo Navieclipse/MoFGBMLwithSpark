@@ -16,7 +16,6 @@ public class Rule implements java.io.Serializable{
 
 		Rule(){}
 
-		//Copy construct
 		public Rule(Rule rule){
 			this.rnd = rule.rnd;
 
