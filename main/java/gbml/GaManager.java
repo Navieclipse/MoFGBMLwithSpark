@@ -41,12 +41,9 @@ public class GaManager {
 	int emoType;
 	int populationSize;
 
-	public static final int PARENT = 1;
-	public static final int OFF_SPRING = 0;
-
-
-	public GaManager( int popSize, PopulationManager populationManager, Nsga2 nsga2, Moead moead, MersenneTwisterFast rnd, ForkJoinPool forkJoinPool,
-				int objectiveNum, int generationNum, Dataset<Row> trainData, int emoType, ResultMaster resultMaster) {
+	public GaManager( int popSize, PopulationManager populationManager, Nsga2 nsga2, Moead moead,
+			MersenneTwisterFast rnd, ForkJoinPool forkJoinPool,	int objectiveNum, int generationNum,
+			Dataset<Row> trainData, int emoType, ResultMaster resultMaster) {
 
 		this.populationManager = populationManager;
 		this.nsga2 = nsga2;
@@ -108,6 +105,7 @@ public class GaManager {
 				}
 			}
 		}
+
 	}
 
 	public void genCheck(int gen, int repeat, int cv){
@@ -217,11 +215,11 @@ public class GaManager {
 	void parentEvaluation(DataSetInfo dataSetInfo, PopulationManager popManager){
 
 		if(trainData == null){
-			popManager.currentRuleSets.parallelStream()
-					.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
+			popManager.currentRuleSets.stream()
+			.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
 		}else{
-			popManager.currentRuleSets	.parallelStream()
-					.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
+			popManager.currentRuleSets.parallelStream()
+			.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
 		}
 
 	}
@@ -229,11 +227,11 @@ public class GaManager {
 	void offspringEvaluation(DataSetInfo dataSetInfo, PopulationManager popManager){
 
 		if(trainData == null){
-			popManager.newRuleSets.parallelStream()
-					.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
+			popManager.newRuleSets.stream()
+			.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
 		}else{
-			popManager.newRuleSets	.parallelStream()
-						.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
+			popManager.newRuleSets.parallelStream()
+			.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
 		}
 
 	}

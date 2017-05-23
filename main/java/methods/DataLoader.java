@@ -47,6 +47,7 @@ public class DataLoader {
 
 		//2行目以降は属性値（最終列はクラス）
 		lines.stream().forEach(data::addPattern);
+
 	}
 
 }

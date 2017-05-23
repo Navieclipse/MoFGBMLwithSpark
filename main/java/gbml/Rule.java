@@ -9,7 +9,7 @@ import org.apache.spark.sql.Row;
 import methods.MersenneTwisterFast;
 import methods.StaticFuzzyFunc;
 
-public class Rule implements java.io.Serializable{
+public class Rule {
 
 		/******************************************************************************/
 		//コンストラクタ
@@ -139,12 +139,12 @@ public class Rule implements java.io.Serializable{
 		}
 
 		//HDFS使う場合
-		public double calcAdaptationPureSpark(Row lines){
+		public double calcAdaptationPure(Row lines){
 	    	return  StaticFuzzyFunc.menberMulPureSpark(lines, rule);
 		}
 
 		//HDFS使わない場合
-		public double calcAdaptationPureSpark(Pattern line){
+		public double calcAdaptationPure(Pattern line){
 	    	return  StaticFuzzyFunc.menberMulPure(line, rule);
 		}
 
@@ -188,7 +188,6 @@ public class Rule implements java.io.Serializable{
 
 		    cf = rnd.nextDouble();
 
-		    //総ルール長
 		    ruleLength = ruleLengthCalc();
 
 		}

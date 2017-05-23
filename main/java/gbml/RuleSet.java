@@ -16,7 +16,7 @@ import methods.MersenneTwisterFast;
 import methods.StaticFuzzyFunc;
 import methods.StaticGeneralFunc;
 
-public class RuleSet implements java.io.Serializable{
+public class RuleSet {
 	/******************************************************************************/
 	//コンストラクタ
 
@@ -838,7 +838,7 @@ public class RuleSet implements java.io.Serializable{
 		double maxMul = 0.0;
 		for(int r=0; r<ruleSize; r++){
 
-			double multiValue = micRules.get(r).getCf() * micRules.get(r).calcAdaptationPureSpark(line);
+			double multiValue = micRules.get(r).getCf() * micRules.get(r).calcAdaptationPure(line);
 
 			if (maxMul < multiValue){
 				maxMul = multiValue;
@@ -871,7 +871,7 @@ public class RuleSet implements java.io.Serializable{
 		double maxMul = 0.0;
 		for(int r=0; r<ruleSize; r++){
 
-			double multiValue = micRules.get(r).getCf() * micRules.get(r).calcAdaptationPureSpark(line);
+			double multiValue = micRules.get(r).getCf() * micRules.get(r).calcAdaptationPure(line);
 
 			if (maxMul < multiValue){
 				maxMul = multiValue;

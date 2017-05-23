@@ -3,7 +3,7 @@ package gbml;
 import java.util.ArrayList;
 
 
-public class DataSetInfo implements java.io.Serializable{
+public class DataSetInfo {
 
 	//コンストラクタ
 	DataSetInfo(){}

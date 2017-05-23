@@ -2,7 +2,7 @@ package gbml;
 
 import java.util.Arrays;
 
-public class Pattern implements java.io.Serializable {
+public class Pattern {
 
 	//コンストラクタ
 	Pattern(){}
@@ -31,7 +31,7 @@ public class Pattern implements java.io.Serializable {
 
 	/******************************************************************************/
 
-	public double getX(int i){
+	public double getDimValue(int i){
 		return x[i];
 	}
 

@@ -171,7 +171,7 @@ public class StaticFuzzyFunc {
 		int Ndim = rule.length;
 		for(int i=0; i<Ndim; i++){
 			try{
-				ans *= calcMenbership(rule[i], line.getX(i));
+				ans *= calcMenbership(rule[i], line.getDimValue(i));
 			}catch (Exception e) {
 				calcMenbership(rule[i], 0.0);
 			}
@@ -264,7 +264,7 @@ public class StaticFuzzyFunc {
 				double sumMembershipValue = 0.0;
 				membershipValueRulet[0] = 0.0;
 				for (int f = 0; f < Consts.FUZZY_SET_NUM; f++) {
-					sumMembershipValue += calcMenbership( f+1, line.getX(n) );
+					sumMembershipValue += calcMenbership( f+1, line.getDimValue(n) );
 					membershipValueRulet[f] = sumMembershipValue;
 				}
 				double rr = rnd.nextDouble() * sumMembershipValue;

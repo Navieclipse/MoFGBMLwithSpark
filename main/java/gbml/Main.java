@@ -309,7 +309,6 @@ public class Main {
 		if(objectiveNum != 1){
 			resultMaster.outSolution(crossValidationNum, repeatNum);
 			resultMaster.resetSolution();
-
 		}
 		/************************************************************/
 	}
