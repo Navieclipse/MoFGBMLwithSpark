@@ -215,7 +215,7 @@ public class GaManager {
 	void parentEvaluation(DataSetInfo dataSetInfo, PopulationManager popManager){
 
 		if(trainData == null){
-			popManager.currentRuleSets.stream()
+			popManager.currentRuleSets.parallelStream()
 			.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
 		}else{
 			popManager.currentRuleSets.parallelStream()
@@ -227,7 +227,7 @@ public class GaManager {
 	void offspringEvaluation(DataSetInfo dataSetInfo, PopulationManager popManager){
 
 		if(trainData == null){
-			popManager.newRuleSets.stream()
+			popManager.newRuleSets.parallelStream()
 			.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
 		}else{
 			popManager.newRuleSets.parallelStream()
