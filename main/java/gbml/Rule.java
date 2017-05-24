@@ -14,7 +14,7 @@ public class Rule {
 		/******************************************************************************/
 		//コンストラクタ
 
-		Rule(){}
+		public Rule(){}
 
 		public Rule(Rule rule){
 			this.rnd = rule.rnd;
@@ -76,6 +76,11 @@ public class Rule {
 		//ルール作成
 		public void setMic(){
 			rule = new int[Ndim];
+		}
+
+		public void setMic(int Dim){
+			Ndim = Dim;
+			rule = new int[Dim];
 		}
 
 		public void setTest(int size){
@@ -160,9 +165,13 @@ public class Rule {
 			return ruleLength;
 		}
 
+		public void setLength(int Length){
+			ruleLength = Length;
+		}
+
 		public int ruleLengthCalc(){
-			int ans=0;
-			for(int i=0;i<Ndim;i++){
+			int ans = 0;
+			for(int i=0; i<Ndim; i++){
 				if(rule[i]!=0){
 					ans++;
 				}
