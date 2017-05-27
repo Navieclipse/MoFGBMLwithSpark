@@ -1,5 +1,6 @@
 package gbml;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -16,7 +17,7 @@ import methods.MersenneTwisterFast;
 import methods.StaticFuzzyFunc;
 import methods.StaticGeneralFunc;
 
-public class RuleSet {
+public class RuleSet implements Serializable{
 	/******************************************************************************/
 	//コンストラクタ
 

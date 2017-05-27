@@ -220,6 +220,7 @@ public class Main {
 
 		/************************************************************/
 		//時間計測開始
+		TimeWatcher evaWatcher = new TimeWatcher();
 		TimeWatcher timeWatcher = new TimeWatcher();
 		timeWatcher.start();
 
@@ -268,13 +269,14 @@ public class Main {
 
 		//GA操作
 		GaManager gaManager = new GaManager(populationSize, populationManager, nsga2, moead, rnd, forkJoinPool,
-											objectiveNum, generationNum, trainData, emoType, resultMaster);
+											objectiveNum, generationNum, trainData, emoType, resultMaster, evaWatcher);
 		gaManager.gaFrame(trainDataInfo, repeatNum, crossValidationNum);
 
 		//時間計測終了
 		timeWatcher.end();
 		resultMaster.setTime( timeWatcher.getSec() );
 		resultMaster.writeTime(timeWatcher.getSec(), timeWatcher.getNano(), crossValidationNum, repeatNum);
+		resultMaster.writeTime(evaWatcher.getSec(), evaWatcher.getNano(), 114, 514);
 
 		//永続化終了（メモリにはまだ残っているのでOutOfMemoryする）
 		if(trainData != null){

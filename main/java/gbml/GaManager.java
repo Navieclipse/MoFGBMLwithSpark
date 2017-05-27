@@ -15,6 +15,7 @@ import methods.ResultMaster;
 import methods.StaticGeneralFunc;
 import moead.Moead;
 import nsga2.Nsga2;
+import time.TimeWatcher;
 
 
 public class GaManager {
@@ -28,6 +29,8 @@ public class GaManager {
 	MersenneTwisterFast rnd;
 
 	ForkJoinPool forkJoinPool;
+
+	TimeWatcher timeWatcher;
 
 	Dataset<Row> trainData;
 
@@ -43,7 +46,7 @@ public class GaManager {
 
 	public GaManager( int popSize, PopulationManager populationManager, Nsga2 nsga2, Moead moead,
 			MersenneTwisterFast rnd, ForkJoinPool forkJoinPool,	int objectiveNum, int generationNum,
-			Dataset<Row> trainData, int emoType, ResultMaster resultMaster) {
+			Dataset<Row> trainData, int emoType, ResultMaster resultMaster, TimeWatcher timeWatcher) {
 
 		this.populationManager = populationManager;
 		this.nsga2 = nsga2;
@@ -54,6 +57,7 @@ public class GaManager {
 		this.trainData = trainData;
 
 		this.resultMaster = resultMaster;
+		this.timeWatcher = timeWatcher;
 
 		this.objectiveNum = objectiveNum;
 		this.generationNum = generationNum;
@@ -80,15 +84,14 @@ public class GaManager {
 			populationManager.bestOfAllGen = new RuleSet( populationManager.currentRuleSets.get(0) );
 		}
 
-		boolean isNewGen = Consts.DO_LOG_PER_LOG;
-
+		boolean doLog = Consts.DO_LOG_PER_LOG;
 		for (int gen_i = 0; gen_i < generationNum; gen_i++) {
 
 			if(gen_i % Consts.PER_SHOW_GENERATION_NUM == 0){
 				System.out.print(".");
 			}
 
-			if(isNewGen){		//途中結果保持（テストデータは無理）
+			if(doLog){		//途中結果保持（テストデータは無理）
 				genCheck(gen_i, repeat, cv);
 			}
 
@@ -169,9 +172,12 @@ public class GaManager {
 	void nsga2TypeGa(DataSetInfo trainDataInfo, int gen) {
 
 		geneticOperation(trainDataInfo);
+
 		deleteUnnecessaryRules();
 
+		timeWatcher.start();
 		offspringEvaluation(trainDataInfo, populationManager);
+		timeWatcher.end();
 
 		if(objectiveNum == 1){
 			populationUpdateOfSingleObj();
@@ -215,7 +221,7 @@ public class GaManager {
 	void parentEvaluation(DataSetInfo dataSetInfo, PopulationManager popManager){
 
 		if(trainData == null){
-			popManager.currentRuleSets.parallelStream()
+			popManager.currentRuleSets.stream()
 			.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
 		}else{
 			popManager.currentRuleSets.parallelStream()
@@ -227,7 +233,7 @@ public class GaManager {
 	void offspringEvaluation(DataSetInfo dataSetInfo, PopulationManager popManager){
 
 		if(trainData == null){
-			popManager.newRuleSets.parallelStream()
+			popManager.newRuleSets.stream()
 			.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
 		}else{
 			popManager.newRuleSets.parallelStream()

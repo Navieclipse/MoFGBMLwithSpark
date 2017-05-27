@@ -1,8 +1,9 @@
 package gbml;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
-public class Pattern {
+public class Pattern implements Serializable{
 
 	//コンストラクタ
 	Pattern(){}

@@ -1,5 +1,6 @@
 package gbml;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.concurrent.ForkJoinPool;
 
@@ -9,7 +10,7 @@ import org.apache.spark.sql.Row;
 import methods.MersenneTwisterFast;
 import methods.StaticFuzzyFunc;
 
-public class Rule {
+public class Rule  implements Serializable{
 
 		/******************************************************************************/
 		//コンストラクタ

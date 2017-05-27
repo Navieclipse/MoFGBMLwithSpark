@@ -158,22 +158,22 @@ public class StaticFuzzyFunc {
 			try{
 				ans *= calcMenbership(rule[i], lines.getDouble(i));
 			}catch (Exception e) {
-				calcMenbership(rule[i], 0.0);
+				//calcMenbership(rule[i], 0.0);
 			}
 		}
 
 		return ans;
 	}
 
-	public static Double menberMulPure(Pattern line, int rule[]){
+	public static double menberMulPure(Pattern line, int rule[]){
 
-		Double ans = 1.0;
+		double ans = 1.0;
 		int Ndim = rule.length;
 		for(int i=0; i<Ndim; i++){
 			try{
 				ans *= calcMenbership(rule[i], line.getDimValue(i));
 			}catch (Exception e) {
-				calcMenbership(rule[i], 0.0);
+				//calcMenbership(rule[i], 0.0);
 			}
 		}
 
