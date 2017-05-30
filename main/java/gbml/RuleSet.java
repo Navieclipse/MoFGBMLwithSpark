@@ -1,6 +1,7 @@
 package gbml;
 
 import java.io.Serializable;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -722,21 +723,21 @@ public class RuleSet implements Serializable{
 	public void evaluationRule(DataSetInfo trainDataInfo, Dataset<Row> trainData, int objectives, int way, ForkJoinPool forkJoinPool) {
 
 		if (getRuleNum() != 0) {
+			//各種方ごとの計算
 			double ans = 0;
-
 			boolean doHeuris = Consts.DO_HEURISTIC_GENERATION;
 			if(doHeuris){
-				if(trainData == null){
-					ans = calcAndSetMissPatterns(trainDataInfo, forkJoinPool);
-				}else{
+				if(trainData != null){
 					ans = calcAndSetMissPatterns(trainData);
+				}else{
+					ans = calcAndSetMissPatterns(trainDataInfo, forkJoinPool);
 				}
 			}
 			else{
-				if(trainData == null){
-					ans = calcMissPatterns(trainDataInfo, forkJoinPool);
-				}else{
+				if(trainData != null){
 					ans = calcMissPatterns(trainData);
+				}else{
+					ans = calcMissPatterns(trainDataInfo, forkJoinPool);
 				}
 			}
 
@@ -744,6 +745,7 @@ public class RuleSet implements Serializable{
 			setMissRate( acc * 100.0 );
 			setNumAndLength();
 
+			//各目的数ごとの目的関数値
 			if (objectives == 1) {
 				double fitness = Consts.W1 * getMissRate() + Consts.W2 * getRuleNum() + Consts.W3 * getRuleLength();
 				setFitness(fitness, 0);
@@ -775,6 +777,60 @@ public class RuleSet implements Serializable{
 
 	}
 
+	/************************************************************************************************************/
+	//server unit 用
+	public void evaluationRule(DataSetInfo trainDataInfo, ForkJoinPool forkJoinPool) {
+		int way = Consts.SECOND_OBJECTIVE_TYPE;
+		int objectives = fitnesses.length;
+
+		if (getRuleNum() != 0) {
+			//各種方ごとの計算
+			double ans = 0;
+			boolean doHeuris = Consts.DO_HEURISTIC_GENERATION;
+			if(doHeuris){
+				ans = calcAndSetMissPatterns(trainDataInfo, forkJoinPool);
+			}
+			else{
+				ans = calcMissPatterns(trainDataInfo, forkJoinPool);
+			}
+
+			double acc = ans / trainDataInfo.getDataSize();
+			setMissRate( acc * 100.0 );
+			setNumAndLength();
+
+			//各目的数ごとの目的関数値
+			if (objectives == 1) {
+				double fitness = Consts.W1 * getMissRate() + Consts.W2 * getRuleNum() + Consts.W3 * getRuleLength();
+				setFitness(fitness, 0);
+			}
+			else if (objectives == 2) {
+				setFitness( (getMissRate() ), 0 );
+				setFitness( (out2obje(way) ), 1 );
+			}
+			else if (objectives == 3) {
+				setFitness( getMissRate(), 0 );
+				setFitness( getRuleNum(), 1 );
+				setFitness( getRuleLength(), 2 );
+			}
+			else {
+				System.out.println("not be difined");
+			}
+			if(getRuleLength() == 0){
+				for (int o = 0; o < objectives; o++) {
+					setFitness(100000, o);
+				}
+			}
+		}
+		else {
+			setMissRate(100);
+			for (int o = 0; o < objectives; o++) {
+				setFitness(100000, o);
+			}
+		}
+
+	}
+
+	/************************************************************************************************************/
 	//HDFS使う場合
 	public int calcAndSetMissPatterns(Dataset<Row> df) {
 
@@ -791,6 +847,7 @@ public class RuleSet implements Serializable{
 		return MissPatNum;
 	}
 
+	/************************************************************************************************************/
 	//HDFS使わない場合
 	public int calcAndSetMissPatterns(DataSetInfo dataSetInfo, ForkJoinPool forkJoinPool) {
 		try{
@@ -828,6 +885,32 @@ public class RuleSet implements Serializable{
 		return MissPatNum;
 	}
 
+	/************************************************************************************************************/
+	//Simple Socketの場合
+
+	public int calcAndSetMissPatterns(DataSetInfo dataSetInfo, InetSocketAddress serverList) {
+
+		missPatterns =
+			dataSetInfo.getPattern().parallelStream()
+			.filter( line -> calcWinClassPal(line) != line.getConClass() )
+			.collect( Collectors.toList() );
+
+		MissPatNum = missPatterns.size();
+
+		return MissPatNum;
+	}
+
+	public int calcMissPatterns(DataSetInfo dataSetInfo, InetSocketAddress serverList) {
+
+		MissPatNum =
+			(int)dataSetInfo.getPattern().parallelStream()
+			.filter( line -> calcWinClassPal(line) != line.getConClass() )
+			.count();
+
+		return MissPatNum;
+	}
+
+	/************************************************************************************************************/
 	//HDFS使う場合
 	public int calcWinClassPalSpark(Row line){
 
@@ -861,6 +944,7 @@ public class RuleSet implements Serializable{
 		return answerClass;
 	}
 
+	/************************************************************************************************************/
 	//HDFS使わない場合
 	public int calcWinClassPal(Pattern line){
 
@@ -894,6 +978,7 @@ public class RuleSet implements Serializable{
 		return answerClass;
 	}
 
+	/************************************************************************************************************/
 	public void setTestMissRate(double m){
 		testMissRate = m;
 	}

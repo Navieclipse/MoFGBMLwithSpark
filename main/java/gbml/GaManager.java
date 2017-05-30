@@ -1,10 +1,13 @@
 package gbml;
 
 
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 
 import org.apache.spark.sql.Dataset;
@@ -15,6 +18,7 @@ import methods.ResultMaster;
 import methods.StaticGeneralFunc;
 import moead.Moead;
 import nsga2.Nsga2;
+import socket.SocketUnit;
 import time.TimeWatcher;
 
 
@@ -30,6 +34,8 @@ public class GaManager {
 
 	ForkJoinPool forkJoinPool;
 
+	InetSocketAddress serverList[];
+
 	TimeWatcher timeWatcher;
 
 	Dataset<Row> trainData;
@@ -44,8 +50,8 @@ public class GaManager {
 	int emoType;
 	int populationSize;
 
-	public GaManager( int popSize, PopulationManager populationManager, Nsga2 nsga2, Moead moead,
-			MersenneTwisterFast rnd, ForkJoinPool forkJoinPool,	int objectiveNum, int generationNum,
+	public GaManager( int popSize, PopulationManager populationManager, Nsga2 nsga2, Moead moead, MersenneTwisterFast rnd,
+			ForkJoinPool forkJoinPool, InetSocketAddress serverList[], int objectiveNum, int generationNum,
 			Dataset<Row> trainData, int emoType, ResultMaster resultMaster, TimeWatcher timeWatcher) {
 
 		this.populationManager = populationManager;
@@ -53,6 +59,8 @@ public class GaManager {
 		this.moead = moead;
 
 		this.forkJoinPool = forkJoinPool;
+
+		this.serverList = serverList;
 
 		this.trainData = trainData;
 
@@ -220,11 +228,11 @@ public class GaManager {
 
 	void parentEvaluation(DataSetInfo dataSetInfo, PopulationManager popManager){
 
-		if(trainData == null){
-			popManager.currentRuleSets.stream()
+		if(trainData != null){
+			popManager.currentRuleSets.parallelStream()
 			.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
 		}else{
-			popManager.currentRuleSets.parallelStream()
+			popManager.currentRuleSets.stream()
 			.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
 		}
 
@@ -232,11 +240,43 @@ public class GaManager {
 
 	void offspringEvaluation(DataSetInfo dataSetInfo, PopulationManager popManager){
 
-		if(trainData == null){
-			popManager.newRuleSets.stream()
+		if(serverList != null){
+	        //個体群の分割
+	        int divideNum = serverList.length;
+	        ArrayList<ArrayList<RuleSet>> subRuleSets = new ArrayList<ArrayList<RuleSet>>();
+	        for(int i=0; i<divideNum; i++){
+	        	subRuleSets.add( new ArrayList<RuleSet>() );
+	        }
+
+	        //割り切れない場合の処理とか
+	        int subPopSize = populationSize / divideNum;
+	        int ruleIdx = 0;
+	        for(int i=0; i<divideNum; i++){
+				for(int k=0; k<subPopSize; k++){
+					if( ruleIdx < populationSize);
+					subRuleSets.get(i).add( popManager.newRuleSets.get(ruleIdx++) );
+				}
+	        }
+
+			//Socket用
+			ExecutorService service = Executors.newCachedThreadPool();
+	        SocketUnit socketUnits = null;
+
+	        //すべてのサーバーに分散する．
+			for (int i=0; i<divideNum; i++) {
+				socketUnits = new SocketUnit(serverList[i], subRuleSets.get(i) );
+				service.submit(socketUnits);
+			}
+
+			//ルールセット置き換え
+			popManager.newRuleSets.clear();
+			popManager.newRuleSets = socketUnits.getRuleSets();
+
+		}else if(trainData != null){
+			popManager.newRuleSets.parallelStream()
 			.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
 		}else{
-			popManager.newRuleSets.parallelStream()
+			popManager.newRuleSets.stream()
 			.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
 		}
 

@@ -1,5 +1,6 @@
 package gbml;
 
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.concurrent.ForkJoinPool;
 
@@ -36,7 +37,7 @@ public class Settings {
 	    if(calclationType == 0){
 			CommandLineFunc.lessArgs(args, 10);
 	    }else if(calclationType == 1){
-			CommandLineFunc.lessArgs(args, 16);
+			CommandLineFunc.lessArgs(args, 11);
 	    }else if(calclationType == 2){
 			CommandLineFunc.lessArgs(args, 15);
 	    }
@@ -78,21 +79,22 @@ public class Settings {
 
     //1: Apache Spark時の設定
 	void setSpark(String args[]){
+
+		//このmasterはネームノードのアドレス名が入る
+	    masterNodeName = args[10];
+
+	    //Sparkの実行をWebから見るときの名前の指定
+	    appName = args[11];
+
 	    //分散環境かどうか
-	    isDistributed = Boolean.parseBoolean(args[10]);
+	    isDistributed = Boolean.parseBoolean(args[12]);
 	    if (isDistributed) osType = Consts.HDFS;
 
 	    //データの分割数
-	    partitionNum = Integer.parseInt(args[11]);
+	    if (isDistributed) partitionNum = Integer.parseInt(args[13]);
 
 	    //HDFSにおけるフォルダ
-	    dirNameInHdfs = args[12];
-
-	    //このmasterはネームノードのアドレス名が入る
-	    masterNodeName = args[13];
-
-	    //Sparkの実行をWebから見るときの名前の指定
-	    appName = args[14];
+	    if (isDistributed) dirNameInHdfs = args[14];
 
 	    //number of executor
 	    executorNum = 0;
@@ -119,6 +121,12 @@ public class Settings {
 
 		for(int i=0; i<partitionNum; i++){
 			nodeNames.add(args[i+15]);
+		}
+
+		serverList = new InetSocketAddress[nodeNames.size()];
+
+		for(int i=0; i<nodeNames.size(); i++){
+			serverList[i] = new InetSocketAddress(nodeNames.get(i), portNum);
 		}
 
 	}
@@ -186,6 +194,8 @@ public class Settings {
 	int threadNum = 18;	//各ノードのスレッド数？
 
 	ArrayList<String> nodeNames;	//ノードの名前
+
+	InetSocketAddress[] serverList;	//サーバーリスト
 
 	/******************************************************************************/
 

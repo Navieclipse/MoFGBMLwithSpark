@@ -26,6 +26,7 @@ public class Main {
 		/******************************************************************************/
 		//基本設定
 		Settings sets = new Settings(args);
+
 		/******************************************************************************/
 	    //ファジィ分割の生成
 	    //StaticFuzzyFunc kk = new StaticFuzzyFunc();
@@ -180,12 +181,12 @@ public class Main {
 		populationManager.generateInitialPopulation(trainDataInfo, trainData, sets.populationSize, sets.forkJoinPool);
 
 		//EMOアルゴリズム初期化
-		Moead moead = new Moead(sets.populationSize, Consts.VECTOR_DIVIDE_NUM, Consts.MOEAD_ALPHA, sets.emoType, sets.objectiveNum,
-								Consts.SELECTION_NEIGHBOR_NUM, Consts.UPDATE_NEIGHBOR_NUM, rnd);
+		Moead moead = new Moead(sets.populationSize, Consts.VECTOR_DIVIDE_NUM, Consts.MOEAD_ALPHA, sets.emoType,
+								sets.objectiveNum, Consts.SELECTION_NEIGHBOR_NUM, Consts.UPDATE_NEIGHBOR_NUM, rnd);
 		Nsga2 nsga2 = new Nsga2(sets.objectiveNum, rnd);
 
 		//GA操作
-		GaManager gaManager = new GaManager(sets.populationSize, populationManager, nsga2, moead, rnd, sets.forkJoinPool,
+		GaManager gaManager = new GaManager(sets.populationSize, populationManager, nsga2, moead, rnd, sets.forkJoinPool, sets.serverList,
 											sets.objectiveNum, sets.generationNum, trainData, sets.emoType, resultMaster, evaWatcher);
 		gaManager.gaFrame(trainDataInfo, repeatNum, crossValidationNum);
 

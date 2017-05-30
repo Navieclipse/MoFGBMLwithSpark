@@ -6,7 +6,7 @@ import java.util.ArrayList;
 public class DataSetInfo {
 
 	//コンストラクタ
-	DataSetInfo(){}
+	public DataSetInfo(){}
 
 	public DataSetInfo(int Datasize, int Ndim, int Cnum){
 

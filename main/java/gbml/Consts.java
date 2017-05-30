@@ -55,6 +55,9 @@ public class Consts {
 
     //Others
     public static final int PER_SHOW_GENERATION_NUM  = 100;	//表示する世代
+    public static final int WAIT_SECOND = 300000;
+    public static final int TIME_OUT_TIME = 30000;
+    public static final int SLEEP_TIME = 1000;
 
     //One objective weights
     public static final int W1 = 100;
@@ -70,6 +73,7 @@ public class Consts {
     public static final String SOLUTION = "solution";
     public static final String VECSET = "vecset";
     public static final String OTHERS = "write";
+
     //OS
     public static final int WINDOWS = 0;	//windows
     public static final int UNIX = 1;	//unix
