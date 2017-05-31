@@ -209,7 +209,7 @@ public class RuleSet implements Serializable{
 
 	/******************************************************************************/
 	//メソッド
-	public void generalInitialRules(DataSetInfo trainDataInfo, Dataset<Row> trainData, ForkJoinPool forkJoinPool){
+	public void generalInitialRules(DataSetInfo trainDataInfo, Dataset<Row> trainData, ForkJoinPool forkJoinPool, int calclationType){
 		//ヒューリスティック生成を行う場合
 		boolean isHeuris = Consts.DO_HEURISTIC_GENERATION;
         Dataset<Row> dfsample;
@@ -217,11 +217,11 @@ public class RuleSet implements Serializable{
         int sampleNums[] = null;
 
         if(isHeuris){ //サンプリング
-        	if(trainData == null){
+        	if(calclationType == 0){
 				sampleNums = new int[Consts.INITIATION_RULE_NUM];
 				sampleNums = StaticGeneralFunc.sampringWithout(Consts.INITIATION_RULE_NUM, DataSize, uniqueRnd);
         	}
-        	else{
+        	else if (calclationType == 1){
 				double sampleSize = (double)(Consts.INITIATION_RULE_NUM+10) / (double)DataSize;
 				dfsample = trainData.sample( false, sampleSize, uniqueRnd.nextInt() );
 				samples = dfsample.collectAsList();
@@ -235,10 +235,11 @@ public class RuleSet implements Serializable{
         		micRules.get(i).setMic();
 
         		if(isHeuris){		//ヒューリスティック生成
-        			if(trainData == null){
+        			if(calclationType == 0){
         				micRules.get(i).makeRuleSingle( trainDataInfo.getPattern(sampleNums[i]), uniqueRnd );
         				micRules.get(i).calcRuleConc(trainDataInfo, forkJoinPool);
-        			}else{
+        			}
+        			else if(calclationType == 1){
 						micRules.get(i).makeRuleSingle(samples.get(i), uniqueRnd);
 						micRules.get(i).calcRuleConc(trainData);
         			}
@@ -251,10 +252,12 @@ public class RuleSet implements Serializable{
 
         }while( micRules.size()==0 );
 
-		setFitness(trainDataInfo, trainData, forkJoinPool);
+		ruleNum = micRules.size();
+		ruleLength = ruleLengthCalc();
+		//setFitness(trainDataInfo, trainData, forkJoinPool, calclationType);
 	}
 
-	public void setFitness(DataSetInfo trainDataInfo, Dataset<Row> trainData, ForkJoinPool forkJoinPool){
+	public void setFitness(DataSetInfo trainDataInfo, Dataset<Row> trainData, ForkJoinPool forkJoinPool, int calclationType){
 
 		removeRule();
 
@@ -269,16 +272,16 @@ public class RuleSet implements Serializable{
 			double ans = 0.0;
 			boolean doHeuris = Consts.DO_HEURISTIC_GENERATION;
 			if(doHeuris){
-				if(trainData == null){
+				if(calclationType == 0){
 					ans = calcAndSetMissPatterns(trainDataInfo, forkJoinPool);
-				}else{
+				}else if(calclationType == 1){
 					ans = calcAndSetMissPatterns(trainData);
 				}
 			}
 			else{
-				if(trainData == null){
+				if(calclationType == 0){
 					ans = calcMissPatterns(trainDataInfo, forkJoinPool);
-				}else{
+				}else if (calclationType == 1){
 					ans = calcMissPatterns(trainData);
 				}
 			}

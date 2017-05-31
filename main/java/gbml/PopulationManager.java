@@ -52,7 +52,7 @@ public class PopulationManager{
 
 	/******************************************************************************/
 
-	public void generateInitialPopulation(DataSetInfo dataSetInfo, Dataset<Row> trainData, int populationSize, ForkJoinPool forkJoinPool){
+	public void generateInitialPopulation(DataSetInfo dataSetInfo, Dataset<Row> trainData, int populationSize, ForkJoinPool forkJoinPool, int calclationType){
 
 		attributeNum = dataSetInfo.getNdim();
 		classNum = dataSetInfo.getCnum();
@@ -60,12 +60,12 @@ public class PopulationManager{
 
 		for(int i=0; i<populationSize; i++){
 			currentRuleSets.add( new RuleSet( rnd, attributeNum, classNum, trainDataSize, testDataSize, objectiveNum) );
-			currentRuleSets.get(i).generalInitialRules(dataSetInfo, trainData, forkJoinPool);
+			currentRuleSets.get(i).generalInitialRules(dataSetInfo, trainData, forkJoinPool, calclationType);
 		}
 
-		for(int i=0; i<populationSize; i++){
-			newRuleSets.add( new RuleSet( uniqueRnd, attributeNum, classNum, trainDataSize, testDataSize, objectiveNum) );
-		}
+//	for(int i=0; i<populationSize; i++){
+//		newRuleSets.add( new RuleSet( uniqueRnd, attributeNum, classNum, trainDataSize, testDataSize, objectiveNum) );
+//	}
 
 	}
 

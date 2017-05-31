@@ -6,12 +6,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
+import com.clearspring.analytics.util.Lists;
 
 import methods.MersenneTwisterFast;
 import methods.ResultMaster;
@@ -228,7 +232,61 @@ public class GaManager {
 
 	void parentEvaluation(DataSetInfo dataSetInfo, PopulationManager popManager){
 
-		if(trainData != null){
+		if(serverList != null){
+	        //個体群の分割
+	        int divideNum = serverList.length;
+	        ArrayList<ArrayList<RuleSet>> subRuleSets = new ArrayList<ArrayList<RuleSet>>();
+	        for(int i=0; i<divideNum; i++){
+	        	subRuleSets.add( new ArrayList<RuleSet>() );
+	        }
+
+	        //割り切れない場合の処理とか
+	        int subPopSize = populationSize / divideNum;
+	        int ruleIdx = 0;
+	        for(int i=0; i<divideNum; i++){
+				for(int k=0; k<subPopSize; k++){
+					if( ruleIdx < populationSize);
+					subRuleSets.get(i).add( popManager.currentRuleSets.get(ruleIdx++) );
+				}
+	        }
+
+			//Socket用
+			ExecutorService service = Executors.newCachedThreadPool();
+
+			try{
+				List< Callable<ArrayList<RuleSet>> > tasks = Lists.newArrayList();
+				for(int i=0; i<divideNum; i++){
+					tasks.add(  new SocketUnit( serverList[i], subRuleSets.get(i) )  );
+				}
+
+				//並列実行，同期
+				List< Future<ArrayList<RuleSet>> > futures = null;
+				try{
+					futures = service.invokeAll(tasks);
+				}
+				catch(InterruptedException e){
+					System.out.println(e+": make future");
+				}
+
+				//ルールセット置き換え
+				popManager.currentRuleSets.clear();
+				for(Future<ArrayList<RuleSet>> future : futures){
+					try{
+						popManager.currentRuleSets.addAll( future.get() );
+					}
+					catch(Exception e){
+						System.out.println(e+": exchanging");
+					}
+				}
+			}
+			finally{
+				if(service != null){
+					service.shutdown();
+				}
+			}
+
+		}
+		else if(trainData != null){
 			popManager.currentRuleSets.parallelStream()
 			.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
 		}else{
@@ -260,22 +318,45 @@ public class GaManager {
 
 			//Socket用
 			ExecutorService service = Executors.newCachedThreadPool();
-	        SocketUnit socketUnits = null;
 
-	        //すべてのサーバーに分散する．
-			for (int i=0; i<divideNum; i++) {
-				socketUnits = new SocketUnit(serverList[i], subRuleSets.get(i) );
-				service.submit(socketUnits);
+			try{
+				List< Callable<ArrayList<RuleSet>> > tasks = Lists.newArrayList();
+				for(int i=0; i<divideNum; i++){
+					tasks.add(  new SocketUnit( serverList[i], subRuleSets.get(i) )  );
+				}
+
+				//並列実行，同期
+				List< Future<ArrayList<RuleSet>> > futures = null;
+				try{
+					futures = service.invokeAll(tasks);
+				}
+				catch(InterruptedException e){
+					System.out.println(e+": make future");
+				}
+
+				//ルールセット置き換え
+				popManager.newRuleSets.clear();
+				for(Future<ArrayList<RuleSet>> future : futures){
+					try{
+						popManager.newRuleSets.addAll( future.get() );
+					}
+					catch(Exception e){
+						System.out.println(e+": exchanging");
+					}
+				}
+			}
+			finally{
+				if(service != null){
+					service.shutdown();
+				}
 			}
 
-			//ルールセット置き換え
-			popManager.newRuleSets.clear();
-			popManager.newRuleSets = socketUnits.getRuleSets();
-
-		}else if(trainData != null){
+		}
+		else if(trainData != null){
 			popManager.newRuleSets.parallelStream()
 			.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
-		}else{
+		}
+		else{
 			popManager.newRuleSets.stream()
 			.forEach( rule -> rule.evaluationRule(dataSetInfo, trainData, objectiveNum, secondObjType, forkJoinPool) );
 		}

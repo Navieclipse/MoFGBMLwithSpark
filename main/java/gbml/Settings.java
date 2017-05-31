@@ -31,7 +31,7 @@ public class Settings {
 
 		/******************************************************************************/
 	    //0: single node, 1:Apache Spark, 2:Simple Socket
-	    int calclationType = Integer.parseInt(args[0]);
+	    calclationType = Integer.parseInt(args[0]);
 
 		//コマンドライン引数が足りてるかどうか
 	    if(calclationType == 0){
@@ -119,6 +119,7 @@ public class Settings {
 
 		threadNum = Integer.parseInt(args[14]);
 
+		nodeNames = new ArrayList<String>();
 		for(int i=0; i<partitionNum; i++){
 			nodeNames.add(args[i+15]);
 		}
@@ -129,11 +130,15 @@ public class Settings {
 			serverList[i] = new InetSocketAddress(nodeNames.get(i), portNum);
 		}
 
+		//テスト用
+		forkJoinPool = new ForkJoinPool(threadNum);
+
 	}
 
 	/******************************************************************************/
 	//基本設定
-	int osType = 0;
+
+	int osType;
 
 	String dataName = "glass";	//データ名
 	int generationNum = 1000; //世代数

@@ -10,7 +10,7 @@ import java.util.concurrent.Callable;
 import gbml.Consts;
 import gbml.RuleSet;
 
-public class SocketUnit implements Callable<String>{
+public class SocketUnit implements Callable< ArrayList<RuleSet> >{
 
     private InetSocketAddress address = null;
 
@@ -29,7 +29,7 @@ public class SocketUnit implements Callable<String>{
 
     @SuppressWarnings("unchecked")
 	@Override
-    public String call() throws Exception {
+    public ArrayList<RuleSet> call() throws Exception {
 
         try {
             Socket socket = new Socket();
@@ -40,11 +40,10 @@ public class SocketUnit implements Callable<String>{
 
             //ルールセットを送信
             send.writeObject( subRuleSets );
-            System.out.println(System.currentTimeMillis() + " request to: " + this.address.getHostName() + ":" + this.address.getPort() );
 
             //ルールセットを受信
-            newRuleSets.addAll ( (ArrayList<RuleSet>) recieve.readObject() );
-            System.out.println(System.currentTimeMillis() + " response from: " + this.address.getHostName() + ":" + this.address.getPort() );
+            newRuleSets = ( (ArrayList<RuleSet>) recieve.readObject() );
+            //System.out.println(System.currentTimeMillis() + " response from: " + this.address.getHostName() + ":" + this.address.getPort() + " " + newRuleSets.size() );
 
             //クローズ
             send.close();
@@ -52,10 +51,10 @@ public class SocketUnit implements Callable<String>{
             socket.close();
         }
         catch(Exception e){
-        	System.out.println(e);
+        	System.out.println(e + ": SoketUnit");
         }
 
-        return "";
+        return newRuleSets;
     }
 
 }

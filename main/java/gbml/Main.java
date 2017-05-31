@@ -152,11 +152,11 @@ public class Main {
 		int classNum = 0;
 
 		//Sparkを使わない場合（HDFSも使わない）
-		if(sets.sparkSession == null){
+		if(sets.calclationType == 0 || sets.calclationType == 2){
 			trainDataInfo = new DataSetInfo();
 			DataLoader.inputFile(trainDataInfo, nowTrainFile);
 		}
-		else{ //Sparkを使う場合（HDFSも使う）
+		else if(sets.calclationType == 1){ //Sparkを使う場合（HDFSも使う）
 			sqlc = new SQLContext(sets.sparkSession);
 			trainData = sqlc.read()
 					.format("com.databricks.spark.csv")
@@ -178,7 +178,7 @@ public class Main {
 		/************************************************************/
 		//初期個体群の生成
 		PopulationManager populationManager = new PopulationManager(rnd, sets.objectiveNum);
-		populationManager.generateInitialPopulation(trainDataInfo, trainData, sets.populationSize, sets.forkJoinPool);
+		populationManager.generateInitialPopulation(trainDataInfo, trainData, sets.populationSize, sets.forkJoinPool, sets.calclationType);
 
 		//EMOアルゴリズム初期化
 		Moead moead = new Moead(sets.populationSize, Consts.VECTOR_DIVIDE_NUM, Consts.MOEAD_ALPHA, sets.emoType,
@@ -206,10 +206,11 @@ public class Main {
 		Dataset<Row> testData = null;
 		DataSetInfo testDataInfo = null;
 
-		if(sets.sparkSession == null){
+		if(sets.calclationType == 0 || sets.calclationType == 2){
 			testDataInfo = new DataSetInfo();
 			DataLoader.inputFile(testDataInfo, nowTestFile);
-		}else{
+		}
+		else if(sets.calclationType == 1){
 			testData = sqlc.read()
 					.format("com.databricks.spark.csv")
 					.option("inferSchema", "true")

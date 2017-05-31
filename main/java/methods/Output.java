@@ -53,6 +53,19 @@ public class Output {
 
 	}
 
+	public static String makeFileNameOne(String dataName, String location, int cv_i, int rep_i, boolean isTra){
+
+		String fileName = "";
+		if(isTra){
+			fileName = location + dataName + "/a" + Integer.toString(rep_i) + "_" + Integer.toString(cv_i) + "_" +dataName + "-10tra.dat";
+		}else{
+			fileName = location + dataName + "/a" + Integer.toString(rep_i) + "_" + Integer.toString(cv_i) + "_" +dataName + "-10tst.dat";
+		}
+
+		return fileName;
+
+	}
+
 	//単一用
 	public static void writeln(String fileName, String st, int os){
 

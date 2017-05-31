@@ -1,5 +1,6 @@
 package methods;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -7,6 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.fs.Path;
 
 import gbml.DataSetInfo;
 
@@ -47,6 +53,57 @@ public class DataLoader {
 
 		//2行目以降は属性値（最終列はクラス）
 		lines.stream().forEach(data::addPattern);
+
+	}
+
+	public static DataSetInfo readHdfsData(String dataName, String dataLocation){
+
+		DataSetInfo data = null;
+
+		String localPathString = dataName;
+    	String hdfsPathString = dataLocation;
+
+    	Configuration conf = new Configuration();
+    	Path hdfsPath = new Path(hdfsPathString);
+    	try {
+    	    FileSystem fs = hdfsPath.getFileSystem(conf);
+    	    FileUtil.copy(fs, hdfsPath, new File(localPathString), false, conf);
+    	} catch (IOException e) {
+    	    e.printStackTrace();
+    	}
+
+//	List<Double[]> lines = new ArrayList<Double[]>();
+//	try ( Stream<String> line = Files.lines(Paths.get(fileName)) ) {
+//	    lines =
+//	    	line.map(s ->{
+//	    	String[] numbers = s.split(",");
+//	    	Double[] nums = new Double[numbers.length];
+//
+//	    	//値が無い場合の例外処理
+//	    	for (int i = 0; i < nums.length; i++) {
+//	    		if (numbers[i].matches("^([1-9][0-9]*|0)(.[0-9]+)?$") ){
+//	    			nums[i] = Double.parseDouble(numbers[i]);
+//	    		}else{
+//	    			nums[i] = 0.0;
+//	    		}
+//			}
+//	    	return nums;
+//	    })
+//	    .collect( Collectors.toList() );
+//
+//	} catch (IOException e) {
+//	    e.printStackTrace();
+//	}
+//
+//	//1行目はデータのパラメータ
+//	data.setDataSize( lines.get(0)[0].intValue() );
+//	data.setNdim( lines.get(0)[1].intValue() );
+//	data.setCnum( lines.get(0)[2].intValue() );
+//
+//	//2行目以降は属性値（最終列はクラス）
+//	lines.stream().forEach(data::addPattern);
+
+		return data;
 
 	}
 
