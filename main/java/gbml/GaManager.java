@@ -233,32 +233,35 @@ public class GaManager {
 	void parentEvaluation(DataSetInfo dataSetInfo, PopulationManager popManager){
 
 		if(serverList != null){
+			//個体群のソート
+			boolean isSort = Consts.IS_RULESETS_SORT;
+			if(isSort){
+				Collections.sort(popManager.currentRuleSets, new RuleSetCompByRuleNum());
+			}
 	        //個体群の分割
 	        int divideNum = serverList.length;
 	        ArrayList<ArrayList<RuleSet>> subRuleSets = new ArrayList<ArrayList<RuleSet>>();
 	        for(int i=0; i<divideNum; i++){
 	        	subRuleSets.add( new ArrayList<RuleSet>() );
 	        }
-
-	        //割り切れない場合の処理とか
-	        int subPopSize = populationSize / divideNum;
 	        int ruleIdx = 0;
-	        for(int i=0; i<divideNum; i++){
-				for(int k=0; k<subPopSize; k++){
-					if( ruleIdx < populationSize);
-					subRuleSets.get(i).add( popManager.currentRuleSets.get(ruleIdx++) );
+	        while(ruleIdx < populationSize){
+				for(int i=0; i<divideNum; i++){
+					if(ruleIdx < populationSize){
+						subRuleSets.get(i).add( popManager.currentRuleSets.get(ruleIdx++) );
+					}else{
+						break;
+					}
 				}
 	        }
 
 			//Socket用
 			ExecutorService service = Executors.newCachedThreadPool();
-
 			try{
 				List< Callable<ArrayList<RuleSet>> > tasks = Lists.newArrayList();
 				for(int i=0; i<divideNum; i++){
 					tasks.add(  new SocketUnit( serverList[i], subRuleSets.get(i) )  );
 				}
-
 				//並列実行，同期
 				List< Future<ArrayList<RuleSet>> > futures = null;
 				try{
@@ -267,7 +270,6 @@ public class GaManager {
 				catch(InterruptedException e){
 					System.out.println(e+": make future");
 				}
-
 				//ルールセット置き換え
 				popManager.currentRuleSets.clear();
 				for(Future<ArrayList<RuleSet>> future : futures){
@@ -593,6 +595,26 @@ public class GaManager {
 
 	        //昇順でソート
 	        if (no1 > no2) {
+	            return 1;
+
+	        } else if (no1 == no2) {
+	            return 0;
+
+	        } else {
+	            return -1;
+	        }
+	    }
+
+	}
+
+	public class RuleSetCompByRuleNum implements Comparator<RuleSet> {
+
+	    public int compare(RuleSet a, RuleSet b) {
+	        int no1 = a.getRuleNum();
+	        int no2 = b.getRuleNum();
+
+	        //降順でソート
+	        if (no1 < no2) {
 	            return 1;
 
 	        } else if (no1 == no2) {

@@ -79,7 +79,6 @@ public class Settings {
 
     //1: Apache Spark時の設定
 	void setSpark(String args[]){
-
 		//このmasterはネームノードのアドレス名が入る
 	    masterNodeName = args[10];
 
@@ -98,11 +97,11 @@ public class Settings {
 
 	    //number of executor
 	    executorNum = 0;
-	    if(osType==Consts.HDFS) executorNum = Integer.parseInt(args[15]);
+	    if(isDistributed) executorNum = Integer.parseInt(args[15]);
 
 	    //number of executor per cores
 	    executorCoreNum = 0;
-	    if(osType==Consts.HDFS) executorCoreNum = Integer.parseInt(args[16]);
+	    if(isDistributed) executorCoreNum = Integer.parseInt(args[16]);
 
 		sparkSession = SparkSession.builder().master(masterNodeName).appName(appName).getOrCreate();
 		System.out.println( "Spark version: " + sparkSession.version() );

@@ -60,12 +60,25 @@ public class Main {
 		//読み込みファイル名とディレクトリ名
 		String traFile = Output.makeFileNameOne(sets.dataName, sets.dirNameInHdfs, sets.crossValidationNum, sets.repeatTimes, true, sets.sparkSession);
 		String tstFile = Output.makeFileNameOne(sets.dataName, sets.dirNameInHdfs, sets.crossValidationNum, sets.repeatTimes, false, sets.sparkSession);
-		String resultDir = Output.makeDirName(sets.dataName, sets.dirNameInHdfs, sets.executorNum, sets.executorCoreNum, sets.seed, sets.osType);
+		String resultDir;
+		if(sets.calclationType == 1){
+			resultDir = Output.makeDirName(sets.dataName, sets.dirNameInHdfs, sets.calclationType, sets.executorNum, sets.seed, sets.osType);
+		}else if(sets.calclationType == 2){
+			resultDir = Output.makeDirName(sets.dataName, sets.dirNameInHdfs, sets.calclationType, sets.partitionNum, sets.seed, sets.osType);
+		}else{
+			resultDir = Output.makeDirName(sets.dataName, sets.dirNameInHdfs, sets.calclationType, sets.divideNum, sets.seed, sets.osType);
+		}
 
 		//実験パラメータ出力 + ディレクトリ作成
 		if(sets.crossValidationNum == 0 && sets.repeatTimes == 0){
 			String settings = StaticGeneralFunc.getExperimentSettings(args);
-			resultDir = Output.makeDir(sets.dataName, sets.dirNameInHdfs, sets.executorNum, sets.executorCoreNum, sets.seed, sets.osType);
+			if(sets.calclationType == 1){
+				resultDir = Output.makeDir(sets.dataName, sets.dirNameInHdfs, sets.calclationType, sets.executorNum, sets.seed, sets.osType);
+			}else if(sets.calclationType == 2){
+				resultDir = Output.makeDir(sets.dataName, sets.dirNameInHdfs, sets.calclationType, sets.partitionNum, sets.seed, sets.osType);
+			}else{
+				resultDir = Output.makeDir(sets.dataName, sets.dirNameInHdfs, sets.calclationType, sets.divideNum, sets.seed, sets.osType);
+			}
 			Output.makeDirRule(resultDir, sets.osType);
 			Output.writeSetting(sets.dataName, resultDir, settings, sets.osType);
 	    }
@@ -100,7 +113,14 @@ public class Main {
 	    Output.makeFileName(sets.dataName, traFiles, tstFiles, sets.dirNameInHdfs, sets.sparkSession);
 
 	    //データディレクトリ作成
-	    String resultDir = Output.makeDir(sets.dataName, sets.dirNameInHdfs, sets.executorNum, sets.executorCoreNum, sets.seed, sets.osType);
+		String resultDir;
+		if(sets.calclationType == 1){
+			resultDir = Output.makeDirName(sets.dataName, sets.dirNameInHdfs, sets.calclationType, sets.executorNum, sets.seed, sets.osType);
+		}else if(sets.calclationType == 2){
+			resultDir = Output.makeDirName(sets.dataName, sets.dirNameInHdfs, sets.calclationType, sets.partitionNum, sets.seed, sets.osType);
+		}else{
+			resultDir = Output.makeDirName(sets.dataName, sets.dirNameInHdfs, sets.calclationType, sets.divideNum, sets.seed, sets.osType);
+		}
 	    Output.makeDirRule(resultDir, sets.osType);
 
 	    //実験パラメータ出力
@@ -152,7 +172,7 @@ public class Main {
 		int classNum = 0;
 
 		//Sparkを使わない場合（HDFSも使わない）
-		if(sets.calclationType == 0 || sets.calclationType == 2){
+		if(sets.calclationType == 0){
 			trainDataInfo = new DataSetInfo();
 			DataLoader.inputFile(trainDataInfo, nowTrainFile);
 		}
@@ -173,6 +193,10 @@ public class Main {
 			String rowName = "_c" + attributeNum;
 			classNum= (int) trainData.dropDuplicates(rowName).count();
 			trainDataInfo = new DataSetInfo(trainDataSize, attributeNum, classNum);
+		}
+		else if(sets.calclationType == 2){
+			trainDataInfo = new DataSetInfo();
+			DataLoader.inputFileOneLine(trainDataInfo, nowTrainFile);
 		}
 
 		/************************************************************/

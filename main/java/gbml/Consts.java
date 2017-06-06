@@ -4,6 +4,8 @@ import java.lang.reflect.Field;
 
 public class Consts {
 
+	public static final boolean IS_RULESETS_SORT = true;
+
 	//GBML's parameter
     public static final int ANTECEDENT_LEN  = 5;	//ドントケアにしない条件部の数
     public static final double DONT_CAlE_RT = 0.8;	//どんとケア適応確率（合わせ用）
@@ -58,6 +60,7 @@ public class Consts {
     public static final int WAIT_SECOND = 300000;
     public static final int TIME_OUT_TIME = 30000;
     public static final int SLEEP_TIME = 1000;
+
 
     //One objective weights
     public static final int W1 = 100;
