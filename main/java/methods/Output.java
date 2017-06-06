@@ -148,7 +148,7 @@ public class Output {
 			path += sep + Consts.ROOTFOLDER +"_"+ dataname + "_e" + executors + "_c" + exeCores + "_" + seed;
 		}
 		else{
-			path = hdfs + sep + Consts.ROOTFOLDER +"_"+ dataname + "_e" + executors + "_c" + exeCores + "_" + seed;
+			path = hdfs + Consts.ROOTFOLDER +"_"+ dataname + "_e" + executors + "_c" + exeCores + "_" + seed;
 		}
 
 		return path;
@@ -166,7 +166,7 @@ public class Output {
 			newdir.mkdir();
 		}
 		else{
-			path = hdfs + sep + Consts.ROOTFOLDER +"_"+ dataname + "_e" + executors + "_c" + exeCores + "_" + seed;
+			path = hdfs + Consts.ROOTFOLDER +"_"+ dataname + "_e" + executors + "_c" + exeCores + "_" + seed;
 			Path hdfsPath = new Path( path );
 
 			Configuration conf = new Configuration();

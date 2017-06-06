@@ -4,7 +4,7 @@ import java.lang.reflect.Field;
 
 public class Consts {
 
-	public static final boolean IS_RULESETS_SORT = true;
+	public static final boolean IS_RULESETS_SORT = false;
 
 	//GBML's parameter
     public static final int ANTECEDENT_LEN  = 5;	//ドントケアにしない条件部の数
@@ -49,7 +49,7 @@ public class Consts {
     public static final double IS_FIRST_IDEAL_DOWN = 0.0;	//１目的目のみ下に動かす．（やらない場合は０に）
     public static final boolean IS_WS_FROM_NADIA = false;	//WSをナディアポイントから
 
-    //NSGA2's parameter
+    //NSGA2's parametek
     public static final int NSGA2 = 0;	//NSGA2の番号
     public static final int OBJECTIVE_DEGREES = 0;	//目的関数の回転度
     public static final boolean DO_CD_NORMALIZE = false;	//Crowding distanceを正規化する
