@@ -218,7 +218,7 @@ public class Main {
 		timeWatcher.end();
 		resultMaster.setTime( timeWatcher.getSec() );
 		resultMaster.writeTime(timeWatcher.getSec(), timeWatcher.getNano(), crossValidationNum, repeatNum);
-		resultMaster.writeTime(evaWatcher.getSec(), evaWatcher.getNano(), 114, 514);
+		resultMaster.writeTime(evaWatcher.getSec(), evaWatcher.getNano(), 100+crossValidationNum, 100+repeatNum);
 
 		//永続化終了（メモリにはまだ残っているのでOutOfMemoryする）
 		if(trainData != null){

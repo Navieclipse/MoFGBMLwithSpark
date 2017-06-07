@@ -143,7 +143,7 @@ public class Output {
 		String path = "";
 		String sep = File.separator;
 		//HDFS
-		if(os != Consts.WINDOWS){
+		if(os != Consts.HDFS){
 			path = System.getProperty("user.dir");
 			path += sep + Consts.ROOTFOLDER +"_"+ dataname + "_e" + executors + "_c" + exeCores + "_" + seed;
 		}

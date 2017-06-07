@@ -79,7 +79,7 @@ public class ResultMaster {
 	public void writeTime(double sec, double ns, int cv, int rep){
 
 		String sep = File.separator;
-		String fileName = nameDir + sep + Consts.OTHERS + sep + "Atime_0" + rep + cv + ".txt";
+		String fileName = nameDir + sep + Consts.OTHERS + sep + "Atime_0" + String.valueOf(rep) + String.valueOf(cv) + ".txt";
 
 		String str = sec + " " + ns;
 
